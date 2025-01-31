@@ -105,10 +105,10 @@ export default function Config() {
                 />
               </div>
               <div>
-                <label className="block font-semibold mb-1">Avatar ID</label>
+                <label className="block font-semibold mb-1">HeyGen Scene ID</label>
                 <Input
-                  value={formData.avatarId || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, avatarId: e.target.value }))}
+                  value={formData.heygenSceneId || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, heygenSceneId: e.target.value }))}
                 />
               </div>
               <div className="space-y-4">

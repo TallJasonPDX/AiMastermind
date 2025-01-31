@@ -5,7 +5,7 @@ import { relations } from "drizzle-orm";
 export const configurations = pgTable("configurations", {
   id: serial("id").primaryKey(),
   pageTitle: text("page_title").notNull(),
-  avatarId: text("avatar_id").notNull(),
+  heygenSceneId: text("heygen_scene_id").notNull(),
   openaiAgentConfig: jsonb("openai_agent_config").notNull(),
   passResponse: text("pass_response").notNull(),
   failResponse: text("fail_response").notNull(),

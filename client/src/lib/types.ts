@@ -1,7 +1,7 @@
 export interface Config {
   id: number;
   pageTitle: string;
-  avatarId: string;
+  heygenSceneId: string;
   openaiAgentConfig: {
     systemPrompt: string;
   };

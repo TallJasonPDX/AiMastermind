@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AvatarDisplayProps {
-  avatarId?: string;
+  heygenSceneId?: string;
   isAudioEnabled: boolean;
 }
 

@@ -44,7 +44,7 @@ export default function Home() {
       <main className="container mx-auto px-4 pt-16 pb-24">
         <Card className="mt-4 p-4">
           <AvatarDisplay
-            avatarId={config?.avatarId}
+            heygenSceneId={config?.heygenSceneId}
             isAudioEnabled={audioEnabled}
           />
           <ChatInterface 
