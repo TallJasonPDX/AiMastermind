@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { AudioModal } from '@/components/AudioModal';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
@@ -7,17 +8,21 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { Config } from '@/lib/types';
 
+console.log('[Home] Module loaded');
+
 export default function Home() {
+  console.log('[Home] Component rendering');
   const [showAudioModal, setShowAudioModal] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
 
   const searchParams = new URLSearchParams(window.location.search);
   const configId = searchParams.get('id');
+  console.log('[Home] URL config ID:', configId);
 
-  const { data: config } = useQuery<Config>({
+  const { data: config, error: configError, isLoading } = useQuery<Config>({
     queryKey: ['/api/config', configId],
     queryFn: async () => {
-      console.log('[Home] Page loaded');
+      console.log('[Home] Starting config query');
       console.log('[Home] ConfigId from URL:', configId);
       let id = configId;
       
@@ -25,7 +30,11 @@ export default function Home() {
         console.log('[Home] No ID in query string, finding default');
         console.log('[Home] Fetching from /api/config/active');
         const response = await fetch('/api/config/active');
-        console.log('[Home] Active config response status:', response.status);
+        console.log('[Home] Active config response:', {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText
+        });
         const data = await response.json();
         console.log('[Home] Active config raw response:', data);
         
@@ -39,7 +48,11 @@ export default function Home() {
       
       console.log(`[Home] Loading configuration ${id}`);
       const response = await fetch(`/api/config/${id}`);
-      console.log('[Home] Config response status:', response.status);
+      console.log('[Home] Config response:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
       const data = await response.json();
       console.log(`[Home] Configuration ${id} raw response:`, data);
       
@@ -52,15 +65,30 @@ export default function Home() {
     }
   });
 
+  useEffect(() => {
+    console.log('[Home] Component mounted');
+    return () => console.log('[Home] Component unmounting');
+  }, []);
+
+  console.log('[Home] Current state:', { 
+    showAudioModal, 
+    audioEnabled, 
+    configLoaded: !!config,
+    configError: configError?.message,
+    isLoading 
+  });
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AudioModal 
         isOpen={showAudioModal} 
         onConfirm={() => {
+          console.log('[Home] Audio modal confirmed');
           setShowAudioModal(false);
           setAudioEnabled(true);
         }}
         onExit={() => {
+          console.log('[Home] Audio modal exited');
           window.location.href = "javascript:window.external.AddFavorite(location.href, document.title)";
         }}
       />
