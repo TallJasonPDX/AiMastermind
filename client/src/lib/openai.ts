@@ -21,38 +21,83 @@ export async function processChat(
   }
 ): Promise<ChatResponse> {
   try {
-    // Create a thread
-    const thread = await openai.beta.threads.create();
+    // Create a thread with proper error handling
+    let thread;
+    try {
+      thread = await openai.beta.threads.create();
+    } catch (error) {
+      console.error('Error creating thread:', error);
+      throw new Error('Failed to create chat thread');
+    }
 
-    // Add all messages to the thread in order
+    // Add messages to thread with proper formatting
     for (const msg of messages) {
-      await openai.beta.threads.messages.create(thread.id, {
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content,
+      try {
+        await openai.beta.threads.messages.create(thread.id, {
+          role: msg.role,
+          content: msg.content
+        });
+      } catch (error) {
+        console.error('Error adding message to thread:', error);
+        throw new Error('Failed to add message to thread');
+      }
+    }
+
+    // Format the assistant prompt properly
+    const assistantPrompt = `
+Context: ${config.pageTitle}
+System Instructions: ${config.openaiAgentConfig.systemPrompt}
+Special Instructions: When you determine the conversation should end with a success, include #PASS# in your response.
+If the conversation should end with a failure, include #FAIL# in your response.
+Otherwise, continue the conversation normally.
+`;
+
+    // Run the assistant with the formatted prompt
+    let run;
+    try {
+      run = await openai.beta.threads.runs.create(thread.id, {
+        assistant_id: config.openaiAgentConfig.assistantId,
+        instructions: assistantPrompt,
       });
+    } catch (error) {
+      console.error('Error starting assistant run:', error);
+      throw new Error('Failed to start assistant');
     }
 
-    // Run the assistant
-    const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: config.openaiAgentConfig.assistantId,
-      instructions: config.openaiAgentConfig.systemPrompt,
-    });
-
-    // Wait for the run to complete
-    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-    while (runStatus.status === "queued" || runStatus.status === "in_progress") {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    // Wait for the run to complete with proper status checking
+    let runStatus;
+    while (true) {
+      try {
+        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+        if (runStatus.status === "completed") break;
+        if (runStatus.status === "failed" || runStatus.status === "cancelled") {
+          throw new Error(`Assistant run ${runStatus.status}`);
+        }
+        if (!["queued", "in_progress"].includes(runStatus.status)) {
+          throw new Error(`Unexpected status: ${runStatus.status}`);
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error('Error checking run status:', error);
+        throw new Error('Failed to get assistant response');
+      }
     }
 
-    // Get the assistant's response
-    const threadMessages = await openai.beta.threads.messages.list(thread.id);
+    // Get the assistant's response with proper error handling
+    let threadMessages;
+    try {
+      threadMessages = await openai.beta.threads.messages.list(thread.id);
+    } catch (error) {
+      console.error('Error retrieving messages:', error);
+      throw new Error('Failed to get chat response');
+    }
+
     const lastMessage = threadMessages.data[0].content[0];
     if (lastMessage.type !== 'text') throw new Error('Unexpected response type');
 
     const responseText = lastMessage.text.value;
 
-    // Check for pass/fail status
+    // Check for pass/fail status in the entire response
     if (responseText.includes('#PASS#')) {
       return {
         response: config.passResponse,
