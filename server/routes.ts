@@ -32,7 +32,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get active configuration
-  app.get('/api/config/active', async (req, res) => {
+  app.get('/api/config/active', async (_req, res) => {
     try {
       console.log('[Config] Looking for default configuration');
       
@@ -47,27 +47,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ error: 'No configurations found' });
       }
 
-      if (typeof config.id !== 'number') {
-        console.log('[Config] Invalid config ID type:', typeof config.id);
-        return res.status(400).json({ error: 'Invalid configuration ID type' });
-      }
-      
-      console.log('[Config] Database query completed');
-      console.log('[Config] Query result:', config);
-      
-      if (!config) {
-        console.log('[Config] No configurations found in database');
-        return res.status(404).json({ error: 'No configurations found' });
-      }
-
-      console.log(`[Config] Found default configuration with ID ${config.id}`);
-      console.log('[Config] Configuration details:', {
-        id: config.id,
-        pageTitle: config.pageTitle,
-        heygenSceneId: config.heygenSceneId,
-        openaiAgentConfig: config.openaiAgentConfig
-      });
-
+      console.log('[Config] Config found:', config);
       res.json(config);
     } catch (error) {
       console.error('Active config error:', error);
