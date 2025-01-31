@@ -48,7 +48,9 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
         const data = await response.json();
         setStreamUrl(data.stream_url);
       } catch (err) {
-        console.error('Failed to initialize HeyGen stream:', err);
+        const errorDetails = err instanceof Error ? err.message : JSON.stringify(err);
+        console.error(`[HeyGen API] Stream initialization failed: ${errorDetails}`);
+        console.error('[HeyGen API] Full error:', err);
         setError('Failed to initialize avatar stream. Please check your API key and network connection.');
       }
     }
