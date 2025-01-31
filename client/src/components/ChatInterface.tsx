@@ -52,7 +52,7 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
         {latestAssistantMessage && (
           <div className="mb-4 p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground mb-2">AI Response:</p>
-            <p>{latestAssistantMessage.content}</p>
+            <p className="whitespace-pre-wrap">{latestAssistantMessage.content}</p>
           </div>
         )}
 
