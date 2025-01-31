@@ -22,11 +22,15 @@ export function AvatarDisplay({ avatarId, isAudioEnabled }: AvatarDisplayProps) 
     );
   }
 
+  // Create URL with authorization
+  const avatarUrl = new URL(`https://api.heygen.com/v1/avatar/${avatarId}/stream`);
+  avatarUrl.searchParams.set('key', import.meta.env.VITE_HEYGEN_API_KEY);
+
   return (
     <Card className="w-full aspect-video bg-black rounded-lg overflow-hidden relative">
       <iframe
         key={avatarId} // Force iframe refresh when avatarId changes
-        src={`https://api.heygen.com/v1/avatar/${avatarId}/stream`}
+        src={avatarUrl.toString()}
         className="w-full h-full absolute inset-0"
         allow="autoplay; microphone"
         style={{ border: 'none' }}
