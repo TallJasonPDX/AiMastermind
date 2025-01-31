@@ -8,12 +8,30 @@ import { processChat } from "../client/src/lib/openai";
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
+  // Get all configurations
+  app.get('/api/configs', async (_req, res) => {
+    const configs = await db.query.configurations.findMany({
+      orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
+    });
+    res.json(configs);
+  });
+
   // Get active configuration
   app.get('/api/config/active', async (_req, res) => {
     const config = await db.query.configurations.findFirst({
       orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
     });
     res.json(config);
+  });
+
+  // Delete configuration
+  app.delete('/api/config/:id', async (req, res) => {
+    try {
+      await db.delete(configurations).where(eq(configurations.id, parseInt(req.params.id)));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete configuration' });
+    }
   });
 
   app.put('/api/config', async (req, res) => {
