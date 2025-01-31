@@ -1,3 +1,5 @@
+
+import { useEffect, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -6,14 +8,55 @@ interface AvatarDisplayProps {
   isAudioEnabled: boolean;
 }
 
-export function AvatarDisplay({ avatarId, isAudioEnabled }: AvatarDisplayProps) {
-  if (!avatarId) {
-    return (
-      <Skeleton className="w-full aspect-video rounded-lg" />
-    );
+export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayProps) {
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function initializeStream() {
+      if (!heygenSceneId || !isAudioEnabled) return;
+
+      const apiKey = import.meta.env.VITE_HEYGEN_API_KEY;
+      if (!apiKey) {
+        setError('Missing HeyGen API key');
+        return;
+      }
+
+      try {
+        const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            template_id: heygenSceneId,
+            voice_id: 'en-US-Neural2-C', // Default voice ID, you might want to make this configurable
+            text: 'Hello! I am ready to chat.',
+            livekit_room: `room_${heygenSceneId}`,
+            livekit_identity: `user_${Date.now()}`
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HeyGen API error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setStreamUrl(data.stream_url);
+      } catch (err) {
+        console.error('Failed to initialize HeyGen stream:', err);
+        setError('Failed to initialize avatar stream');
+      }
+    }
+
+    initializeStream();
+  }, [heygenSceneId, isAudioEnabled]);
+
+  if (!heygenSceneId) {
+    return <Skeleton className="w-full aspect-video rounded-lg" />;
   }
 
-  // Only show iframe when audio is enabled
   if (!isAudioEnabled) {
     return (
       <Card className="w-full aspect-video bg-black rounded-lg flex items-center justify-center">
@@ -22,31 +65,26 @@ export function AvatarDisplay({ avatarId, isAudioEnabled }: AvatarDisplayProps) 
     );
   }
 
-  const apiKey = import.meta.env.VITE_HEYGEN_API_KEY;
-  if (!apiKey) {
-    console.error('Missing HeyGen API key');
+  if (error) {
     return (
       <Card className="w-full aspect-video bg-black rounded-lg flex items-center justify-center">
-        <p className="text-white">Error: Missing API key</p>
+        <p className="text-white">{error}</p>
       </Card>
     );
   }
 
-  // Create URL with authorization and streaming parameters
-  const avatarUrl = new URL(`https://api.heygen.com/v1/avatar/${avatarId}/stream`);
-  avatarUrl.searchParams.set('key', apiKey);
-  avatarUrl.searchParams.set('mode', 'stream');
-  avatarUrl.searchParams.set('streaming', 'true');
-  avatarUrl.searchParams.set('format', 'video');
-  avatarUrl.searchParams.set('quality', 'high');
-
-  console.log('Attempting to load avatar with ID:', avatarId);
+  if (!streamUrl) {
+    return (
+      <Card className="w-full aspect-video bg-black rounded-lg flex items-center justify-center">
+        <p className="text-white">Initializing avatar...</p>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full aspect-video bg-black rounded-lg overflow-hidden relative">
       <iframe
-        key={avatarId} // Force iframe refresh when avatarId changes
-        src={avatarUrl.toString()}
+        src={streamUrl}
         className="w-full h-full absolute inset-0"
         allow="autoplay; microphone"
         style={{ border: 'none' }}
