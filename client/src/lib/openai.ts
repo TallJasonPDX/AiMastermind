@@ -14,7 +14,6 @@ export async function processChat(
     pageTitle: string;
     openaiAgentConfig: { 
       assistantId: string;
-      systemPrompt: string;
     };
     passResponse: string;
     failResponse: string;

@@ -3,7 +3,7 @@ export interface Config {
   pageTitle: string;
   heygenSceneId: string;
   openaiAgentConfig: {
-    systemPrompt: string;
+    assistantId: string;
   };
   passResponse: string;
   failResponse: string;
