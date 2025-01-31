@@ -15,23 +15,6 @@ export default function Home() {
     queryKey: ['/api/config/active'],
   });
 
-  const sendMessage = useMutation({
-    mutationFn: async (message: string) => {
-      const res = await apiRequest('POST', '/api/chat', {
-        configId: config?.id,
-        message,
-      });
-      return res.json();
-    },
-  });
-
-  useEffect(() => {
-    if (audioEnabled && config?.id) {
-      // Send initial greeting
-      sendMessage.mutate("Hey, what's up?");
-    }
-  }, [audioEnabled, config?.id]);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AudioModal 

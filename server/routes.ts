@@ -23,14 +23,28 @@ export function registerRoutes(app: Express): Server {
       return res.status(400).json({ error: 'Configuration ID is required' });
     }
 
-    const conversation = await db.query.conversations.findFirst({
-      where: eq(conversations.configId, Number(configId)),
-      orderBy: (conversations, { desc }) => [desc(conversations.createdAt)],
+    // Always create a new conversation on initial load
+    const config = await db.query.configurations.findFirst({
+      where: eq(configurations.id, Number(configId)),
     });
 
+    if (!config) {
+      return res.status(404).json({ error: 'Configuration not found' });
+    }
+
+    // Create a new conversation
+    const newConversation = await db.insert(conversations).values({
+      configId: Number(configId),
+      messages: [{
+        role: 'system',
+        content: (config.openaiAgentConfig as { systemPrompt: string }).systemPrompt
+      }],
+      status: 'ongoing',
+    }).returning();
+
     res.json({ 
-      messages: conversation?.messages || [],
-      status: conversation?.status || 'ongoing'
+      messages: newConversation[0].messages,
+      status: newConversation[0].status
     });
   });
 
@@ -53,17 +67,9 @@ export function registerRoutes(app: Express): Server {
         throw new Error('Configuration not found');
       }
 
-      // Initialize messages array with greeting if new conversation
+      // Initialize messages array
       const messages: Array<{ role: 'user' | 'assistant' | 'system', content: string }> = 
         conversation?.messages as typeof messages || [];
-
-      if (!conversation) {
-        // Add initial system message with assistant configuration
-        messages.push({
-          role: 'system',
-          content: (config.openaiAgentConfig as { systemPrompt: string }).systemPrompt
-        });
-      }
 
       // Add user message
       messages.push({ 
@@ -73,9 +79,9 @@ export function registerRoutes(app: Express): Server {
 
       const chatResponse = await processChat(messages, {
         pageTitle: config.pageTitle,
-        openaiAgentConfig: config.openaiAgentConfig as { 
-          assistantId: string;
-          systemPrompt: string;
+        openaiAgentConfig: {
+          assistantId: 'asst_J6fMLXA582DbB39yMkcF4sHG',
+          systemPrompt: (config.openaiAgentConfig as { systemPrompt: string }).systemPrompt
         },
         passResponse: config.passResponse,
         failResponse: config.failResponse,
