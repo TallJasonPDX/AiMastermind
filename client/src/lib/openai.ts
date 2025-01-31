@@ -57,14 +57,12 @@ Otherwise, continue the conversation normally.
       const assistantId = config.openaiAgentConfig.assistantId;
       console.log('[OpenAI] Using assistant ID:', assistantId);
       console.log('[OpenAI] Request body:', {
-        assistant_id: assistantId,
-        instructions: assistantPrompt,
+        assistant_id: assistantId
       });
       console.log('[OpenAI] Thread ID:', thread.id);
       
       run = await openai.beta.threads.runs.create(thread.id, {
-        assistant_id: assistantId,
-        instructions: assistantPrompt,
+        assistant_id: assistantId
       });
       
       console.log('[OpenAI] Run created:', run);

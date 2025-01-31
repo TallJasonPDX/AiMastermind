@@ -31,10 +31,6 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
   useEffect(() => {
     // Reset chat response when component mounts
     setChatResponse(null);
-    // Send empty message to initialize new thread
-    if (configId) {
-      sendMessage.mutate('');
-    }
   }, [configId]);
 
   const sendMessage = useMutation({
