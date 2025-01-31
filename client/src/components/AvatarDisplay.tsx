@@ -8,11 +8,14 @@ interface AvatarDisplayProps {
 }
 
 export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayProps) {
+  console.log('[AvatarDisplay] Rendering with props:', { heygenSceneId, isAudioEnabled });
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[AvatarDisplay] Effect triggered with:', { heygenSceneId, isAudioEnabled });
     async function initializeStream() {
+      console.log('[AvatarDisplay] Initializing stream');
       if (!heygenSceneId || !isAudioEnabled) return;
 
       const apiKey = import.meta.env.VITE_HEYGEN_API_KEY;
@@ -23,6 +26,7 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
       }
 
       try {
+        console.log('[AvatarDisplay] Making HeyGen API request with key:', apiKey ? 'Present' : 'Missing');
         const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
           method: 'POST',
           mode: 'cors',
