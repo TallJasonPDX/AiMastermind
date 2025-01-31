@@ -56,10 +56,18 @@ Otherwise, continue the conversation normally.
     try {
       const assistantId = config.openaiAgentConfig.assistantId;
       console.log('[OpenAI] Using assistant ID:', assistantId);
+      console.log('[OpenAI] Request body:', {
+        assistant_id: assistantId,
+        instructions: assistantPrompt,
+      });
+      console.log('[OpenAI] Thread ID:', thread.id);
+      
       run = await openai.beta.threads.runs.create(thread.id, {
         assistant_id: assistantId,
         instructions: assistantPrompt,
       });
+      
+      console.log('[OpenAI] Run created:', run);
     } catch (error) {
       console.error('Error starting assistant run:', error);
       throw new Error('Failed to start assistant');
