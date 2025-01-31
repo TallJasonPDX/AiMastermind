@@ -34,14 +34,15 @@ export function registerRoutes(app: Express): Server {
   // Get active configuration
   app.get('/api/config/active', async (_req, res) => {
     try {
-      const config = await db.query.configurations.findFirst({
+      const configs = await db.query.configurations.findMany({
         orderBy: (configurations, { asc }) => [asc(configurations.id)],
+        limit: 1
       });
       
-      if (!config) {
+      if (!configs || configs.length === 0) {
         return res.status(404).json({ error: 'No configurations found' });
       }
-      res.json(config);
+      res.json(configs[0]);
     } catch (error) {
       console.error('Active config error:', error);
       res.status(500).json({ error: 'Failed to fetch active configuration' });
