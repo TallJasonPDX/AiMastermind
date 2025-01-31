@@ -16,6 +16,14 @@ export function registerRoutes(app: Express): Server {
     res.json(configs);
   });
 
+  // Get specific configuration
+  app.get('/api/config/:id', async (req, res) => {
+    const config = await db.query.configurations.findFirst({
+      where: eq(configurations.id, parseInt(req.params.id)),
+    });
+    res.json(config);
+  });
+
   // Get active configuration
   app.get('/api/config/active', async (_req, res) => {
     const config = await db.query.configurations.findFirst({

@@ -11,8 +11,15 @@ export default function Home() {
   const [showAudioModal, setShowAudioModal] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const configId = searchParams.get('id');
+
   const { data: config } = useQuery<Config>({
-    queryKey: ['/api/config/active'],
+    queryKey: ['/api/config', configId],
+    queryFn: async () => {
+      const response = await fetch(configId ? `/api/config/${configId}` : '/api/config/active');
+      return response.json();
+    }
   });
 
   return (
