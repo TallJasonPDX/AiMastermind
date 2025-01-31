@@ -43,7 +43,7 @@ export function registerRoutes(app: Express): Server {
         // Add initial system message with assistant configuration
         messages.push({
           role: 'system',
-          content: config.openaiAgentConfig.systemPrompt
+          content: (config.openaiAgentConfig as { systemPrompt: string }).systemPrompt
         });
       }
 
@@ -53,7 +53,15 @@ export function registerRoutes(app: Express): Server {
         content: message || "Hey, what's up?" 
       });
 
-      const chatResponse = await processChat(messages, config);
+      const chatResponse = await processChat(messages, {
+        pageTitle: config.pageTitle,
+        openaiAgentConfig: config.openaiAgentConfig as { 
+          assistantId: string;
+          systemPrompt: string;
+        },
+        passResponse: config.passResponse,
+        failResponse: config.failResponse,
+      });
 
       // Add assistant response
       messages.push({ 
