@@ -16,6 +16,24 @@ export function registerRoutes(app: Express): Server {
     res.json(config);
   });
 
+  // Get chat history
+  app.get('/api/chat', async (req, res) => {
+    const { configId } = req.query;
+    if (!configId) {
+      return res.status(400).json({ error: 'Configuration ID is required' });
+    }
+
+    const conversation = await db.query.conversations.findFirst({
+      where: eq(conversations.configId, Number(configId)),
+      orderBy: (conversations, { desc }) => [desc(conversations.createdAt)],
+    });
+
+    res.json({ 
+      messages: conversation?.messages || [],
+      status: conversation?.status || 'ongoing'
+    });
+  });
+
   // Send chat message
   app.post('/api/chat', async (req, res) => {
     const { configId, message } = req.body;
@@ -85,7 +103,11 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      res.json(chatResponse);
+      res.json({
+        response: chatResponse.response,
+        messages,
+        status: chatResponse.status
+      });
     } catch (error) {
       console.error('Chat error:', error);
       res.status(500).json({ error: 'Failed to process chat message' });
