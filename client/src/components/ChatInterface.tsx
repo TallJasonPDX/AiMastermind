@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SendIcon } from "lucide-react";
@@ -12,6 +12,12 @@ interface Message {
   content: string;
 }
 
+interface ChatResponse {
+  response: string;
+  messages: Message[];
+  status: string;
+}
+
 interface ChatInterfaceProps {
   configId?: number;
   isAudioEnabled: boolean;
@@ -20,12 +26,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const queryClient = useQueryClient();
-
-  // Fetch chat history
-  const { data: chatHistory } = useQuery<{ messages: Message[], status: string }>({
-    queryKey: [`/api/chat?configId=${configId}`, configId],
-    enabled: !!configId,
-  });
+  const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
 
   const sendMessage = useMutation({
     mutationFn: async (content: string) => {
@@ -33,45 +34,38 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
         configId,
         message: content,
       });
-      return res.json();
+      return res.json() as Promise<ChatResponse>;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setMessage('');
-      queryClient.invalidateQueries({ queryKey: [`/api/chat?configId=${configId}`, configId] });
+      setChatResponse(data);
     },
   });
 
-  // Get the latest assistant message
-  const latestAssistantMessage = chatHistory?.messages
-    ?.filter(msg => msg.role === 'assistant')
-    ?.slice(-1)[0];
-
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-2">
       {/* Response Display Area */}
-      <ScrollArea className="h-[300px] rounded-md border p-4">
-        {latestAssistantMessage ? (
-          <div className="space-y-4">
-            <div className="bg-muted rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-2">AI Response:</p>
-              <p className="whitespace-pre-wrap">{latestAssistantMessage.content}</p>
-            </div>
+      <ScrollArea className="min-h-[80px] max-h-[160px] rounded-md border p-3">
+        {chatResponse?.response ? (
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-sm text-muted-foreground mb-1">AI Response:</p>
+            <p className="whitespace-pre-wrap text-sm">{chatResponse.response}</p>
           </div>
         ) : (
-          <div className="text-center text-muted-foreground">
+          <div className="text-center text-muted-foreground text-sm py-2">
             No messages yet. Start a conversation!
           </div>
         )}
       </ScrollArea>
 
       {/* Message Input Area */}
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-2">
         <Textarea
           placeholder="Type your message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           className="resize-none"
-          rows={3}
+          rows={2}
         />
         <Button
           onClick={() => sendMessage.mutate(message)}
