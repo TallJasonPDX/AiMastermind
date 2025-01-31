@@ -22,9 +22,21 @@ export function AvatarDisplay({ avatarId, isAudioEnabled }: AvatarDisplayProps) 
     );
   }
 
+  const apiKey = import.meta.env.VITE_HEYGEN_API_KEY;
+  if (!apiKey) {
+    console.error('Missing HeyGen API key');
+    return (
+      <Card className="w-full aspect-video bg-black rounded-lg flex items-center justify-center">
+        <p className="text-white">Error: Missing API key</p>
+      </Card>
+    );
+  }
+
   // Create URL with authorization
   const avatarUrl = new URL(`https://api.heygen.com/v1/avatar/${avatarId}/stream`);
-  avatarUrl.searchParams.set('key', import.meta.env.VITE_HEYGEN_API_KEY);
+  avatarUrl.searchParams.set('key', apiKey);
+
+  console.log('Attempting to load avatar with ID:', avatarId);
 
   return (
     <Card className="w-full aspect-video bg-black rounded-lg overflow-hidden relative">
