@@ -18,9 +18,16 @@ export function registerRoutes(app: Express): Server {
 
   // Get specific configuration
   app.get('/api/config/:id', async (req, res) => {
+    const configId = parseInt(req.params.id);
+    if (isNaN(configId)) {
+      return res.status(400).json({ error: 'Invalid configuration ID' });
+    }
     const config = await db.query.configurations.findFirst({
-      where: eq(configurations.id, parseInt(req.params.id)),
+      where: eq(configurations.id, configId),
     });
+    if (!config) {
+      return res.status(404).json({ error: 'Configuration not found' });
+    }
     res.json(config);
   });
 
