@@ -16,6 +16,22 @@ export function registerRoutes(app: Express): Server {
     res.json(config);
   });
 
+  app.put('/api/config', async (req, res) => {
+    const { id, ...updateData } = req.body;
+    try {
+      const updated = await db.update(configurations)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(configurations.id, id))
+        .returning();
+      res.json(updated[0]);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update configuration' });
+    }
+  });
+
   // Get chat history
   app.get('/api/chat', async (req, res) => {
     const { configId } = req.query;
