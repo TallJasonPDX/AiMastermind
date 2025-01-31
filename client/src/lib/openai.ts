@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI();
 
 export interface ChatResponse {
   response: string;
@@ -35,7 +35,7 @@ export async function processChat(
     // Run the assistant
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: config.openaiAgentConfig.assistantId,
-      instructions: `${config.openaiAgentConfig.systemPrompt}\nWhen you determine the conversation should end, include either #PASS# or #FAIL# at the start of your response.`,
+      instructions: config.openaiAgentConfig.systemPrompt,
     });
 
     // Wait for the run to complete
@@ -51,25 +51,23 @@ export async function processChat(
     if (lastMessage.type !== 'text') throw new Error('Unexpected response type');
 
     const responseText = lastMessage.text.value;
-    let status: 'ongoing' | 'pass' | 'fail' = 'ongoing';
 
-    if (responseText.startsWith('#PASS#')) {
-      status = 'pass';
+    // Check for pass/fail status
+    if (responseText.includes('#PASS#')) {
       return {
         response: config.passResponse,
-        status,
+        status: 'pass',
       };
-    } else if (responseText.startsWith('#FAIL#')) {
-      status = 'fail';
+    } else if (responseText.includes('#FAIL#')) {
       return {
         response: config.failResponse,
-        status,
+        status: 'fail',
       };
     }
 
     return {
       response: responseText,
-      status,
+      status: 'ongoing',
     };
   } catch (error) {
     console.error('OpenAI chat error:', error);
