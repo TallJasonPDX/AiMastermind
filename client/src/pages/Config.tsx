@@ -111,15 +111,52 @@ export default function Config() {
                   onChange={e => setFormData(prev => ({ ...prev, avatarId: e.target.value }))}
                 />
               </div>
-              <div>
-                <label className="block font-semibold mb-1">System Prompt</label>
-                <Textarea
-                  value={formData.openaiAgentConfig?.systemPrompt || ''}
-                  onChange={e => setFormData(prev => ({
-                    ...prev,
-                    openaiAgentConfig: { ...prev.openaiAgentConfig, systemPrompt: e.target.value }
-                  }))}
-                />
+              <div className="space-y-4">
+                <h3 className="font-semibold">OpenAI Agent Configuration</h3>
+                {formData.openaiAgentConfig && Object.entries(formData.openaiAgentConfig).map(([key, value]) => (
+                  <div key={key}>
+                    <label className="block font-semibold mb-1 capitalize">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </label>
+                    {typeof value === 'string' ? (
+                      key === 'systemPrompt' ? (
+                        <Textarea
+                          value={value}
+                          onChange={e => setFormData(prev => ({
+                            ...prev,
+                            openaiAgentConfig: {
+                              ...prev.openaiAgentConfig,
+                              [key]: e.target.value
+                            }
+                          }))}
+                        />
+                      ) : (
+                        <Input
+                          value={value}
+                          onChange={e => setFormData(prev => ({
+                            ...prev,
+                            openaiAgentConfig: {
+                              ...prev.openaiAgentConfig,
+                              [key]: e.target.value
+                            }
+                          }))}
+                        />
+                      )
+                    ) : (
+                      <Input
+                        type="number"
+                        value={value}
+                        onChange={e => setFormData(prev => ({
+                          ...prev,
+                          openaiAgentConfig: {
+                            ...prev.openaiAgentConfig,
+                            [key]: Number(e.target.value)
+                          }
+                        }))}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
               <div className="space-x-2">
                 <Button type="submit">Save</Button>
