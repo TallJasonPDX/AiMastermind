@@ -32,9 +32,13 @@ export function AvatarDisplay({ avatarId, isAudioEnabled }: AvatarDisplayProps) 
     );
   }
 
-  // Create URL with authorization
+  // Create URL with authorization and streaming parameters
   const avatarUrl = new URL(`https://api.heygen.com/v1/avatar/${avatarId}/stream`);
   avatarUrl.searchParams.set('key', apiKey);
+  avatarUrl.searchParams.set('mode', 'stream');
+  avatarUrl.searchParams.set('streaming', 'true');
+  avatarUrl.searchParams.set('format', 'video');
+  avatarUrl.searchParams.set('quality', 'high');
 
   console.log('Attempting to load avatar with ID:', avatarId);
 
