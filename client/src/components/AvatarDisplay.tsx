@@ -30,24 +30,31 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
         const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
           method: 'POST',
           mode: 'cors',
+          credentials: 'omit',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Origin': window.location.origin
           },
           body: JSON.stringify({
             template_id: heygenSceneId,
-            voice_id: 'en-US-Neural2-C', // Default voice ID, you might want to make this configurable
+            voice_id: 'en-US-Neural2-C',
             text: 'Hello! I am ready to chat.',
             livekit_room: `room_${heygenSceneId}`,
             livekit_identity: `user_${Date.now()}`
           })
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({message: response.statusText})); //Attempt to get error details
-          throw new Error(`HeyGen API error: ${errorData.message || response.statusText} (${response.status})`);
-        }
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => response.statusText);
+            console.error('[HeyGen API] Request failed:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorText
+            });
+            throw new Error(`API request failed: ${response.status} ${errorText}`);
+          }
 
         const data = await response.json();
         setStreamUrl(data.stream_url);
