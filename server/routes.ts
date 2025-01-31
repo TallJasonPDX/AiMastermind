@@ -80,11 +80,10 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: 'Invalid configuration ID' });
       }
 
-      const now = new Date().toISOString();
       const updated = await db.update(configurations)
         .set({
           ...updateData,
-          updatedAt: now
+          updatedAt: new Date()
         })
         .where(eq(configurations.id, id))
         .returning();
