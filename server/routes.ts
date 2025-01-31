@@ -124,20 +124,26 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/chat', async (req, res) => {
     const { configId, message } = req.body;
 
-    if (!process.env.OPENAI_ASSISTANT_ID) {
-      return res.status(500).json({ error: 'OpenAI Assistant ID not configured' });
-    }
-
     try {
+      // Get configuration first
+      const config = await db.query.configurations.findFirst({
+        where: eq(configurations.id, configId),
+      });
+
+      if (!config) {
+        return res.status(404).json({ error: 'Configuration not found' });
+      }
+
       // Get or create conversation
       let conversation = await db.query.conversations.findFirst({
         where: eq(conversations.configId, configId),
         orderBy: (conversations, { desc }) => [desc(conversations.createdAt)],
       });
 
-      const config = await db.query.configurations.findFirst({
-        where: eq(configurations.id, configId),
-      });
+      const assistantId = (config.openaiAgentConfig as { assistantId: string }).assistantId;
+      if (!assistantId) {
+        return res.status(500).json({ error: 'OpenAI Assistant ID not configured in this configuration' });
+      }
 
       if (!config) {
         throw new Error('Configuration not found');
@@ -156,7 +162,7 @@ export function registerRoutes(app: Express): Server {
       const chatResponse = await processChat(messages, {
         pageTitle: config.pageTitle,
         openaiAgentConfig: {
-          assistantId: process.env.OPENAI_ASSISTANT_ID,
+          assistantId: assistantId,
           systemPrompt: (config.openaiAgentConfig as { systemPrompt: string }).systemPrompt
         },
         passResponse: config.passResponse,
