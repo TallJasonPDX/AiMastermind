@@ -39,6 +39,18 @@ export function registerRoutes(app: Express): Server {
       const config = await db.query.configurations.findFirst({
         orderBy: (configurations, { asc }) => [asc(configurations.id)]
       });
+
+      console.log('[Config] Raw config from database:', config);
+      
+      if (!config) {
+        console.log('[Config] No configurations found in database');
+        return res.status(404).json({ error: 'No configurations found' });
+      }
+
+      if (typeof config.id !== 'number') {
+        console.log('[Config] Invalid config ID type:', typeof config.id);
+        return res.status(400).json({ error: 'Invalid configuration ID type' });
+      }
       
       console.log('[Config] Database query completed');
       console.log('[Config] Query result:', config);
