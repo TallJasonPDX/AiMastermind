@@ -16,8 +16,9 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
       if (!heygenSceneId || !isAudioEnabled) return;
 
       const apiKey = import.meta.env.VITE_HEYGEN_API_KEY;
-      if (!apiKey) {
-        setError('Missing HeyGen API key');
+      if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
+        console.error('Invalid or missing HeyGen API key');
+        setError('Missing or invalid HeyGen API key configuration');
         return;
       }
 
