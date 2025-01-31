@@ -2,6 +2,12 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Enable verbose logging
+const DEBUG = true;
+const debugLog = (...args: any[]) => {
+  if (DEBUG) console.log("[DEBUG]", ...args);
+};
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

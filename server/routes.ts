@@ -18,13 +18,18 @@ export function registerRoutes(app: Express): Server {
 
   // Get specific configuration
   app.get('/api/config/:id', async (req, res) => {
+    console.log('[Config/:id] Request received with params:', req.params);
     const configId = parseInt(req.params.id);
+    console.log('[Config/:id] Parsed configId:', configId, 'isNaN:', isNaN(configId));
     if (isNaN(configId)) {
-      return res.status(400).json({ error: 'Invalid configuration ID' });
+      console.log('[Config/:id] Invalid ID detected, returning 400');
+      return res.status(400).json({ error: 'Invalid Configuration ID' });
     }
+    console.log('[Config/:id] Querying database for config:', configId);
     const config = await db.query.configurations.findFirst({
       where: eq(configurations.id, configId),
     });
+    console.log('[Config/:id] Database result:', config);
     if (!config) {
       return res.status(404).json({ error: 'Configuration not found' });
     }
@@ -42,7 +47,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       console.log('[Config/active] Database query completed');
-      console.log('[Config/active] Raw result:', config);
+      console.log('[Config/active] Raw result:', JSON.stringify(config, null, 2));
       
       if (!config) {
         console.log('[Config/active] No configurations found in database');
@@ -97,9 +102,12 @@ export function registerRoutes(app: Express): Server {
 
   app.put('/api/config', async (req, res) => {
     const { id, ...updateData } = req.body;
+    console.log('[Config PUT] Request body:', req.body);
     try {
+      console.log('[Config PUT] Validating ID:', id, 'isNaN:', isNaN(id));
       if (!id || isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid configuration ID' });
+        console.log('[Config PUT] Invalid ID detected, returning 400');
+        return res.status(400).json({ error: 'Invalid Configuration ID' });
       }
 
       // Remove updatedAt from updateData to prevent timestamp conflicts
