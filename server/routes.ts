@@ -42,9 +42,22 @@ export function registerRoutes(app: Express): Server {
   // Delete configuration
   app.delete('/api/config/:id', async (req, res) => {
     try {
-      await db.delete(configurations).where(eq(configurations.id, parseInt(req.params.id)));
+      const configId = parseInt(req.params.id);
+      if (isNaN(configId)) {
+        return res.status(400).json({ error: 'Invalid configuration ID' });
+      }
+      
+      const result = await db.delete(configurations)
+        .where(eq(configurations.id, configId))
+        .returning();
+        
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Configuration not found' });
+      }
+      
       res.json({ success: true });
     } catch (error) {
+      console.error('Delete error:', error);
       res.status(500).json({ error: 'Failed to delete configuration' });
     }
   });
@@ -52,6 +65,10 @@ export function registerRoutes(app: Express): Server {
   app.put('/api/config', async (req, res) => {
     const { id, ...updateData } = req.body;
     try {
+      if (!id || isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid configuration ID' });
+      }
+
       const updated = await db.update(configurations)
         .set({
           ...updateData,
@@ -59,8 +76,14 @@ export function registerRoutes(app: Express): Server {
         })
         .where(eq(configurations.id, id))
         .returning();
+
+      if (updated.length === 0) {
+        return res.status(404).json({ error: 'Configuration not found' });
+      }
+
       res.json(updated[0]);
     } catch (error) {
+      console.error('Update error:', error);
       res.status(500).json({ error: 'Failed to update configuration' });
     }
   });
