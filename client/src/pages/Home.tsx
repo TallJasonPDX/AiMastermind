@@ -17,8 +17,19 @@ export default function Home() {
   const { data: config } = useQuery<Config>({
     queryKey: ['/api/config', configId],
     queryFn: async () => {
-      const response = await fetch(configId ? `/api/config/${configId}` : '/api/config/active');
-      return response.json();
+      console.log('[Home] Page loaded');
+      if (!configId) {
+        console.log('[Home] No ID in query string, finding default');
+        const defaultConfigResponse = await fetch('/api/config/default');
+        const defaultConfig = await defaultConfigResponse.json();
+        configId = defaultConfig.id;
+        console.log(`[Home] Default ID of ${configId} found in database`);
+      }
+      console.log(`[Home] Loading configuration ${configId}`);
+      const response = await fetch(`/api/config/${configId}`);
+      const data = await response.json();
+      console.log(`[Home] Configuration ${configId} loaded:`, data);
+      return data;
     }
   });
 
