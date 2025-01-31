@@ -49,15 +49,9 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ error: 'No configurations found' });
       }
 
-      if (!config.id) {
-        console.log('[Config/active] Config found but ID is invalid:', config);
-        return res.status(400).json({ error: 'Invalid configuration ID' });
-      }
-
       console.log('[Config/active] Valid config found:', {
         id: config.id,
-        pageTitle: config.pageTitle,
-        configType: typeof config
+        pageTitle: config.pageTitle
       });
       
       res.json(config);
