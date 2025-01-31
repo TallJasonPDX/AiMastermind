@@ -34,8 +34,11 @@ export function registerRoutes(app: Express): Server {
   // Get active configuration
   app.get('/api/config/active', async (_req, res) => {
     const config = await db.query.configurations.findFirst({
-      orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
+      orderBy: (configurations, { asc }) => [asc(configurations.id)],
     });
+    if (!config) {
+      return res.status(404).json({ error: 'No configurations found' });
+    }
     res.json(config);
   });
 
