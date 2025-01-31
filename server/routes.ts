@@ -46,19 +46,30 @@ export function registerRoutes(app: Express): Server {
       if (isNaN(configId)) {
         return res.status(400).json({ error: 'Invalid configuration ID' });
       }
+
+      console.log(`Attempting to delete config ${configId}`);
       
+      // First delete associated conversations
+      const deleteConversations = await db.delete(conversations)
+        .where(eq(conversations.configId, configId))
+        .returning();
+      console.log(`Deleted ${deleteConversations.length} associated conversations`);
+      
+      // Then delete the configuration
       const result = await db.delete(configurations)
         .where(eq(configurations.id, configId))
         .returning();
         
       if (result.length === 0) {
+        console.log('No configuration found to delete');
         return res.status(404).json({ error: 'Configuration not found' });
       }
       
+      console.log('Successfully deleted configuration');
       res.json({ success: true });
     } catch (error) {
       console.error('Delete error:', error);
-      res.status(500).json({ error: 'Failed to delete configuration' });
+      res.status(500).json({ error: 'Failed to delete configuration', details: error.message });
     }
   });
 
