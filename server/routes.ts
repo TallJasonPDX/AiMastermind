@@ -41,6 +41,11 @@ export function registerRoutes(app: Express): Server {
       if (!config) {
         return res.status(404).json({ error: 'No configurations found' });
       }
+
+      if (isNaN(config.id)) {
+        return res.status(400).json({ error: 'Invalid configuration ID' });
+      }
+
       res.json(config);
     } catch (error) {
       console.error('Active config error:', error);
