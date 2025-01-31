@@ -54,8 +54,10 @@ Otherwise, continue the conversation normally.
     // Run the assistant with the formatted prompt
     let run;
     try {
+      const assistantId = config.openaiAgentConfig.assistantId;
+      console.log('[OpenAI] Using assistant ID:', assistantId);
       run = await openai.beta.threads.runs.create(thread.id, {
-        assistant_id: config.openaiAgentConfig.assistantId,
+        assistant_id: assistantId,
         instructions: assistantPrompt,
       });
     } catch (error) {
