@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,9 +24,11 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
       try {
         const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
           method: 'POST',
+          mode: 'cors',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
           body: JSON.stringify({
             template_id: heygenSceneId,
@@ -39,14 +40,15 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
         });
 
         if (!response.ok) {
-          throw new Error(`HeyGen API error: ${response.statusText}`);
+          const errorData = await response.json().catch(() => ({message: response.statusText})); //Attempt to get error details
+          throw new Error(`HeyGen API error: ${errorData.message || response.statusText} (${response.status})`);
         }
 
         const data = await response.json();
         setStreamUrl(data.stream_url);
       } catch (err) {
         console.error('Failed to initialize HeyGen stream:', err);
-        setError('Failed to initialize avatar stream');
+        setError('Failed to initialize avatar stream. Please check your API key and network connection.');
       }
     }
 
