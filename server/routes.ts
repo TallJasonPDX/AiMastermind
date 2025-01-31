@@ -81,7 +81,8 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Remove updatedAt from updateData to prevent timestamp conflicts
-      const { updatedAt, ...cleanUpdateData } = updateData;
+      // Exclude timestamps from the update
+      const { updatedAt, createdAt, ...cleanUpdateData } = updateData;
       
       const updated = await db.update(configurations)
         .set(cleanUpdateData)
