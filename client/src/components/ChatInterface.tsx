@@ -23,7 +23,7 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
 
   // Fetch chat history
   const { data: chatHistory } = useQuery<{ messages: Message[] }>({
-    queryKey: ['/api/chat', configId],
+    queryKey: [`/api/chat?configId=${configId}`, configId],
     enabled: !!configId,
   });
 
@@ -37,7 +37,7 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
     },
     onSuccess: () => {
       setMessage('');
-      queryClient.invalidateQueries({ queryKey: ['/api/chat', configId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/chat?configId=${configId}`, configId] });
     },
   });
 
