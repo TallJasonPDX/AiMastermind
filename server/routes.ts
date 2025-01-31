@@ -80,11 +80,11 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: 'Invalid configuration ID' });
       }
 
+      // Remove updatedAt from updateData to prevent timestamp conflicts
+      const { updatedAt, ...cleanUpdateData } = updateData;
+      
       const updated = await db.update(configurations)
-        .set({
-          ...updateData,
-          updatedAt: new Date()
-        })
+        .set(cleanUpdateData)
         .where(eq(configurations.id, id))
         .returning();
 
