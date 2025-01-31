@@ -23,22 +23,10 @@ export function registerRoutes(app: Express): Server {
       return res.status(400).json({ error: 'Configuration ID is required' });
     }
 
-    // Always create a new conversation on initial load
-    const config = await db.query.configurations.findFirst({
-      where: eq(configurations.id, Number(configId)),
-    });
-
-    if (!config) {
-      return res.status(404).json({ error: 'Configuration not found' });
-    }
-
     // Create a new conversation
     const newConversation = await db.insert(conversations).values({
       configId: Number(configId),
-      messages: [{
-        role: 'system',
-        content: (config.openaiAgentConfig as { systemPrompt: string }).systemPrompt
-      }],
+      messages: [], // Start with empty messages since we're using an assistant
       status: 'ongoing',
     }).returning();
 
@@ -68,7 +56,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Initialize messages array
-      const messages: Array<{ role: 'user' | 'assistant' | 'system', content: string }> = 
+      const messages: Array<{ role: 'user' | 'assistant', content: string }> = 
         conversation?.messages as typeof messages || [];
 
       // Add user message

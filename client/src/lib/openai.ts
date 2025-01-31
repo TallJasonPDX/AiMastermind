@@ -9,7 +9,7 @@ export interface ChatResponse {
 }
 
 export async function processChat(
-  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   config: {
     pageTitle: string;
     openaiAgentConfig: { 
