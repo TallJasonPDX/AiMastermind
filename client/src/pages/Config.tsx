@@ -1,10 +1,8 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import type { Config } from '@/lib/types';
 
 export default function Config() {
@@ -70,7 +68,7 @@ export default function Config() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Configuration Management</h1>
-        
+
         {!editMode ? (
           <div className="grid gap-4">
             {configs?.map(config => (
@@ -78,17 +76,12 @@ export default function Config() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-semibold text-lg">{config.pageTitle}</h3>
-                    <p className="text-sm text-gray-500">ID: {config.avatarId}</p>
+                    <p className="text-sm text-gray-500">Scene ID: {config.heygenSceneId}</p>
+                    <p className="text-sm text-gray-500">Assistant ID: {config.openaiAgentConfig.assistantId}</p>
                   </div>
                   <div className="space-x-2">
                     <Button variant="outline" onClick={() => handleEdit(config)}>Edit</Button>
                     <Button variant="destructive" onClick={() => handleDelete(config.id)}>Delete</Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div>
-                    <h4 className="font-semibold">System Prompt</h4>
-                    <p className="text-sm">{config.openaiAgentConfig.systemPrompt}</p>
                   </div>
                 </div>
               </Card>
@@ -111,52 +104,31 @@ export default function Config() {
                   onChange={e => setFormData(prev => ({ ...prev, heygenSceneId: e.target.value }))}
                 />
               </div>
-              <div className="space-y-4">
-                <h3 className="font-semibold">OpenAI Agent Configuration</h3>
-                {formData.openaiAgentConfig && Object.entries(formData.openaiAgentConfig).map(([key, value]) => (
-                  <div key={key}>
-                    <label className="block font-semibold mb-1 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </label>
-                    {typeof value === 'string' ? (
-                      key === 'systemPrompt' ? (
-                        <Textarea
-                          value={value}
-                          onChange={e => setFormData(prev => ({
-                            ...prev,
-                            openaiAgentConfig: {
-                              ...prev.openaiAgentConfig,
-                              [key]: e.target.value
-                            }
-                          }))}
-                        />
-                      ) : (
-                        <Input
-                          value={value}
-                          onChange={e => setFormData(prev => ({
-                            ...prev,
-                            openaiAgentConfig: {
-                              ...prev.openaiAgentConfig,
-                              [key]: e.target.value
-                            }
-                          }))}
-                        />
-                      )
-                    ) : (
-                      <Input
-                        type="number"
-                        value={value}
-                        onChange={e => setFormData(prev => ({
-                          ...prev,
-                          openaiAgentConfig: {
-                            ...prev.openaiAgentConfig,
-                            [key]: Number(e.target.value)
-                          }
-                        }))}
-                      />
-                    )}
-                  </div>
-                ))}
+              <div>
+                <label className="block font-semibold mb-1">Assistant ID</label>
+                <Input
+                  value={formData.openaiAgentConfig?.assistantId || ''}
+                  onChange={e => setFormData(prev => ({
+                    ...prev,
+                    openaiAgentConfig: {
+                      assistantId: e.target.value
+                    }
+                  }))}
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Pass Response</label>
+                <Input
+                  value={formData.passResponse || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, passResponse: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Fail Response</label>
+                <Input
+                  value={formData.failResponse || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, failResponse: e.target.value }))}
+                />
               </div>
               <div className="space-x-2">
                 <Button type="submit">Save</Button>
