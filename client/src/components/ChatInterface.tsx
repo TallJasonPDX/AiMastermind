@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { SendIcon } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,6 +26,11 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
     enabled: !!configId,
   });
 
+  // Get the latest assistant message
+  const latestAssistantMessage = chatHistory?.messages
+    ?.filter(msg => msg.role === 'assistant')
+    ?.slice(-1)[0];
+
   const sendMessage = useMutation({
     mutationFn: async (content: string) => {
       const res = await apiRequest('POST', '/api/chat', {
@@ -44,29 +48,13 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
   return (
     <Card className="mt-4">
       <CardContent className="p-4">
-        {/* Messages display */}
-        <ScrollArea className="h-[300px] mb-4 pr-4">
-          <div className="space-y-4">
-            {chatHistory?.messages?.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  msg.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground ml-auto'
-                      : 'bg-muted'
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              </div>
-            ))}
+        {/* Latest response display */}
+        {latestAssistantMessage && (
+          <div className="mb-4 p-4 bg-muted rounded-lg">
+            <p className="text-sm text-muted-foreground mb-2">AI Response:</p>
+            <p>{latestAssistantMessage.content}</p>
           </div>
-        </ScrollArea>
+        )}
 
         {/* Message input */}
         <div className="flex gap-2">
