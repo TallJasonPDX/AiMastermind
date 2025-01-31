@@ -3,7 +3,8 @@ import { AudioModal } from '@/components/AudioModal';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { ChatInterface } from '@/components/ChatInterface';
 import { Card } from '@/components/ui/card';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import type { Config } from '@/lib/types';
 
 export default function Home() {
@@ -14,11 +15,22 @@ export default function Home() {
     queryKey: ['/api/config/active'],
   });
 
+  const sendMessage = useMutation({
+    mutationFn: async (message: string) => {
+      const res = await apiRequest('POST', '/api/chat', {
+        configId: config?.id,
+        message,
+      });
+      return res.json();
+    },
+  });
+
   useEffect(() => {
-    if (audioEnabled && config) {
-      // Initialize avatar and audio
+    if (audioEnabled && config?.id) {
+      // Send initial greeting
+      sendMessage.mutate("Hey, what's up?");
     }
-  }, [audioEnabled, config]);
+  }, [audioEnabled, config?.id]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

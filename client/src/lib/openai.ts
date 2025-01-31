@@ -21,14 +21,16 @@ export async function processChat(
   }
 ): Promise<ChatResponse> {
   try {
-    // Create a thread if it doesn't exist
+    // Create a thread
     const thread = await openai.beta.threads.create();
 
-    // Add the user's message to the thread
-    await openai.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: messages[messages.length - 1].content,
-    });
+    // Add all messages to the thread in order
+    for (const msg of messages) {
+      await openai.beta.threads.messages.create(thread.id, {
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+      });
+    }
 
     // Run the assistant
     const run = await openai.beta.threads.runs.create(thread.id, {
@@ -44,8 +46,8 @@ export async function processChat(
     }
 
     // Get the assistant's response
-    const messages = await openai.beta.threads.messages.list(thread.id);
-    const lastMessage = messages.data[0].content[0];
+    const threadMessages = await openai.beta.threads.messages.list(thread.id);
+    const lastMessage = threadMessages.data[0].content[0];
     if (lastMessage.type !== 'text') throw new Error('Unexpected response type');
 
     const responseText = lastMessage.text.value;

@@ -35,12 +35,31 @@ export function registerRoutes(app: Express): Server {
         throw new Error('Configuration not found');
       }
 
-      const messages = conversation?.messages || [];
-      messages.push({ role: 'user', content: message });
+      // Initialize messages array with greeting if new conversation
+      const messages: Array<{ role: 'user' | 'assistant' | 'system', content: string }> = 
+        conversation?.messages as typeof messages || [];
+
+      if (!conversation) {
+        // Add initial system message with assistant configuration
+        messages.push({
+          role: 'system',
+          content: config.openaiAgentConfig.systemPrompt
+        });
+      }
+
+      // Add user message
+      messages.push({ 
+        role: 'user', 
+        content: message || "Hey, what's up?" 
+      });
 
       const chatResponse = await processChat(messages, config);
 
-      messages.push({ role: 'assistant', content: chatResponse.response });
+      // Add assistant response
+      messages.push({ 
+        role: 'assistant', 
+        content: chatResponse.response 
+      });
 
       if (conversation) {
         await db.update(conversations)
