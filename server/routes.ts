@@ -21,14 +21,14 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log('[Config/active] Request received');
       console.log('[Config/active] Attempting database query');
-      
+
       const config = await db.query.configurations.findFirst({
         orderBy: (configurations, { asc }) => [asc(configurations.id)]
       });
 
       console.log('[Config/active] Database query completed');
       console.log('[Config/active] Raw result:', JSON.stringify(config, null, 2));
-      
+
       if (!config) {
         console.log('[Config/active] No configurations found in database');
         return res.status(404).json({ error: 'No configurations found' });
@@ -38,7 +38,7 @@ export function registerRoutes(app: Express): Server {
         id: config.id,
         pageTitle: config.pageTitle
       });
-      
+
       res.json(config);
     } catch (error) {
       console.error('Active config error:', error);
@@ -65,33 +65,6 @@ export function registerRoutes(app: Express): Server {
     }
     res.json(config);
   });
-    try {
-      console.log('[Config/active] Request received');
-      console.log('[Config/active] Attempting database query');
-      
-      const config = await db.query.configurations.findFirst({
-        orderBy: (configurations, { asc }) => [asc(configurations.id)]
-      });
-
-      console.log('[Config/active] Database query completed');
-      console.log('[Config/active] Raw result:', JSON.stringify(config, null, 2));
-      
-      if (!config) {
-        console.log('[Config/active] No configurations found in database');
-        return res.status(404).json({ error: 'No configurations found' });
-      }
-
-      console.log('[Config/active] Valid config found:', {
-        id: config.id,
-        pageTitle: config.pageTitle
-      });
-      
-      res.json(config);
-    } catch (error) {
-      console.error('Active config error:', error);
-      res.status(500).json({ error: 'Failed to fetch active configuration' });
-    }
-  });
 
   // Delete configuration
   app.delete('/api/config/:id', async (req, res) => {
@@ -102,23 +75,23 @@ export function registerRoutes(app: Express): Server {
       }
 
       console.log(`Attempting to delete config ${configId}`);
-      
+
       // First delete associated conversations
       const deleteConversations = await db.delete(conversations)
         .where(eq(conversations.configId, configId))
         .returning();
       console.log(`Deleted ${deleteConversations.length} associated conversations`);
-      
+
       // Then delete the configuration
       const result = await db.delete(configurations)
         .where(eq(configurations.id, configId))
         .returning();
-        
+
       if (result.length === 0) {
         console.log('No configuration found to delete');
         return res.status(404).json({ error: 'Configuration not found' });
       }
-      
+
       console.log('Successfully deleted configuration');
       res.json({ success: true });
     } catch (error) {
@@ -140,7 +113,7 @@ export function registerRoutes(app: Express): Server {
       // Remove updatedAt from updateData to prevent timestamp conflicts
       // Exclude timestamps from the update
       const { updatedAt, createdAt, ...cleanUpdateData } = updateData;
-      
+
       const updated = await db.update(configurations)
         .set(cleanUpdateData)
         .where(eq(configurations.id, id))
@@ -200,10 +173,6 @@ export function registerRoutes(app: Express): Server {
       const assistantId = (config.openaiAgentConfig as { assistantId: string }).assistantId;
       if (!assistantId) {
         return res.status(500).json({ error: 'OpenAI Assistant ID not configured in this configuration' });
-      }
-
-      if (!config) {
-        throw new Error('Configuration not found');
       }
 
       // Initialize messages array
