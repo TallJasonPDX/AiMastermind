@@ -34,20 +34,32 @@ export function registerRoutes(app: Express): Server {
   // Get active configuration
   app.get('/api/config/active', async (_req, res) => {
     try {
-      console.log('[Config] Looking for default configuration');
+      console.log('[Config/active] Request received');
+      console.log('[Config/active] Attempting database query');
       
       const config = await db.query.configurations.findFirst({
         orderBy: (configurations, { asc }) => [asc(configurations.id)]
       });
 
-      console.log('[Config] Raw config from database:', config);
+      console.log('[Config/active] Database query completed');
+      console.log('[Config/active] Raw result:', config);
       
       if (!config) {
-        console.log('[Config] No configurations found in database');
+        console.log('[Config/active] No configurations found in database');
         return res.status(404).json({ error: 'No configurations found' });
       }
 
-      console.log('[Config] Config found:', config);
+      if (!config.id) {
+        console.log('[Config/active] Config found but ID is invalid:', config);
+        return res.status(400).json({ error: 'Invalid configuration ID' });
+      }
+
+      console.log('[Config/active] Valid config found:', {
+        id: config.id,
+        pageTitle: config.pageTitle,
+        configType: typeof config
+      });
+      
       res.json(config);
     } catch (error) {
       console.error('Active config error:', error);

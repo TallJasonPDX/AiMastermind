@@ -18,18 +18,36 @@ export default function Home() {
     queryKey: ['/api/config', configId],
     queryFn: async () => {
       console.log('[Home] Page loaded');
+      console.log('[Home] ConfigId from URL:', configId);
       let id = configId;
+      
       if (!id) {
         console.log('[Home] No ID in query string, finding default');
+        console.log('[Home] Fetching from /api/config/active');
         const response = await fetch('/api/config/active');
+        console.log('[Home] Active config response status:', response.status);
         const data = await response.json();
-        console.log(`[Home] Default configuration loaded:`, data);
+        console.log('[Home] Active config raw response:', data);
+        
+        if (data.error) {
+          console.error('[Home] Error loading active config:', data.error);
+          throw new Error(data.error);
+        }
+        
         return data;
       }
+      
       console.log(`[Home] Loading configuration ${id}`);
       const response = await fetch(`/api/config/${id}`);
+      console.log('[Home] Config response status:', response.status);
       const data = await response.json();
-      console.log(`[Home] Configuration ${id} loaded:`, data);
+      console.log(`[Home] Configuration ${id} raw response:`, data);
+      
+      if (data.error) {
+        console.error('[Home] Error loading config:', data.error);
+        throw new Error(data.error);
+      }
+      
       return data;
     }
   });
