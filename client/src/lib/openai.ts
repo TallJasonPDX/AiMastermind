@@ -12,37 +12,57 @@ export async function processChat(
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
   config: {
     pageTitle: string;
-    openaiAgentConfig: { systemPrompt: string };
+    openaiAgentConfig: { 
+      assistantId: string;
+      systemPrompt: string;
+    };
     passResponse: string;
     failResponse: string;
   }
 ): Promise<ChatResponse> {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI assistant for ${config.pageTitle}. ${config.openaiAgentConfig.systemPrompt}
-          When you determine the conversation should end, include either #PASS# or #FAIL# at the start of your response.`,
-        },
-        ...messages,
-      ],
-      response_format: { type: "json_object" },
+    // Create a thread if it doesn't exist
+    const thread = await openai.beta.threads.create();
+
+    // Add the user's message to the thread
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: messages[messages.length - 1].content,
     });
 
-    const content = response.choices[0].message.content || '';
-    const result = JSON.parse(content);
+    // Run the assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: config.openaiAgentConfig.assistantId,
+      instructions: `${config.openaiAgentConfig.systemPrompt}\nWhen you determine the conversation should end, include either #PASS# or #FAIL# at the start of your response.`,
+    });
 
+    // Wait for the run to complete
+    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    while (runStatus.status === "queued" || runStatus.status === "in_progress") {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    }
+
+    // Get the assistant's response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const lastMessage = messages.data[0].content[0];
+    if (lastMessage.type !== 'text') throw new Error('Unexpected response type');
+
+    const responseText = lastMessage.text.value;
     let status: 'ongoing' | 'pass' | 'fail' = 'ongoing';
-    let responseText = result.response;
 
     if (responseText.startsWith('#PASS#')) {
       status = 'pass';
-      responseText = config.passResponse;
+      return {
+        response: config.passResponse,
+        status,
+      };
     } else if (responseText.startsWith('#FAIL#')) {
       status = 'fail';
-      responseText = config.failResponse;
+      return {
+        response: config.failResponse,
+        status,
+      };
     }
 
     return {
