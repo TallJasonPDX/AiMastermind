@@ -40,7 +40,7 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
           },
           body: JSON.stringify({
             template_id: heygenSceneId,
-            voice_id: 'en-US-Neural2-C',
+            voice_id: voiceId || '9d7ba6d68d2940579a07c4a0d934f914',
             text: 'Hello! I am ready to chat.',
             livekit_room: `room_${heygenSceneId}`,
             livekit_identity: `user_${Date.now()}`

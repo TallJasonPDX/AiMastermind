@@ -30,8 +30,11 @@ export function registerRoutes(app: Express): Server {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          ...req.body,
-          voice_id: req.body.voiceId || '9d7ba6d68d2940579a07c4a0d934f914'
+          template_id: req.body.template_id,
+          voice_id: req.body.voice_id || '9d7ba6d68d2940579a07c4a0d934f914',
+          text: req.body.text,
+          livekit_room: req.body.livekit_room,
+          livekit_identity: req.body.livekit_identity
         })
       });
 
