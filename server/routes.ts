@@ -15,14 +15,16 @@ export function registerRoutes(app: Express): Server {
       const apiKey = req.headers.authorization?.replace('Bearer ', '');
       console.log('\n[HeyGen Proxy] API Key:', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(-4)}` : 'Missing');
       console.log('\n[HeyGen Proxy] Request Details:');
+      const heygenUrl = 'https://api.heygen.com/v1/streaming.new';
       console.log('Headers:', JSON.stringify({
         Authorization: apiKey ? 'Bearer [PRESENT]' : '[MISSING]',
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       }, null, 2));
+      console.log('URL:', heygenUrl);
       console.log('Body:', JSON.stringify(req.body, null, 2));
       
-      const response = await fetch('https://api.heygen.com/v1/streaming.new', {
+      const response = await fetch(heygenUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
