@@ -13,20 +13,42 @@ export function registerRoutes(app: Express): Server {
   router.post('/api/heygen/streaming/sessions', async (req, res) => {
     try {
       const apiKey = req.headers.authorization;
+      console.log('[HeyGen Proxy] Making request with auth:', apiKey ? 'Present' : 'Missing');
+      
       const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
         method: 'POST',
         headers: {
           'Authorization': apiKey,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify(req.body)
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[HeyGen Proxy] API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        return res.status(response.status).json({ 
+          error: `HeyGen API Error: ${response.status} ${response.statusText}`,
+          details: errorText
+        });
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('[HeyGen Proxy] Invalid content type:', contentType);
+        return res.status(500).json({ error: 'Invalid response from HeyGen API' });
+      }
+
       const data = await response.json();
       res.json(data);
     } catch (error) {
-      console.error('HeyGen proxy error:', error);
-      res.status(500).json({ error: error.message });
+      console.error('[HeyGen Proxy] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
