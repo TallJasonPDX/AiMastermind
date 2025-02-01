@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface AvatarDisplayProps {
   heygenSceneId?: string;
+  voiceId?: string;
   isAudioEnabled: boolean;
 }
 

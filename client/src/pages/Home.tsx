@@ -103,6 +103,7 @@ export default function Home() {
         <Card className="mt-4 p-4">
           <AvatarDisplay
             heygenSceneId={config?.heygenSceneId}
+            voiceId={config?.voiceId}
             isAudioEnabled={audioEnabled}
           />
           <ChatInterface 
