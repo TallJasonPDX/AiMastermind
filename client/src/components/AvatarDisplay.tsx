@@ -8,7 +8,7 @@ interface AvatarDisplayProps {
   isAudioEnabled: boolean;
 }
 
-export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayProps) {
+export function AvatarDisplay({ heygenSceneId, voiceId, isAudioEnabled }: AvatarDisplayProps) {
   console.log('[AvatarDisplay] Rendering with props:', { heygenSceneId, isAudioEnabled });
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
           },
           body: JSON.stringify({
             template_id: heygenSceneId,
-            voice_id: voiceId || '9d7ba6d68d2940579a07c4a0d934f914',
+            voice_id: voiceId,
             text: 'Hello! I am ready to chat.',
             livekit_room: `room_${heygenSceneId}`,
             livekit_identity: `user_${Date.now()}`
@@ -68,7 +68,7 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
     }
 
     initializeStream();
-  }, [heygenSceneId, isAudioEnabled]);
+  }, [heygenSceneId, isAudioEnabled, voiceId]);
 
   if (!heygenSceneId) {
     return <Skeleton className="w-full aspect-video rounded-lg" />;
