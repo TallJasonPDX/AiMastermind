@@ -6,6 +6,7 @@ export const configurations = pgTable("configurations", {
   id: serial("id").primaryKey(),
   pageTitle: text("page_title").notNull(),
   heygenSceneId: text("heygen_scene_id").notNull(),
+  voiceId: text("voice_id").notNull(),
   openaiAgentConfig: jsonb("openai_agent_config").$type<{
     assistantId: string;
   }>().notNull(),
