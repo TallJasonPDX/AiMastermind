@@ -12,13 +12,13 @@ export function registerRoutes(app: Express): Server {
 
   router.post('/api/heygen/streaming/sessions', async (req, res) => {
     try {
-      const apiKey = req.headers.authorization;
+      const apiKey = req.headers.authorization?.replace('Bearer ', '');
       console.log('[HeyGen Proxy] Making request with auth:', apiKey ? 'Present' : 'Missing');
       
-      const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
+      const response = await fetch('https://api.heygen.com/v1/streaming.new', {
         method: 'POST',
         headers: {
-          'Authorization': apiKey,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
