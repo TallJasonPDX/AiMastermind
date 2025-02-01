@@ -4,9 +4,31 @@ import { db } from "@db";
 import { configurations, conversations } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { processChat } from "../client/src/lib/openai";
+import express from 'express';
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
+  const router = express.Router();
+
+  router.post('/api/heygen/streaming/sessions', async (req, res) => {
+    try {
+      const apiKey = req.headers.authorization;
+      const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
+        method: 'POST',
+        headers: {
+          'Authorization': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(req.body)
+      });
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error('HeyGen proxy error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Get all configurations
   app.get('/api/configs', async (_req, res) => {
@@ -215,6 +237,6 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: 'Failed to process chat message' });
     }
   });
-
+  app.use(router);
   return httpServer;
 }

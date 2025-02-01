@@ -27,7 +27,7 @@ export function AvatarDisplay({ heygenSceneId, isAudioEnabled }: AvatarDisplayPr
 
       try {
         console.log('[AvatarDisplay] Making HeyGen API request with key:', apiKey ? 'Present' : 'Missing');
-        const response = await fetch('https://api.heygen.com/v2/streaming/sessions', {
+        const response = await fetch('/api/heygen/streaming/sessions', {
           method: 'POST',
           mode: 'cors',
           credentials: 'omit',
