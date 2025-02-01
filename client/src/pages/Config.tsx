@@ -78,6 +78,7 @@ export default function Config() {
                     <h3 className="font-semibold text-lg">{config.pageTitle}</h3>
                     <p className="text-sm text-gray-500">Scene ID: {config.heygenSceneId}</p>
                     <p className="text-sm text-gray-500">Assistant ID: {config.openaiAgentConfig.assistantId}</p>
+                    <p className="text-sm text-gray-500">Voice ID: {config.voiceId}</p>
                   </div>
                   <div className="space-x-2">
                     <Button variant="outline" onClick={() => handleEdit(config)}>Edit</Button>
@@ -102,6 +103,13 @@ export default function Config() {
                 <Input
                   value={formData.heygenSceneId || ''}
                   onChange={e => setFormData(prev => ({ ...prev, heygenSceneId: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Voice ID</label>
+                <Input
+                  value={formData.voiceId || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, voiceId: e.target.value }))}
                 />
               </div>
               <div>
