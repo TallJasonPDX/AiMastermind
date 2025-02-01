@@ -13,7 +13,13 @@ export function registerRoutes(app: Express): Server {
   router.post('/api/heygen/streaming/sessions', async (req, res) => {
     try {
       const apiKey = req.headers.authorization?.replace('Bearer ', '');
-      console.log('[HeyGen Proxy] Making request with auth:', apiKey ? 'Present' : 'Missing');
+      console.log('\n[HeyGen Proxy] Request Details:');
+      console.log('Headers:', JSON.stringify({
+        Authorization: apiKey ? 'Bearer [PRESENT]' : '[MISSING]',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }, null, 2));
+      console.log('Body:', JSON.stringify(req.body, null, 2));
       
       const response = await fetch('https://api.heygen.com/v1/streaming.new', {
         method: 'POST',
@@ -27,11 +33,12 @@ export function registerRoutes(app: Express): Server {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[HeyGen Proxy] API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
-        });
+        const responseHeaders = Object.fromEntries(response.headers.entries());
+        console.error('\n[HeyGen Proxy] API Error:');
+        console.error('Status:', response.status);
+        console.error('Status Text:', response.statusText);
+        console.error('Response Headers:', JSON.stringify(responseHeaders, null, 2));
+        console.error('Response Body:', errorText);
         return res.status(response.status).json({ 
           error: `HeyGen API Error: ${response.status} ${response.statusText}`,
           details: errorText
