@@ -9,14 +9,24 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
-  const router = express.Router();
 
-  // Proxy /api/videos to FastAPI backend
+  // Setup proxy for FastAPI endpoints
   app.use('/api/videos', createProxyMiddleware({
     target: 'http://localhost:8000',
     changeOrigin: true,
-    logLevel: 'debug'
+    pathRewrite: {
+      '^/api/videos': '/api/videos'
+    },
+    onError: (err, req, res) => {
+      console.error('[Proxy Error]', err);
+      res.status(500).json({ error: 'Failed to fetch videos from backend' });
+    },
+    onProxyRes: (proxyRes, req, res) => {
+      console.log('[Proxy]', req.method, req.path, '->', proxyRes.statusCode);
+    }
   }));
+
+  const router = express.Router();
 
   router.post('/api/heygen/streaming/sessions', async (req, res) => {
     try {
