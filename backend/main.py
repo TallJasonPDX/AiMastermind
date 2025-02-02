@@ -1,16 +1,23 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from . import models, schemas, database
-from .database import engine
-import os
-from dotenv import load_dotenv
+import uvicorn
 import openai
+from . import models, schemas
+from .database import engine, get_db
 
-# Create database tables
-models.Base.metadata.create_all(bind=engine)
+# Load environment variables
+load_dotenv()
 
-app = FastAPI()
+# Configure OpenAI
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if not openai.api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
+
+# Create FastAPI app instance
+app = FastAPI(title="AI Landing Page Generator")
 
 # Configure CORS
 app.add_middleware(
@@ -21,14 +28,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load environment variables
-load_dotenv()
-
-# Configure OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
 
 @app.get("/api/config/active", response_model=schemas.Config)
-async def get_active_config(db: Session = Depends(database.get_db)):
+async def get_active_config(db: Session = Depends(get_db)):
+    """Get the active configuration for the landing page"""
     config = db.query(models.Config).first()
     if not config:
         raise HTTPException(status_code=404, detail="No active configuration found")
@@ -37,8 +42,8 @@ async def get_active_config(db: Session = Depends(database.get_db)):
 @app.post("/api/heygen/streaming/sessions")
 async def create_streaming_session():
     # TODO: Implement HeyGen streaming session creation
-    pass
+    # This is a placeholder for the HeyGen integration
+    raise HTTPException(status_code=501, detail="Not implemented yet")
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True)
