@@ -11,52 +11,56 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
 
-  // Setup proxy for FastAPI endpoints
+  // Setup proxy for FastAPI endpoints with proper error handling
   const fastApiProxy = createProxyMiddleware({
-    target: "http://localhost:8000",
+    target: 'http://localhost:8000',
     changeOrigin: true,
+    pathRewrite: {
+      '^/api/videos': '/api/videos'  // Explicitly map the path
+    },
     onError: (err, req, res) => {
-      console.error("[FastAPI Proxy Error]", err);
-      res.status(500).json({ error: "Failed to connect to backend service" });
+      console.error('[FastAPI Proxy Error]', err);
+      res.status(500).json({ error: 'Failed to connect to backend service' });
     },
     onProxyReq: (proxyReq, req) => {
-      console.log("[FastAPI Proxy] Forwarding request:", req.method, req.path);
+      console.log('[FastAPI Proxy] Forwarding request:', req.method, req.path);
     },
     onProxyRes: (proxyRes, req, res) => {
       console.log(
-        "[FastAPI Proxy] Response:",
+        '[FastAPI Proxy] Response:',
         req.method,
         req.path,
-        "->",
+        '->',
         proxyRes.statusCode,
       );
     },
   });
 
-  // Apply proxy middleware before other routes
-  app.use("/api/videos", fastApiProxy);
+  // Apply proxy middleware for /api/videos endpoint
+  app.use('/api/videos', fastApiProxy);
 
   // Proxy for serving video files
   app.use(
-    "/videos",
+    '/videos',
     createProxyMiddleware({
-      target: "http://localhost:8000",
+      target: 'http://localhost:8000',
       changeOrigin: true,
       onError: (err, req, res) => {
-        console.error("[Video Proxy Error]", err);
-        res.status(500).json({ error: "Failed to serve video file" });
+        console.error('[Video Proxy Error]', err);
+        res.status(500).json({ error: 'Failed to serve video file' });
       },
       onProxyRes: (proxyRes, req, res) => {
         console.log(
-          "[Video Proxy]",
+          '[Video Proxy]',
           req.method,
           req.path,
-          "->",
+          '->',
           proxyRes.statusCode,
         );
       },
     }),
   );
+
   router.post("/api/heygen/streaming/sessions", async (req, res) => {
     try {
       const apiKey = req.headers.authorization?.replace("Bearer ", "");
