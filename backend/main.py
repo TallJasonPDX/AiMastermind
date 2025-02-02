@@ -40,6 +40,7 @@ app.add_middleware(
 videos_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
 if not os.path.exists(videos_path):
     os.makedirs(videos_path)
+print(f"[Videos] Mounting directory at startup: {videos_path}")
 app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
 
 
@@ -47,6 +48,42 @@ app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
 print("[Database] Creating database tables...")
 models.Base.metadata.create_all(bind=engine)
 print("[Database] Tables created successfully")
+
+
+@app.get("/api/videos")
+async def get_available_videos():
+    """Get list of available video files"""
+    print("\n[Videos] Starting video file scan...")
+
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    video_dir = os.path.join(root_dir, "videos")
+    print(f"[Videos] Root directory: {root_dir}")
+    print(f"[Videos] Video directory: {video_dir}")
+
+    if not os.path.exists(video_dir):
+        print(f"[Videos] Directory does not exist, creating it")
+        os.makedirs(video_dir)
+
+    videos = []
+    try:
+        print(f"[Videos] Reading directory contents...")
+        files = os.listdir(video_dir)
+        print(f"[Videos] Found {len(files)} total files")
+
+        for file in files:
+            print(f"[Videos] Checking file: {file}")
+            if file.lower().endswith(('.mp4', '.webm', '.mov')):
+                print(f"[Videos] ✓ Adding video file: {file}")
+                videos.append(file)
+            else:
+                print(f"[Videos] ✗ Skipping non-video file: {file}")
+    except Exception as e:
+        print(f"[Videos] Error scanning directory: {str(e)}")
+        print(f"[Videos] Current working directory: {os.getcwd()}")
+        return []
+
+    print(f"[Videos] Scan complete. Found {len(videos)} videos: {videos}")
+    return videos
 
 
 @app.get("/api/config/active", response_model=schemas.Config)
@@ -103,35 +140,6 @@ async def update_conversation_flow(
     db.refresh(db_flow)
     return db_flow
 
-
-@app.get("/api/videos")
-async def get_available_videos():
-    """Get list of available video files"""
-    # Get the root directory by going up one level from the backend folder
-    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    video_dir = os.path.join(root_dir, "videos")
-    print(f"[Videos] Root directory: {root_dir}")
-    print(f"[Videos] Video directory: {video_dir}")
-
-    if not os.path.exists(video_dir):
-        print(f"[Videos] Directory does not exist, creating it")
-        os.makedirs(video_dir)
-
-    videos = []
-    try:
-        for file in os.listdir(video_dir):
-            print(f"[Videos] Found file: {file}")
-            if file.lower().endswith(('.mp4', '.webm', '.mov')):
-                print(f"[Videos] Adding video file: {file}")
-                videos.append(file)
-            else:
-                print(f"[Videos] Skipping non-video file: {file}")
-    except Exception as e:
-        print(f"[Videos] Error scanning directory: {str(e)}")
-        return []
-
-    print(f"[Videos] Returning list of {len(videos)} videos: {videos}")
-    return videos
 
 
 @app.post("/api/heygen/streaming/sessions")
