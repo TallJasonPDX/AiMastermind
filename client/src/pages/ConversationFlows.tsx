@@ -194,7 +194,7 @@ export default function ConversationFlows() {
                               </SelectItem>
                             ))
                           ) : (
-                            <SelectItem value="" disabled>
+                            <SelectItem value="no-videos-available" disabled>
                               No videos available. Add files to the videos folder.
                             </SelectItem>
                           )}
