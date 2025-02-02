@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 import uvicorn
 import openai
 import httpx
+from typing import List
 from . import models, schemas
 from .database import engine, get_db
 
@@ -45,6 +46,62 @@ async def get_active_config(db: Session = Depends(get_db)):
     if not config:
         raise HTTPException(status_code=404, detail="No active configuration found")
     return config
+
+@app.get("/api/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
+async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
+    """Get all conversation flows for a configuration"""
+    flows = db.query(models.ConversationFlow).filter(
+        models.ConversationFlow.config_id == config_id
+    ).order_by(models.ConversationFlow.order).all()
+    return flows
+
+@app.post("/api/configs/{config_id}/flows", response_model=schemas.ConversationFlow)
+async def create_conversation_flow(
+    config_id: int,
+    flow: schemas.ConversationFlowCreate,
+    db: Session = Depends(get_db)
+):
+    """Create a new conversation flow"""
+    db_flow = models.ConversationFlow(**flow.model_dump())
+    db.add(db_flow)
+    db.commit()
+    db.refresh(db_flow)
+    return db_flow
+
+@app.put("/api/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
+async def update_conversation_flow(
+    config_id: int,
+    flow_id: int,
+    flow: schemas.ConversationFlowCreate,
+    db: Session = Depends(get_db)
+):
+    """Update an existing conversation flow"""
+    db_flow = db.query(models.ConversationFlow).filter(
+        models.ConversationFlow.id == flow_id,
+        models.ConversationFlow.config_id == config_id
+    ).first()
+    if not db_flow:
+        raise HTTPException(status_code=404, detail="Conversation flow not found")
+
+    for key, value in flow.model_dump().items():
+        setattr(db_flow, key, value)
+
+    db.commit()
+    db.refresh(db_flow)
+    return db_flow
+
+@app.get("/api/videos")
+async def get_available_videos():
+    """Get list of available video files"""
+    video_dir = os.path.join(os.getcwd(), "videos")
+    if not os.path.exists(video_dir):
+        os.makedirs(video_dir)
+
+    videos = []
+    for file in os.listdir(video_dir):
+        if file.lower().endswith(('.mp4', '.webm', '.mov')):
+            videos.append(file)
+    return videos
 
 @app.post("/api/heygen/streaming/sessions")
 async def create_streaming_session(db: Session = Depends(get_db)):

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -16,6 +16,23 @@ export const configurations = pgTable("configurations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const conversationFlows = pgTable("conversation_flows", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id").references(() => configurations.id).notNull(),
+  order: integer("order").notNull(),
+  videoFilename: text("video_filename").notNull(),
+  systemPrompt: text("system_prompt").notNull(),
+  agentQuestion: text("agent_question").notNull(),
+  passNext: integer("pass_next"),
+  failNext: integer("fail_next"),
+  videoOnly: boolean("video_only").notNull().default(false),
+  showForm: boolean("show_form").notNull().default(false),
+  formName: text("form_name"),
+  inputDelay: integer("input_delay").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const conversations = pgTable("conversations", {
   id: serial("id").primaryKey(),
   configId: serial("config_id").references(() => configurations.id),
@@ -27,6 +44,7 @@ export const conversations = pgTable("conversations", {
 
 export const configRelations = relations(configurations, ({ many }) => ({
   conversations: many(conversations),
+  conversationFlows: many(conversationFlows),
 }));
 
 export const conversationRelations = relations(conversations, ({ one }) => ({
@@ -36,7 +54,17 @@ export const conversationRelations = relations(conversations, ({ one }) => ({
   }),
 }));
 
+export const conversationFlowRelations = relations(conversationFlows, ({ one }) => ({
+  configuration: one(configurations, {
+    fields: [conversationFlows.configId],
+    references: [configurations.id],
+  }),
+}));
+
+// Create Zod schemas for type-safe inserts and selects
 export const insertConfigSchema = createInsertSchema(configurations);
 export const selectConfigSchema = createSelectSchema(configurations);
 export const insertConversationSchema = createInsertSchema(conversations);
 export const selectConversationSchema = createSelectSchema(conversations);
+export const insertConversationFlowSchema = createInsertSchema(conversationFlows);
+export const selectConversationFlowSchema = createSelectSchema(conversationFlows);
