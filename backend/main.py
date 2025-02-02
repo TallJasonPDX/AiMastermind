@@ -61,17 +61,18 @@ async def create_streaming_session(db: Session = Depends(get_db)):
                 "Accept": "application/json"
             }
 
-            # Initialize streaming session
+            # Initialize streaming session with v2 parameters
             session_response = await client.post(
-                "https://api.heygen.com/v1/streaming.session",
+                "https://api.heygen.com/v1/streaming.new",
                 headers=headers,
                 json={
-                    "scene_id": config.heygen_scene_id,
-                    "voice_id": config.voice_id
+                    "version": "v2",
+                    "avatar_id": config.heygen_scene_id  # Using scene_id as avatar_id for now
                 }
             )
 
             if session_response.status_code != 200:
+                print(f"HeyGen API Error: {session_response.status_code} {session_response.text}")  # Debug log
                 raise HTTPException(
                     status_code=session_response.status_code,
                     detail=f"HeyGen session initialization failed: {session_response.text}"
@@ -79,29 +80,10 @@ async def create_streaming_session(db: Session = Depends(get_db)):
 
             session_data = session_response.json()
 
-            # Start streaming with the session data
-            stream_response = await client.post(
-                "https://api.heygen.com/v1/streaming.new",
-                headers=headers,
-                json={
-                    "scene_id": config.heygen_scene_id,
-                    "voice_id": config.voice_id,
-                    "text": "Hello! I am ready to chat.",
-                    "livekit_room": session_data["room_name"],
-                    "livekit_identity": f"user_{int(time.time() * 1000)}"
-                }
-            )
-
-            if stream_response.status_code != 200:
-                raise HTTPException(
-                    status_code=stream_response.status_code,
-                    detail=f"HeyGen streaming initialization failed: {stream_response.text}"
-                )
-
             return {
-                "room_name": session_data["room_name"],
-                "token": session_data["token"],
-                "socket_url": session_data["socket_url"],
+                "room_name": session_data.get("room_name"),
+                "token": session_data.get("token"),
+                "socket_url": session_data.get("socket_url", "wss://streaming.heygen.com"),
                 "voice_id": config.voice_id
             }
 
