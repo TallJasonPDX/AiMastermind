@@ -16,28 +16,41 @@ export function registerRoutes(app: Express): Server {
       console.log('\n[HeyGen Proxy] API Key:', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(-4)}` : 'Missing');
       console.log('\n[HeyGen Proxy] Request Details:');
       const heygenUrl = 'https://api.heygen.com/v1/streaming.new';
+
+      // Get configuration for avatar_id
+      const config = await db.query.configurations.findFirst({
+        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
+      });
+
+      if (!config) {
+        return res.status(404).json({ error: 'No configuration found' });
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+
       console.log('Headers:', JSON.stringify({
         Authorization: apiKey ? 'Bearer [PRESENT]' : '[MISSING]',
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       }, null, 2));
+
       console.log('URL:', heygenUrl);
-      console.log('Body:', JSON.stringify(req.body, null, 2));
-      
+
+      const requestBody = {
+        version: "v2",
+        avatar_id: config.heygenSceneId  // Using scene_id as avatar_id
+      };
+
+      console.log('Body:', JSON.stringify(requestBody, null, 2));
+
       const response = await fetch(heygenUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          template_id: req.body.template_id,
-          voice_id: req.body.voice_id || '9d7ba6d68d2940579a07c4a0d934f914',
-          text: req.body.text,
-          livekit_room: req.body.livekit_room,
-          livekit_identity: req.body.livekit_identity
-        })
+        headers,
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
