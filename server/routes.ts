@@ -15,7 +15,7 @@ export function registerRoutes(app: Express): Server {
       const apiKey = req.headers.authorization?.replace('Bearer ', '');
       console.log('\n[HeyGen Proxy] API Key:', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(-4)}` : 'Missing');
       console.log('\n[HeyGen Proxy] Request Details:');
-      const heygenUrl = 'https://api.heygen.com/v2/streaming.new';
+      const heygenUrl = 'https://api.heygen.com/v1/streaming.new';
       console.log('Headers:', JSON.stringify({
         Authorization: apiKey ? 'Bearer [PRESENT]' : '[MISSING]',
         'Content-Type': 'application/json',
