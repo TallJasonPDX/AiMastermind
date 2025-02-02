@@ -49,25 +49,23 @@ async def get_active_config(db: Session = Depends(get_db)):
 @app.post("/api/heygen/streaming/sessions")
 async def create_streaming_session(db: Session = Depends(get_db)):
     """Create a new HeyGen streaming session"""
-    config = db.query(models.Config).first()
-    if not config:
-        raise HTTPException(status_code=404, detail="No configuration found")
-
     try:
         async with httpx.AsyncClient() as client:
             headers = {
-                "Authorization": f"Bearer {HEYGEN_API_KEY}",
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                "accept": "application/json",
+                "content-type": "application/json",
+                "x-api-key": HEYGEN_API_KEY
             }
 
-            # Initialize streaming session with v2 parameters
+            # Initialize streaming session with v1 parameters
             session_response = await client.post(
                 "https://api.heygen.com/v1/streaming.new",
                 headers=headers,
                 json={
-                    "version": "v2",
-                    "avatar_id": config.heygen_scene_id  # Using scene_id as avatar_id for now
+                    "quality": "medium",
+                    "voice": {"rate": 1},
+                    "video_encoding": "VP8",
+                    "disable_idle_timeout": False
                 }
             )
 
@@ -79,13 +77,7 @@ async def create_streaming_session(db: Session = Depends(get_db)):
                 )
 
             session_data = session_response.json()
-
-            return {
-                "room_name": session_data.get("room_name"),
-                "token": session_data.get("token"),
-                "socket_url": session_data.get("socket_url", "wss://streaming.heygen.com"),
-                "voice_id": config.voice_id
-            }
+            return session_data
 
     except httpx.RequestError as e:
         raise HTTPException(

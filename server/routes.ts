@@ -13,36 +13,28 @@ export function registerRoutes(app: Express): Server {
   router.post('/api/heygen/streaming/sessions', async (req, res) => {
     try {
       const apiKey = req.headers.authorization?.replace('Bearer ', '');
-      console.log('\n[HeyGen Proxy] API Key:', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(-4)}` : 'Missing');
       console.log('\n[HeyGen Proxy] Request Details:');
       const heygenUrl = 'https://api.heygen.com/v1/streaming.new';
 
-      // Get configuration for avatar_id
-      const config = await db.query.configurations.findFirst({
-        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
-      });
-
-      if (!config) {
-        return res.status(404).json({ error: 'No configuration found' });
-      }
-
       const headers = {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'accept': 'application/json',
+        'content-type': 'application/json',
+        'x-api-key': apiKey
       };
 
       console.log('Headers:', JSON.stringify({
-        Authorization: apiKey ? 'Bearer [PRESENT]' : '[MISSING]',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'x-api-key': apiKey ? '[PRESENT]' : '[MISSING]',
+        'content-type': 'application/json',
+        'accept': 'application/json'
       }, null, 2));
 
       console.log('URL:', heygenUrl);
 
       const requestBody = {
-        version: "v2",
-        avatar_id: config.heygenSceneId  // Using scene_id as avatar_id
+        quality: "medium",
+        voice: { rate: 1 },
+        video_encoding: "VP8",
+        disable_idle_timeout: false
       };
 
       console.log('Body:', JSON.stringify(requestBody, null, 2));
@@ -65,12 +57,6 @@ export function registerRoutes(app: Express): Server {
           error: `HeyGen API Error: ${response.status} ${response.statusText}`,
           details: errorText
         });
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error('[HeyGen Proxy] Invalid content type:', contentType);
-        return res.status(500).json({ error: 'Invalid response from HeyGen API' });
       }
 
       const data = await response.json();
