@@ -5,10 +5,18 @@ import { configurations, conversations } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { processChat } from "../client/src/lib/openai";
 import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
+
+  // Proxy /api/videos to FastAPI backend
+  app.use('/api/videos', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    logLevel: 'debug'
+  }));
 
   router.post('/api/heygen/streaming/sessions', async (req, res) => {
     try {

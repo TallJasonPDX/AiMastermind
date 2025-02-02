@@ -1,11 +1,36 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { spawn } from 'child_process';
+import path from 'path';
 
 // Enable verbose logging
 const DEBUG = true;
 const debugLog = (...args: any[]) => {
   if (DEBUG) console.log("[DEBUG]", ...args);
+};
+
+// Start FastAPI server
+const startFastAPI = () => {
+  const fastApiProcess = spawn('python3', ['-m', 'uvicorn', 'backend.main:app', '--host', '0.0.0.0', '--port', '8000']);
+
+  fastApiProcess.stdout.on('data', (data) => {
+    console.log('[FastAPI]', data.toString());
+  });
+
+  fastApiProcess.stderr.on('data', (data) => {
+    console.error('[FastAPI Error]', data.toString());
+  });
+
+  fastApiProcess.on('close', (code) => {
+    console.log('[FastAPI] Process exited with code', code);
+  });
+
+  // Handle process termination
+  process.on('SIGTERM', () => {
+    fastApiProcess.kill();
+    process.exit(0);
+  });
 };
 
 const app = express();
@@ -43,6 +68,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Start FastAPI server first
+  startFastAPI();
+
+  console.log("[Server] Starting FastAPI server...");
+
+  // Wait a bit for FastAPI to initialize
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
   const server = registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -53,19 +86,14 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client
   const PORT = 5000;
   server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
+    log(`Express server serving on port ${PORT}`);
   });
 })();
