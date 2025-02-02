@@ -10,6 +10,7 @@ import httpx
 from typing import List
 from . import models, schemas
 from .database import engine, get_db
+from fastapi.staticfiles import StaticFiles
 
 # Load environment variables
 load_dotenv()
@@ -17,11 +18,11 @@ load_dotenv()
 # Configure API keys
 openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
-    raise ValueError("OPENAI_API_KEY environment variable is not set")
+    print("[WARNING] OPENAI_API_KEY environment variable is not set")
 
 HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY")
 if not HEYGEN_API_KEY:
-    raise ValueError("HEYGEN_API_KEY environment variable is not set")
+    print("[WARNING] HEYGEN_API_KEY environment variable is not set")
 
 # Create FastAPI app instance
 app = FastAPI(title="AI Landing Page Generator")
@@ -35,8 +36,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount the videos directory
+videos_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
+if not os.path.exists(videos_path):
+    os.makedirs(videos_path)
+app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
+
+
 # Create database tables
+print("[Database] Creating database tables...")
 models.Base.metadata.create_all(bind=engine)
+print("[Database] Tables created successfully")
+
 
 @app.get("/api/config/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
@@ -46,6 +57,7 @@ async def get_active_config(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No active configuration found")
     return config
 
+
 @app.get("/api/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
 async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
     """Get all conversation flows for a configuration"""
@@ -53,6 +65,7 @@ async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
         models.ConversationFlow.config_id == config_id
     ).order_by(models.ConversationFlow.order).all()
     return flows
+
 
 @app.post("/api/configs/{config_id}/flows", response_model=schemas.ConversationFlow)
 async def create_conversation_flow(
@@ -66,6 +79,7 @@ async def create_conversation_flow(
     db.commit()
     db.refresh(db_flow)
     return db_flow
+
 
 @app.put("/api/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
 async def update_conversation_flow(
@@ -88,6 +102,7 @@ async def update_conversation_flow(
     db.commit()
     db.refresh(db_flow)
     return db_flow
+
 
 @app.get("/api/videos")
 async def get_available_videos():
@@ -117,6 +132,7 @@ async def get_available_videos():
 
     print(f"[Videos] Returning list of {len(videos)} videos: {videos}")
     return videos
+
 
 @app.post("/api/heygen/streaming/sessions")
 async def create_streaming_session(db: Session = Depends(get_db)):
@@ -157,5 +173,7 @@ async def create_streaming_session(db: Session = Depends(get_db)):
             detail=f"Error connecting to HeyGen API: {str(e)}"
         )
 
+
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True)
+    print("[Server] Starting FastAPI server...")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
