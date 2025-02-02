@@ -4,13 +4,13 @@ from .database import Base
 
 class Config(Base):
     __tablename__ = "configs"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    page_title = Column(String)
-    heygen_scene_id = Column(String)
-    voice_id = Column(String)
-    openai_agent_config = Column(JSON)
-    pass_response = Column(String)
-    fail_response = Column(String)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    page_title = Column(String, nullable=False)
+    heygen_scene_id = Column(String, nullable=False)
+    voice_id = Column(String, nullable=False)
+    openai_agent_config = Column(JSON, nullable=False)
+    pass_response = Column(String, nullable=False)
+    fail_response = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
