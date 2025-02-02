@@ -3,10 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { Room, RoomEvent, RemoteParticipant, RemoteTrackPublication, Track } from 'livekit-client';
 
 interface StreamingSession {
-  room_name: string;
-  token: string;
-  socket_url: string;
-  voice_id: string;
+  session_id: string;
+  sdp: {
+    type: string;
+    sdp: string;
+  };
+  ice_servers2: Array<{
+    urls: string[];
+    credential?: string;
+    credentialType: string;
+    username?: string;
+  }>;
+  realtime_endpoint: string;
+  is_paid: boolean;
+  session_duration_limit: number;
 }
 
 export function AvatarStream() {
@@ -14,6 +24,7 @@ export function AvatarStream() {
   const [error, setError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(true);
   const roomRef = useRef<Room | null>(null);
+  const sessionRef = useRef<string | null>(null);
 
   const { data: session, isError, isLoading } = useQuery<StreamingSession>({
     queryKey: ['/api/heygen/streaming/sessions'],
@@ -27,6 +38,9 @@ export function AvatarStream() {
       try {
         setIsConnecting(true);
         setError(null);
+
+        // Store session ID for cleanup
+        sessionRef.current = session.session_id;
 
         const room = new Room({
           adaptiveStream: true,
@@ -48,7 +62,8 @@ export function AvatarStream() {
             }
           });
 
-        await room.connect(session.socket_url, session.token);
+        // Connect to the realtime endpoint
+        await room.connect(session.realtime_endpoint, session.sdp);
         roomRef.current = room;
         setIsConnecting(false);
       } catch (err) {
@@ -64,6 +79,12 @@ export function AvatarStream() {
       if (roomRef.current) {
         roomRef.current.disconnect();
         roomRef.current = null;
+      }
+      // Cleanup session if we have an ID
+      if (sessionRef.current) {
+        fetch(`/api/heygen/streaming/sessions/${sessionRef.current}`, {
+          method: 'DELETE'
+        }).catch(console.error);
       }
     };
   }, [session]);

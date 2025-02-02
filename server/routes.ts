@@ -46,12 +46,11 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        const responseHeaders = Object.fromEntries(response.headers.entries());
+        const errorText = await response.text().catch(() => response.statusText);
         console.error('\n[HeyGen Proxy] API Error:');
         console.error('Status:', response.status);
         console.error('Status Text:', response.statusText);
-        console.error('Response Headers:', JSON.stringify(responseHeaders, null, 2));
+        console.error('Response Headers:', JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
         console.error('Response Body:', errorText);
         return res.status(response.status).json({ 
           error: `HeyGen API Error: ${response.status} ${response.statusText}`,
@@ -65,6 +64,35 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('[HeyGen Proxy] Error:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Add endpoint to cleanup sessions
+  router.delete('/api/heygen/streaming/sessions/:sessionId', async (req, res) => {
+    try {
+      const apiKey = req.headers.authorization?.replace('Bearer ', '');
+      const { sessionId } = req.params;
+
+      const response = await fetch(`https://api.heygen.com/v1/streaming.close`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[HeyGen Proxy] Session cleanup failed:', errorText);
+        return res.status(response.status).json({ error: 'Failed to cleanup session' });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[HeyGen Proxy] Session cleanup error:', error);
+      res.status(500).json({ error: 'Internal server error during session cleanup' });
     }
   });
 

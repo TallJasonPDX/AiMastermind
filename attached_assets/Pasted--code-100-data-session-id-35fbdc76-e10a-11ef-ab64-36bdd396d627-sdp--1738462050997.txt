@@ -1,0 +1,56 @@
+{
+  "code": 100,
+  "data": {
+    "session_id": "35fbdc76-e10a-11ef-ab64-36bdd396d627",
+    "sdp": {
+      "type": "offer",
+      "sdp": "v=0\r\no=- 3768549976992095869 1738461944 IN IP4 0.0.0.0\r\ns=-\r\nt=0 0\r\na=msid-semantic:WMS*\r\na=fingerprint:sha-256 E8:20:E9:CC:15:CB:BB:AD:89:73:2B:31:00:48:37:DD:29:00:85:7A:CD:D6:A2:54:50:9F:FF:0E:E0:77:B7:A4\r\na=extmap-allow-mixed\r\na=group:BUNDLE 0 1 2\r\nm=video 9 UDP/TLS/RTP/SAVPF 96\r\nc=IN IP4 0.0.0.0\r\na=setup:actpass\r\na=mid:0\r\na=ice-ufrag:hqmHUrZpKZArbVDc\r\na=ice-pwd:scbuYOAfnDxXuPtDpuncCjmpJQcBmGAN\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:96 VP8/90000\r\na=extmap:1 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\r\na=ssrc:3481135223 cname:pion\r\na=ssrc:3481135223 msid:pion video\r\na=ssrc:3481135223 mslabel:pion\r\na=ssrc:3481135223 label:video\r\na=msid:pion video\r\na=sendonly\r\na=candidate:1205144443 1 udp 2130706431 192.168.36.227 45192 typ host\r\na=candidate:1205144443 2 udp 2130706431 192.168.36.227 45192 typ host\r\na=candidate:233762139 1 udp 2130706431 172.17.0.1 60332 typ host\r\na=candidate:233762139 2 udp 2130706431 172.17.0.1 60332 typ host\r\na=candidate:2017509164 1 udp 1694498815 18.222.88.188 56816 typ srflx raddr 0.0.0.0 rport 56816\r\na=candidate:2017509164 2 udp 1694498815 18.222.88.188 56816 typ srflx raddr 0.0.0.0 rport 56816\r\na=candidate:2017509164 1 udp 1694498815 18.222.88.188 39103 typ srflx raddr 0.0.0.0 rport 39103\r\na=candidate:2017509164 2 udp 1694498815 18.222.88.188 39103 typ srflx raddr 0.0.0.0 rport 39103\r\na=candidate:2017509164 1 udp 1694498815 18.222.88.188 47935 typ srflx raddr 0.0.0.0 rport 47935\r\na=candidate:2017509164 2 udp 1694498815 18.222.88.188 47935 typ srflx raddr 0.0.0.0 rport 47935\r\na=candidate:2017509164 1 udp 1694498815 18.222.88.188 49904 typ srflx raddr 0.0.0.0 rport 49904\r\na=candidate:2017509164 2 udp 1694498815 18.222.88.188 49904 typ srflx raddr 0.0.0.0 rport 49904\r\na=candidate:2017509164 1 udp 1694498815 18.222.88.188 49487 typ srflx raddr 0.0.0.0 rport 49487\r\na=candidate:2017509164 2 udp 1694498815 18.222.88.188 49487 typ srflx raddr 0.0.0.0 rport 49487\r\na=candidate:3080139405 1 udp 16777215 34.203.251.245 49392 typ relay raddr 0.0.0.0 rport 41231\r\na=candidate:3080139405 2 udp 16777215 34.203.251.245 49392 typ relay raddr 0.0.0.0 rport 41231\r\na=candidate:3080139405 1 udp 16777215 34.203.251.245 20200 typ relay raddr 192.168.36.227 rport 38486\r\na=candidate:3080139405 2 udp 16777215 34.203.251.245 20200 typ relay raddr 192.168.36.227 rport 38486\r\na=candidate:3080139405 1 udp 16777215 34.203.251.245 38364 typ relay raddr 192.168.36.227 rport 55600\r\na=candidate:3080139405 2 udp 16777215 34.203.251.245 38364 typ relay raddr 192.168.36.227 rport 55600\r\na=end-of-candidates\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\nc=IN IP4 0.0.0.0\r\na=setup:actpass\r\na=mid:1\r\na=ice-ufrag:hqmHUrZpKZArbVDc\r\na=ice-pwd:scbuYOAfnDxXuPtDpuncCjmpJQcBmGAN\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10;useinbandfec=1\r\na=extmap:1 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\r\na=ssrc:4079125725 cname:pion\r\na=ssrc:4079125725 msid:pion audio\r\na=ssrc:4079125725 mslabel:pion\r\na=ssrc:4079125725 label:audio\r\na=msid:pion audio\r\na=sendrecv\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\nc=IN IP4 0.0.0.0\r\na=setup:actpass\r\na=mid:2\r\na=sendrecv\r\na=sctp-port:5000\r\na=ice-ufrag:hqmHUrZpKZArbVDc\r\na=ice-pwd:scbuYOAfnDxXuPtDpuncCjmpJQcBmGAN\r\n"
+    },
+    "access_token": null,
+    "url": null,
+    "ice_servers": null,
+    "ice_servers2": [
+      {
+        "credentialType": "password",
+        "urls": [
+          "stun:stun.l.google.com:19302"
+        ]
+      },
+      {
+        "credential": "",
+        "credentialType": "password",
+        "urls": [
+          "stun:global.stun.twilio.com:3478"
+        ]
+      },
+      {
+        "credential": "ggrOG5AJcI1VII1yfo4byo80i63Q0mpd9GJrGg21jOM=",
+        "credentialType": "password",
+        "urls": [
+          "turn:global.turn.twilio.com:3478?transport=udp"
+        ],
+        "username": "089abf995c8e07e9bbab25528b712b3351752d93bc1b6a6221c22a5c7f9234c7"
+      },
+      {
+        "credential": "ggrOG5AJcI1VII1yfo4byo80i63Q0mpd9GJrGg21jOM=",
+        "credentialType": "password",
+        "urls": [
+          "turn:global.turn.twilio.com:3478?transport=tcp"
+        ],
+        "username": "089abf995c8e07e9bbab25528b712b3351752d93bc1b6a6221c22a5c7f9234c7"
+      },
+      {
+        "credential": "ggrOG5AJcI1VII1yfo4byo80i63Q0mpd9GJrGg21jOM=",
+        "credentialType": "password",
+        "urls": [
+          "turn:global.turn.twilio.com:443?transport=tcp"
+        ],
+        "username": "089abf995c8e07e9bbab25528b712b3351752d93bc1b6a6221c22a5c7f9234c7"
+      }
+    ],
+    "is_paid": false,
+    "session_duration_limit": 600,
+    "realtime_endpoint": "wss://webrtc-signaling.heygen.io/v2-alpha/interactive-avatar/session/35fbdc76-e10a-11ef-ab64-36bdd396d627"
+  },
+  "message": "success"
+}
