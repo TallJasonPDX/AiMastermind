@@ -10,19 +10,29 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
-  // Setup proxy for FastAPI endpoints
+  // Setup proxy for FastAPI endpoints and video serving
   app.use('/api/videos', createProxyMiddleware({
     target: 'http://localhost:8000',
     changeOrigin: true,
-    pathRewrite: {
-      '^/api/videos': '/api/videos'
-    },
     onError: (err, req, res) => {
       console.error('[Proxy Error]', err);
       res.status(500).json({ error: 'Failed to fetch videos from backend' });
     },
     onProxyRes: (proxyRes, req, res) => {
       console.log('[Proxy]', req.method, req.path, '->', proxyRes.statusCode);
+    }
+  }));
+
+  // Proxy for serving video files
+  app.use('/videos', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    onError: (err, req, res) => {
+      console.error('[Video Proxy Error]', err);
+      res.status(500).json({ error: 'Failed to serve video file' });
+    },
+    onProxyRes: (proxyRes, req, res) => {
+      console.log('[Video Proxy]', req.method, req.path, '->', proxyRes.statusCode);
     }
   }));
 
