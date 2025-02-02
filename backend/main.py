@@ -94,13 +94,22 @@ async def update_conversation_flow(
 async def get_available_videos():
     """Get list of available video files"""
     video_dir = os.path.join(os.getcwd(), "videos")
+    print(f"[Videos] Scanning directory: {video_dir}")
+
     if not os.path.exists(video_dir):
+        print(f"[Videos] Directory does not exist, creating it")
         os.makedirs(video_dir)
 
     videos = []
     for file in os.listdir(video_dir):
+        print(f"[Videos] Found file: {file}")
         if file.lower().endswith(('.mp4', '.webm', '.mov')):
+            print(f"[Videos] Adding video file: {file}")
             videos.append(file)
+        else:
+            print(f"[Videos] Skipping non-video file: {file}")
+
+    print(f"[Videos] Returning list of {len(videos)} videos: {videos}")
     return videos
 
 @app.post("/api/heygen/streaming/sessions")
