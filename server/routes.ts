@@ -9,19 +9,29 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
+  const router = express.Router();
 
-  // Setup proxy for FastAPI endpoints and video serving
-  app.use('/api/videos', createProxyMiddleware({
+  // Setup proxy for FastAPI endpoints
+  const fastApiProxy = createProxyMiddleware({
     target: 'http://localhost:8000',
     changeOrigin: true,
+    pathRewrite: {
+      '^/api/videos': '/api/videos'  // Keep the path as-is
+    },
     onError: (err, req, res) => {
-      console.error('[Proxy Error]', err);
-      res.status(500).json({ error: 'Failed to fetch videos from backend' });
+      console.error('[FastAPI Proxy Error]', err);
+      res.status(500).json({ error: 'Failed to connect to backend service' });
+    },
+    onProxyReq: (proxyReq, req) => {
+      console.log('[FastAPI Proxy] Forwarding request:', req.method, req.path);
     },
     onProxyRes: (proxyRes, req, res) => {
-      console.log('[Proxy]', req.method, req.path, '->', proxyRes.statusCode);
+      console.log('[FastAPI Proxy] Response:', req.method, req.path, '->', proxyRes.statusCode);
     }
-  }));
+  });
+
+  // Apply proxy middleware before other routes
+  app.use('/api/videos', fastApiProxy);
 
   // Proxy for serving video files
   app.use('/videos', createProxyMiddleware({
@@ -35,9 +45,6 @@ export function registerRoutes(app: Express): Server {
       console.log('[Video Proxy]', req.method, req.path, '->', proxyRes.statusCode);
     }
   }));
-
-  const router = express.Router();
-
   router.post('/api/heygen/streaming/sessions', async (req, res) => {
     try {
       const apiKey = req.headers.authorization?.replace('Bearer ', '');
