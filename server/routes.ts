@@ -4,8 +4,8 @@ import { db } from "@db";
 import { configurations, conversations } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { processChat } from "../client/src/lib/openai";
-import express from 'express';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import express from "express";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
@@ -13,126 +13,167 @@ export function registerRoutes(app: Express): Server {
 
   // Setup proxy for FastAPI endpoints
   const fastApiProxy = createProxyMiddleware({
-    target: 'http://localhost:8000',
+    target: "http://localhost:8000",
     changeOrigin: true,
-    pathRewrite: {
-      '^/api/videos': '/api/videos'  // Keep the path as-is
-    },
     onError: (err, req, res) => {
-      console.error('[FastAPI Proxy Error]', err);
-      res.status(500).json({ error: 'Failed to connect to backend service' });
+      console.error("[FastAPI Proxy Error]", err);
+      res.status(500).json({ error: "Failed to connect to backend service" });
     },
     onProxyReq: (proxyReq, req) => {
-      console.log('[FastAPI Proxy] Forwarding request:', req.method, req.path);
+      console.log("[FastAPI Proxy] Forwarding request:", req.method, req.path);
     },
     onProxyRes: (proxyRes, req, res) => {
-      console.log('[FastAPI Proxy] Response:', req.method, req.path, '->', proxyRes.statusCode);
-    }
+      console.log(
+        "[FastAPI Proxy] Response:",
+        req.method,
+        req.path,
+        "->",
+        proxyRes.statusCode,
+      );
+    },
   });
 
   // Apply proxy middleware before other routes
-  app.use('/api/videos', fastApiProxy);
+  app.use("/api/videos", fastApiProxy);
 
   // Proxy for serving video files
-  app.use('/videos', createProxyMiddleware({
-    target: 'http://localhost:8000',
-    changeOrigin: true,
-    onError: (err, req, res) => {
-      console.error('[Video Proxy Error]', err);
-      res.status(500).json({ error: 'Failed to serve video file' });
-    },
-    onProxyRes: (proxyRes, req, res) => {
-      console.log('[Video Proxy]', req.method, req.path, '->', proxyRes.statusCode);
-    }
-  }));
-  router.post('/api/heygen/streaming/sessions', async (req, res) => {
+  app.use(
+    "/videos",
+    createProxyMiddleware({
+      target: "http://localhost:8000",
+      changeOrigin: true,
+      onError: (err, req, res) => {
+        console.error("[Video Proxy Error]", err);
+        res.status(500).json({ error: "Failed to serve video file" });
+      },
+      onProxyRes: (proxyRes, req, res) => {
+        console.log(
+          "[Video Proxy]",
+          req.method,
+          req.path,
+          "->",
+          proxyRes.statusCode,
+        );
+      },
+    }),
+  );
+  router.post("/api/heygen/streaming/sessions", async (req, res) => {
     try {
-      const apiKey = req.headers.authorization?.replace('Bearer ', '');
-      console.log('\n[HeyGen Proxy] Request Details:');
-      const heygenUrl = 'https://api.heygen.com/v1/streaming.new';
+      const apiKey = req.headers.authorization?.replace("Bearer ", "");
+      console.log("\n[HeyGen Proxy] Request Details:");
+      const heygenUrl = "https://api.heygen.com/v1/streaming.new";
 
       const headers = {
-        'accept': 'application/json',
-        'content-type': 'application/json',
-        'x-api-key': apiKey
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-api-key": apiKey,
       };
 
-      console.log('Headers:', JSON.stringify({
-        'x-api-key': apiKey ? '[PRESENT]' : '[MISSING]',
-        'content-type': 'application/json',
-        'accept': 'application/json'
-      }, null, 2));
+      console.log(
+        "Headers:",
+        JSON.stringify(
+          {
+            "x-api-key": apiKey ? "[PRESENT]" : "[MISSING]",
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          null,
+          2,
+        ),
+      );
 
-      console.log('URL:', heygenUrl);
+      console.log("URL:", heygenUrl);
 
       const requestBody = {
         quality: "medium",
         voice: { rate: 1 },
         video_encoding: "VP8",
-        disable_idle_timeout: false
+        disable_idle_timeout: false,
       };
 
-      console.log('Body:', JSON.stringify(requestBody, null, 2));
+      console.log("Body:", JSON.stringify(requestBody, null, 2));
 
       const response = await fetch(heygenUrl, {
-        method: 'POST',
+        method: "POST",
         headers,
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
-        console.error('\n[HeyGen Proxy] API Error:');
-        console.error('Status:', response.status);
-        console.error('Status Text:', response.statusText);
-        console.error('Response Headers:', JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
-        console.error('Response Body:', errorText);
-        return res.status(response.status).json({ 
+        const errorText = await response
+          .text()
+          .catch(() => response.statusText);
+        console.error("\n[HeyGen Proxy] API Error:");
+        console.error("Status:", response.status);
+        console.error("Status Text:", response.statusText);
+        console.error(
+          "Response Headers:",
+          JSON.stringify(
+            Object.fromEntries(response.headers.entries()),
+            null,
+            2,
+          ),
+        );
+        console.error("Response Body:", errorText);
+        return res.status(response.status).json({
           error: `HeyGen API Error: ${response.status} ${response.statusText}`,
-          details: errorText
+          details: errorText,
         });
       }
 
       const data = await response.json();
-      console.log('\n[HeyGen Proxy] Success Response:', JSON.stringify(data, null, 2));
+      console.log(
+        "\n[HeyGen Proxy] Success Response:",
+        JSON.stringify(data, null, 2),
+      );
       res.json(data);
     } catch (error) {
-      console.error('[HeyGen Proxy] Error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error("[HeyGen Proxy] Error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
   // Add endpoint to cleanup sessions
-  router.delete('/api/heygen/streaming/sessions/:sessionId', async (req, res) => {
-    try {
-      const apiKey = req.headers.authorization?.replace('Bearer ', '');
-      const { sessionId } = req.params;
+  router.delete(
+    "/api/heygen/streaming/sessions/:sessionId",
+    async (req, res) => {
+      try {
+        const apiKey = req.headers.authorization?.replace("Bearer ", "");
+        const { sessionId } = req.params;
 
-      const response = await fetch(`https://api.heygen.com/v1/streaming.close`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'content-type': 'application/json',
-          'x-api-key': apiKey
-        },
-        body: JSON.stringify({ session_id: sessionId })
-      });
+        const response = await fetch(
+          `https://api.heygen.com/v1/streaming.close`,
+          {
+            method: "POST",
+            headers: {
+              accept: "application/json",
+              "content-type": "application/json",
+              "x-api-key": apiKey,
+            },
+            body: JSON.stringify({ session_id: sessionId }),
+          },
+        );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[HeyGen Proxy] Session cleanup failed:', errorText);
-        return res.status(response.status).json({ error: 'Failed to cleanup session' });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("[HeyGen Proxy] Session cleanup failed:", errorText);
+          return res
+            .status(response.status)
+            .json({ error: "Failed to cleanup session" });
+        }
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("[HeyGen Proxy] Session cleanup error:", error);
+        res
+          .status(500)
+          .json({ error: "Internal server error during session cleanup" });
       }
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error('[HeyGen Proxy] Session cleanup error:', error);
-      res.status(500).json({ error: 'Internal server error during session cleanup' });
-    }
-  });
+    },
+  );
 
   // Get all configurations
-  app.get('/api/configs', async (_req, res) => {
+  app.get("/api/configs", async (_req, res) => {
     const configs = await db.query.configurations.findMany({
       orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
     });
@@ -140,129 +181,147 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get active configuration
-  app.get('/api/config/active', async (_req, res) => {
+  app.get("/api/config/active", async (_req, res) => {
     try {
       const config = await db.query.configurations.findFirst({
-        orderBy: (configurations, { asc }) => [asc(configurations.id)]
+        orderBy: (configurations, { asc }) => [asc(configurations.id)],
       });
 
       if (!config) {
-        return res.status(404).json({ error: 'No configurations found' });
+        return res.status(404).json({ error: "No configurations found" });
       }
 
       res.json(config);
     } catch (error) {
-      console.error('Active config error:', error);
-      res.status(500).json({ error: 'Failed to fetch active configuration' });
+      console.error("Active config error:", error);
+      res.status(500).json({ error: "Failed to fetch active configuration" });
     }
   });
 
   // Get specific configuration
-  app.get('/api/config/:id', async (req, res) => {
-    console.log('[Config/:id] Request received with params:', req.params);
+  app.get("/api/config/:id", async (req, res) => {
+    console.log("[Config/:id] Request received with params:", req.params);
     const configId = parseInt(req.params.id);
-    console.log('[Config/:id] Parsed configId:', configId, 'isNaN:', isNaN(configId));
+    console.log(
+      "[Config/:id] Parsed configId:",
+      configId,
+      "isNaN:",
+      isNaN(configId),
+    );
     if (isNaN(configId)) {
-      console.log('[Config/:id] Invalid ID detected, returning 400');
-      return res.status(400).json({ error: 'Invalid Configuration ID' });
+      console.log("[Config/:id] Invalid ID detected, returning 400");
+      return res.status(400).json({ error: "Invalid Configuration ID" });
     }
-    console.log('[Config/:id] Querying database for config:', configId);
+    console.log("[Config/:id] Querying database for config:", configId);
     const config = await db.query.configurations.findFirst({
       where: eq(configurations.id, configId),
     });
-    console.log('[Config/:id] Database result:', config);
+    console.log("[Config/:id] Database result:", config);
     if (!config) {
-      return res.status(404).json({ error: 'Configuration not found' });
+      return res.status(404).json({ error: "Configuration not found" });
     }
     res.json(config);
   });
 
   // Delete configuration
-  app.delete('/api/config/:id', async (req, res) => {
+  app.delete("/api/config/:id", async (req, res) => {
     try {
       const configId = parseInt(req.params.id);
       if (isNaN(configId)) {
-        return res.status(400).json({ error: 'Invalid configuration ID' });
+        return res.status(400).json({ error: "Invalid configuration ID" });
       }
 
       console.log(`Attempting to delete config ${configId}`);
 
       // First delete associated conversations
-      const deleteConversations = await db.delete(conversations)
+      const deleteConversations = await db
+        .delete(conversations)
         .where(eq(conversations.configId, configId))
         .returning();
-      console.log(`Deleted ${deleteConversations.length} associated conversations`);
+      console.log(
+        `Deleted ${deleteConversations.length} associated conversations`,
+      );
 
       // Then delete the configuration
-      const result = await db.delete(configurations)
+      const result = await db
+        .delete(configurations)
         .where(eq(configurations.id, configId))
         .returning();
 
       if (result.length === 0) {
-        console.log('No configuration found to delete');
-        return res.status(404).json({ error: 'Configuration not found' });
+        console.log("No configuration found to delete");
+        return res.status(404).json({ error: "Configuration not found" });
       }
 
-      console.log('Successfully deleted configuration');
+      console.log("Successfully deleted configuration");
       res.json({ success: true });
     } catch (error) {
-      console.error('Delete error:', error);
-      res.status(500).json({ error: 'Failed to delete configuration', details: error.message });
+      console.error("Delete error:", error);
+      res
+        .status(500)
+        .json({
+          error: "Failed to delete configuration",
+          details: error.message,
+        });
     }
   });
 
-  app.put('/api/config', async (req, res) => {
+  app.put("/api/config", async (req, res) => {
     const { id, ...updateData } = req.body;
-    console.log('[Config PUT] Request body:', req.body);
+    console.log("[Config PUT] Request body:", req.body);
     try {
-      console.log('[Config PUT] Validating ID:', id, 'isNaN:', isNaN(id));
+      console.log("[Config PUT] Validating ID:", id, "isNaN:", isNaN(id));
       if (!id || isNaN(id)) {
-        console.log('[Config PUT] Invalid ID detected, returning 400');
-        return res.status(400).json({ error: 'Invalid Configuration ID' });
+        console.log("[Config PUT] Invalid ID detected, returning 400");
+        return res.status(400).json({ error: "Invalid Configuration ID" });
       }
 
       // Remove updatedAt from updateData to prevent timestamp conflicts
       // Exclude timestamps from the update
       const { updatedAt, createdAt, ...cleanUpdateData } = updateData;
 
-      const updated = await db.update(configurations)
+      const updated = await db
+        .update(configurations)
         .set(cleanUpdateData)
         .where(eq(configurations.id, id))
         .returning();
 
       if (updated.length === 0) {
-        return res.status(404).json({ error: 'Configuration not found' });
+        return res.status(404).json({ error: "Configuration not found" });
       }
 
       res.json(updated[0]);
     } catch (error) {
-      console.error('Update error:', error);
-      res.status(500).json({ error: 'Failed to update configuration' });
+      console.error("Update error:", error);
+      res.status(500).json({ error: "Failed to update configuration" });
     }
   });
 
   // Get chat history
-  app.get('/api/chat', async (req, res) => {
+  app.get("/api/chat", async (req, res) => {
     const { configId } = req.query;
     if (!configId) {
-      return res.status(400).json({ error: 'Configuration ID is required' });
+      return res.status(400).json({ error: "Configuration ID is required" });
     }
 
     // Create a new conversation
-    const newConversation = await db.insert(conversations).values({
-      configId: Number(configId),
-      messages: [], // Start with empty messages since we're using an assistant
-      status: 'ongoing',
-    }).returning();
+    const newConversation = await db
+      .insert(conversations)
+      .values({
+        configId: Number(configId),
+        messages: [], // Start with empty messages since we're using an assistant
+        status: "ongoing",
+      })
+      .returning();
 
-    res.json({ 
+    res.json({
       messages: newConversation[0].messages,
-      status: newConversation[0].status
+      status: newConversation[0].status,
     });
   });
 
   // Send chat message
-  app.post('/api/chat', async (req, res) => {
+  app.post("/api/chat", async (req, res) => {
     const { configId, message } = req.body;
 
     try {
@@ -272,7 +331,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (!config) {
-        return res.status(404).json({ error: 'Configuration not found' });
+        return res.status(404).json({ error: "Configuration not found" });
       }
 
       // Get or create conversation
@@ -281,40 +340,47 @@ export function registerRoutes(app: Express): Server {
         orderBy: (conversations, { desc }) => [desc(conversations.createdAt)],
       });
 
-      const assistantId = (config.openaiAgentConfig as { assistantId: string }).assistantId;
+      const assistantId = (config.openaiAgentConfig as { assistantId: string })
+        .assistantId;
       if (!assistantId) {
-        return res.status(500).json({ error: 'OpenAI Assistant ID not configured in this configuration' });
+        return res
+          .status(500)
+          .json({
+            error: "OpenAI Assistant ID not configured in this configuration",
+          });
       }
 
       // Initialize messages array
-      const messages: Array<{ role: 'user' | 'assistant', content: string }> = 
-        conversation?.messages as typeof messages || [];
+      const messages: Array<{ role: "user" | "assistant"; content: string }> =
+        (conversation?.messages as typeof messages) || [];
 
       // Add user message
-      messages.push({ 
-        role: 'user', 
-        content: message || "Hey, what's up?" 
+      messages.push({
+        role: "user",
+        content: message || "Hey, what's up?",
       });
 
       const chatResponse = await processChat(messages, {
         pageTitle: config.pageTitle,
         openaiAgentConfig: {
           assistantId: assistantId,
-          systemPrompt: (config.openaiAgentConfig as { systemPrompt: string }).systemPrompt
+          systemPrompt: (config.openaiAgentConfig as { systemPrompt: string })
+            .systemPrompt,
         },
         passResponse: config.passResponse,
         failResponse: config.failResponse,
       });
 
       // Add assistant response
-      messages.push({ 
-        role: 'assistant', 
-        content: chatResponse.response 
+      messages.push({
+        role: "assistant",
+        content: chatResponse.response,
       });
 
       if (conversation) {
-        await db.update(conversations)
-          .set({ 
+        await db
+          .update(conversations)
+          .set({
             messages,
             status: chatResponse.status,
             updatedAt: new Date(),
@@ -331,11 +397,11 @@ export function registerRoutes(app: Express): Server {
       res.json({
         response: chatResponse.response,
         messages,
-        status: chatResponse.status
+        status: chatResponse.status,
       });
     } catch (error) {
-      console.error('Chat error:', error);
-      res.status(500).json({ error: 'Failed to process chat message' });
+      console.error("Chat error:", error);
+      res.status(500).json({ error: "Failed to process chat message" });
     }
   });
   app.use(router);

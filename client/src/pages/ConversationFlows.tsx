@@ -1,81 +1,94 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
-import type { Config, ConversationFlow } from '@/lib/types';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import type { Config, ConversationFlow } from "@/lib/types";
 
 export default function ConversationFlows() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedConfigId, setSelectedConfigId] = useState<number | null>(null);
-  const [editingFlow, setEditingFlow] = useState<Partial<ConversationFlow> | null>(null);
+  const [editingFlow, setEditingFlow] =
+    useState<Partial<ConversationFlow> | null>(null);
 
   // Fetch configurations
   const { data: configs } = useQuery<Config[]>({
-    queryKey: ['configs'],
+    queryKey: ["configs"],
     queryFn: async () => {
-      const response = await fetch('/api/configs');
+      const response = await fetch("/api/configs");
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Failed to fetch configurations');
+        throw new Error(error.detail || "Failed to fetch configurations");
       }
       return response.json();
-    }
+    },
   });
 
   // Fetch conversation flows for selected config
   const { data: flows } = useQuery<ConversationFlow[]>({
-    queryKey: ['conversation-flows', selectedConfigId],
+    queryKey: ["conversation-flows", selectedConfigId],
     queryFn: async () => {
       if (!selectedConfigId) return [];
-      const response = await fetch(`/api/configs/${selectedConfigId}/flows`);
+      const response = await console.log("Fetching videos..."); // Log before fetching
+      console.log("Response status:", response.status); // Log response status
+      fetch(`/api/configs/${selectedConfigId}/flows`);
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Failed to fetch flows');
+        throw new Error(error.detail || "Failed to fetch flows");
       }
       return response.json();
     },
-    enabled: !!selectedConfigId
+    enabled: !!selectedConfigId,
   });
 
   // Fetch available videos
+
   const { data: videos, isLoading: isLoadingVideos } = useQuery<string[]>({
-    queryKey: ['videos'],
+    queryKey: ["videos"],
     queryFn: async () => {
-      const response = await fetch('/api/videos');
+      const response = await fetch(`/api/videos`);
+      console.log("Response Body:", response.status); // Log response status
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Failed to fetch videos');
+        throw new Error(error.detail || "Failed to fetch videos");
       }
       return response.json();
-    }
+    },
   });
 
   const { mutate: saveFlow, isLoading: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
-      const url = flow.id 
+      const url = flow.id
         ? `/api/configs/${selectedConfigId}/flows/${flow.id}`
         : `/api/configs/${selectedConfigId}/flows`;
 
       const response = await fetch(url, {
-        method: flow.id ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: flow.id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(flow),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Failed to save flow');
+        throw new Error(error.detail || "Failed to save flow");
       }
 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation-flows', selectedConfigId] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation-flows", selectedConfigId],
+      });
       setEditingFlow(null);
       toast({
         title: "Success",
@@ -117,7 +130,7 @@ export default function ConversationFlows() {
     if (missingFields.length > 0) {
       toast({
         title: "Error",
-        description: `Please fill out the following required fields: ${missingFields.join(', ')}`,
+        description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
         variant: "destructive",
       });
       return;
@@ -138,15 +151,15 @@ export default function ConversationFlows() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Conversation Flows</h1>
-          <Select 
-            value={selectedConfigId?.toString()} 
+          <Select
+            value={selectedConfigId?.toString()}
             onValueChange={(value) => setSelectedConfigId(Number(value))}
           >
             <SelectTrigger className="w-[300px]">
               <SelectValue placeholder="Select a configuration" />
             </SelectTrigger>
             <SelectContent>
-              {configs?.map(config => (
+              {configs?.map((config) => (
                 <SelectItem key={config.id} value={config.id.toString()}>
                   {config.pageTitle}
                 </SelectItem>
@@ -157,10 +170,7 @@ export default function ConversationFlows() {
 
         {selectedConfigId && (
           <div className="space-y-6">
-            <Button 
-              onClick={() => setEditingFlow({})} 
-              disabled={isSaving}
-            >
+            <Button onClick={() => setEditingFlow({})} disabled={isSaving}>
               Add New Flow
             </Button>
 
@@ -169,22 +179,42 @@ export default function ConversationFlows() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block font-medium mb-1 text-red-500">Order *</label>
+                      <label className="block font-medium mb-1 text-red-500">
+                        Order *
+                      </label>
                       <Input
                         type="number"
-                        value={editingFlow.order || ''}
-                        onChange={e => setEditingFlow(prev => ({ ...prev, order: Number(e.target.value) }))}
+                        value={editingFlow.order || ""}
+                        onChange={(e) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            order: Number(e.target.value),
+                          }))
+                        }
                         required
                       />
                     </div>
                     <div>
-                      <label className="block font-medium mb-1 text-red-500">Video File *</label>
-                      <Select 
-                        value={editingFlow.videoFilename} 
-                        onValueChange={(value) => setEditingFlow(prev => ({ ...prev, videoFilename: value }))}
+                      <label className="block font-medium mb-1 text-red-500">
+                        Video File *
+                      </label>
+                      <Select
+                        value={editingFlow.videoFilename}
+                        onValueChange={(value) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            videoFilename: value,
+                          }))
+                        }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={isLoadingVideos ? "Loading videos..." : "Select a video"} />
+                          <SelectValue
+                            placeholder={
+                              isLoadingVideos
+                                ? "Loading videos..."
+                                : "Select a video"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {isLoadingVideos ? (
@@ -192,97 +222,147 @@ export default function ConversationFlows() {
                               Loading available videos...
                             </SelectItem>
                           ) : videos && videos.length > 0 ? (
-                            videos.map(video => (
+                            videos.map((video) => (
                               <SelectItem key={video} value={video}>
                                 {video}
                               </SelectItem>
                             ))
                           ) : (
                             <SelectItem value="no-videos" disabled>
-                              No videos available. Add files to the videos folder.
+                              No videos available. Add files to the videos
+                              folder.
                             </SelectItem>
                           )}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="col-span-2">
-                      <label className="block font-medium mb-1 text-red-500">System Prompt *</label>
+                      <label className="block font-medium mb-1 text-red-500">
+                        System Prompt *
+                      </label>
                       <Input
-                        value={editingFlow.systemPrompt || ''}
-                        onChange={e => setEditingFlow(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                        value={editingFlow.systemPrompt || ""}
+                        onChange={(e) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            systemPrompt: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
                     <div className="col-span-2">
-                      <label className="block font-medium mb-1 text-red-500">Agent Question *</label>
+                      <label className="block font-medium mb-1 text-red-500">
+                        Agent Question *
+                      </label>
                       <Input
-                        value={editingFlow.agentQuestion || ''}
-                        onChange={e => setEditingFlow(prev => ({ ...prev, agentQuestion: e.target.value }))}
+                        value={editingFlow.agentQuestion || ""}
+                        onChange={(e) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            agentQuestion: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
                     <div>
-                      <label className="block font-medium mb-1">Pass Next</label>
+                      <label className="block font-medium mb-1">
+                        Pass Next
+                      </label>
                       <Input
                         type="number"
-                        value={editingFlow.passNext || ''}
-                        onChange={e => setEditingFlow(prev => ({ ...prev, passNext: Number(e.target.value) }))}
+                        value={editingFlow.passNext || ""}
+                        onChange={(e) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            passNext: Number(e.target.value),
+                          }))
+                        }
                       />
                     </div>
                     <div>
-                      <label className="block font-medium mb-1">Fail Next</label>
+                      <label className="block font-medium mb-1">
+                        Fail Next
+                      </label>
                       <Input
                         type="number"
-                        value={editingFlow.failNext || ''}
-                        onChange={e => setEditingFlow(prev => ({ ...prev, failNext: Number(e.target.value) }))}
+                        value={editingFlow.failNext || ""}
+                        onChange={(e) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            failNext: Number(e.target.value),
+                          }))
+                        }
                       />
                     </div>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={editingFlow.videoOnly || false}
-                        onCheckedChange={checked => setEditingFlow(prev => ({ ...prev, videoOnly: checked }))}
+                        onCheckedChange={(checked) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            videoOnly: checked,
+                          }))
+                        }
                       />
                       <label>Video Only</label>
                     </div>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={editingFlow.showForm || false}
-                        onCheckedChange={checked => setEditingFlow(prev => ({ ...prev, showForm: checked }))}
+                        onCheckedChange={(checked) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            showForm: checked,
+                          }))
+                        }
                       />
                       <label>Show Form</label>
                     </div>
                     {editingFlow.showForm && (
                       <div className="col-span-2">
-                        <label className="block font-medium mb-1">Form Name</label>
+                        <label className="block font-medium mb-1">
+                          Form Name
+                        </label>
                         <Input
-                          value={editingFlow.formName || ''}
-                          onChange={e => setEditingFlow(prev => ({ ...prev, formName: e.target.value }))}
+                          value={editingFlow.formName || ""}
+                          onChange={(e) =>
+                            setEditingFlow((prev) => ({
+                              ...prev,
+                              formName: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                     )}
                     <div>
-                      <label className="block font-medium mb-1">Input Delay (seconds)</label>
+                      <label className="block font-medium mb-1">
+                        Input Delay (seconds)
+                      </label>
                       <Input
                         type="number"
-                        value={editingFlow.inputDelay || ''}
-                        onChange={e => setEditingFlow(prev => ({ ...prev, inputDelay: Number(e.target.value) }))}
+                        value={editingFlow.inputDelay || ""}
+                        onChange={(e) =>
+                          setEditingFlow((prev) => ({
+                            ...prev,
+                            inputDelay: Number(e.target.value),
+                          }))
+                        }
                       />
                     </div>
                   </div>
                   <div className="flex justify-end space-x-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setEditingFlow(null)}
                       type="button"
                       disabled={isSaving}
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      type="submit"
-                      disabled={isSaving}
-                    >
-                      {isSaving ? 'Saving...' : 'Save'}
+                    <Button type="submit" disabled={isSaving}>
+                      {isSaving ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </form>
@@ -291,18 +371,20 @@ export default function ConversationFlows() {
 
             {flows?.length > 0 && (
               <div className="space-y-4">
-                {flows.map(flow => (
+                {flows.map((flow) => (
                   <Card key={flow.id} className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium">Order: {flow.order}</p>
                         <p className="text-sm">Video: {flow.videoFilename}</p>
-                        <p className="text-sm">Question: {flow.agentQuestion}</p>
+                        <p className="text-sm">
+                          Question: {flow.agentQuestion}
+                        </p>
                         <p className="text-sm">Pass Next: {flow.passNext}</p>
                         <p className="text-sm">Fail Next: {flow.failNext}</p>
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => handleEdit(flow)}
                         disabled={isSaving}
                       >
