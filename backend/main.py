@@ -1,4 +1,5 @@
 import os
+import time
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,7 @@ import openai
 import httpx
 from . import models, schemas
 from .database import engine, get_db
+
 
 # Load environment variables
 load_dotenv()
@@ -53,29 +55,56 @@ async def create_streaming_session(db: Session = Depends(get_db)):
 
     try:
         async with httpx.AsyncClient() as client:
-            # Create streaming session with HeyGen
-            response = await client.post(
-                "https://api.heygen.com/v2/streaming/sessions",
-                headers={"X-Api-Key": HEYGEN_API_KEY},
+            headers = {
+                "Authorization": f"Bearer {HEYGEN_API_KEY}",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+
+            # Initialize streaming session
+            session_response = await client.post(
+                "https://api.heygen.com/v1/streaming.session",
+                headers=headers,
                 json={
                     "scene_id": config.heygen_scene_id,
                     "voice_id": config.voice_id
                 }
             )
 
-            if response.status_code != 200:
+            if session_response.status_code != 200:
                 raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"HeyGen API error: {response.text}"
+                    status_code=session_response.status_code,
+                    detail=f"HeyGen session initialization failed: {session_response.text}"
                 )
 
-            session_data = response.json()
+            session_data = session_response.json()
+
+            # Start streaming with the session data
+            stream_response = await client.post(
+                "https://api.heygen.com/v1/streaming.new",
+                headers=headers,
+                json={
+                    "scene_id": config.heygen_scene_id,
+                    "voice_id": config.voice_id,
+                    "text": "Hello! I am ready to chat.",
+                    "livekit_room": session_data["room_name"],
+                    "livekit_identity": f"user_{int(time.time() * 1000)}"
+                }
+            )
+
+            if stream_response.status_code != 200:
+                raise HTTPException(
+                    status_code=stream_response.status_code,
+                    detail=f"HeyGen streaming initialization failed: {stream_response.text}"
+                )
+
             return {
                 "room_name": session_data["room_name"],
                 "token": session_data["token"],
                 "socket_url": session_data["socket_url"],
                 "voice_id": config.voice_id
             }
+
     except httpx.RequestError as e:
         raise HTTPException(
             status_code=500,
