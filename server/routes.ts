@@ -11,21 +11,20 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
 
-  // Setup proxy for FastAPI endpoints with proper error handling
+  // Setup proxy for FastAPI endpoints
   const fastApiProxy = createProxyMiddleware({
     target: 'http://localhost:8000',
     changeOrigin: true,
-    pathRewrite: {
-      '^/api/videos': '/api/videos'  // Explicitly map the path
-    },
-    onError: (err, req, res) => {
+    secure: false,
+    logLevel: 'debug',
+    onError: (err: Error, req: any, res: any) => {
       console.error('[FastAPI Proxy Error]', err);
       res.status(500).json({ error: 'Failed to connect to backend service' });
     },
-    onProxyReq: (proxyReq, req) => {
+    onProxyReq: (proxyReq: any, req: any) => {
       console.log('[FastAPI Proxy] Forwarding request:', req.method, req.path);
     },
-    onProxyRes: (proxyRes, req, res) => {
+    onProxyRes: (proxyRes: any, req: any, res: any) => {
       console.log(
         '[FastAPI Proxy] Response:',
         req.method,
@@ -36,31 +35,10 @@ export function registerRoutes(app: Express): Server {
     },
   });
 
-  // Apply proxy middleware for /api/videos endpoint
+  // Apply proxy middleware for all FastAPI routes
   app.use('/api/videos', fastApiProxy);
-
-  // Proxy for serving video files
-  app.use(
-    '/videos',
-    createProxyMiddleware({
-      target: 'http://localhost:8000',
-      changeOrigin: true,
-      onError: (err, req, res) => {
-        console.error('[Video Proxy Error]', err);
-        res.status(500).json({ error: 'Failed to serve video file' });
-      },
-      onProxyRes: (proxyRes, req, res) => {
-        console.log(
-          '[Video Proxy]',
-          req.method,
-          req.path,
-          '->',
-          proxyRes.statusCode,
-        );
-      },
-    }),
-  );
-
+  app.use('/videos', fastApiProxy);
+  
   router.post("/api/heygen/streaming/sessions", async (req, res) => {
     try {
       const apiKey = req.headers.authorization?.replace("Bearer ", "");

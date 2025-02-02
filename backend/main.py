@@ -55,17 +55,17 @@ async def get_available_videos():
     """Get list of available video files"""
     print("\n[Videos] Starting video file scan...")
 
-    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    video_dir = os.path.join(root_dir, "videos")
-    print(f"[Videos] Root directory: {root_dir}")
-    print(f"[Videos] Video directory: {video_dir}")
-
-    if not os.path.exists(video_dir):
-        print(f"[Videos] Directory does not exist, creating it")
-        os.makedirs(video_dir)
-
-    videos = []
     try:
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        video_dir = os.path.join(root_dir, "videos")
+        print(f"[Videos] Root directory: {root_dir}")
+        print(f"[Videos] Video directory: {video_dir}")
+
+        if not os.path.exists(video_dir):
+            print(f"[Videos] Directory does not exist, creating it")
+            os.makedirs(video_dir)
+
+        videos = []
         print(f"[Videos] Reading directory contents...")
         files = os.listdir(video_dir)
         print(f"[Videos] Found {len(files)} total files")
@@ -77,13 +77,14 @@ async def get_available_videos():
                 videos.append(file)
             else:
                 print(f"[Videos] ✗ Skipping non-video file: {file}")
+
+        print(f"[Videos] Scan complete. Found {len(videos)} videos: {videos}")
+        return videos
+
     except Exception as e:
         print(f"[Videos] Error scanning directory: {str(e)}")
         print(f"[Videos] Current working directory: {os.getcwd()}")
         return []
-
-    print(f"[Videos] Scan complete. Found {len(videos)} videos: {videos}")
-    return videos
 
 
 @app.get("/api/config/active", response_model=schemas.Config)
