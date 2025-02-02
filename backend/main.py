@@ -72,7 +72,7 @@ async def get_available_videos():
 
         for file in files:
             print(f"[Videos] Checking file: {file}")
-            if file.lower().endswith(('.mp4', '.webm', '.mov')):
+            if file.lower().endswith(('.mp4', '.webm', '.mov', '.avi')):
                 print(f"[Videos] ✓ Adding video file: {file}")
                 videos.append(file)
             else:

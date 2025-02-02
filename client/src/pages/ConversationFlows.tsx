@@ -43,7 +43,7 @@ export default function ConversationFlows() {
   });
 
   // Fetch available videos
-  const { data: videos } = useQuery<string[]>({
+  const { data: videos, isLoading: isLoadingVideos } = useQuery<string[]>({
     queryKey: ['videos'],
     queryFn: async () => {
       const response = await fetch('/api/videos');
@@ -184,17 +184,21 @@ export default function ConversationFlows() {
                         onValueChange={(value) => setEditingFlow(prev => ({ ...prev, videoFilename: value }))}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a video" />
+                          <SelectValue placeholder={isLoadingVideos ? "Loading videos..." : "Select a video"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {videos?.length ? (
+                          {isLoadingVideos ? (
+                            <SelectItem value="loading" disabled>
+                              Loading available videos...
+                            </SelectItem>
+                          ) : videos && videos.length > 0 ? (
                             videos.map(video => (
                               <SelectItem key={video} value={video}>
                                 {video}
                               </SelectItem>
                             ))
                           ) : (
-                            <SelectItem value="no-videos-available" disabled>
+                            <SelectItem value="no-videos" disabled>
                               No videos available. Add files to the videos folder.
                             </SelectItem>
                           )}
