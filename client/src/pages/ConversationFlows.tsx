@@ -39,9 +39,9 @@ export default function ConversationFlows() {
     queryKey: ["conversation-flows", selectedConfigId],
     queryFn: async () => {
       if (!selectedConfigId) return [];
-      const response = await console.log("Fetching videos..."); // Log before fetching
-      console.log("Response status:", response.status); // Log response status
-      fetch(`/api/configs/${selectedConfigId}/flows`);
+      console.log("Fetching flows...");
+      const response = await fetch(`/api/configs/${selectedConfigId}/flows`);
+      console.log("Flows response status:", response.status);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || "Failed to fetch flows");
@@ -52,12 +52,12 @@ export default function ConversationFlows() {
   });
 
   // Fetch available videos
-
   const { data: videos, isLoading: isLoadingVideos } = useQuery<string[]>({
     queryKey: ["videos"],
     queryFn: async () => {
+      console.log("Fetching videos...");
       const response = await fetch(`/api/videos`);
-      console.log("Response Body:", response.status); // Log response status
+      console.log("Videos response status:", response.status);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || "Failed to fetch videos");
