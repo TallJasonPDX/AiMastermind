@@ -1,7 +1,7 @@
 import os
 import time
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
@@ -24,8 +24,8 @@ HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY")
 if not HEYGEN_API_KEY:
     print("[WARNING] HEYGEN_API_KEY environment variable is not set")
 
-# Create FastAPI app instance
-app = FastAPI(title="AI Landing Page Generator")
+# Create FastAPI app instance with debug mode
+app = FastAPI(title="AI Landing Page Generator", debug=True)
 
 # Configure CORS
 app.add_middleware(
@@ -36,64 +36,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount the videos directory
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all incoming requests and their responses"""
+    print(f"\n[FastAPI] {request.method} {request.url.path}")
+    try:
+        body = await request.json()
+        print("[FastAPI] Request body:", body)
+    except:
+        print("[FastAPI] No JSON body")
+
+    response = await call_next(request)
+    print(f"[FastAPI] Response status: {response.status_code}")
+    return response
+
+# Mount videos directory
 videos_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
 if not os.path.exists(videos_path):
     os.makedirs(videos_path)
-print(f"[Videos] Mounting directory at startup: {videos_path}")
 app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
 
-
 # Create database tables
-print("[Database] Creating database tables...")
 models.Base.metadata.create_all(bind=engine)
-print("[Database] Tables created successfully")
-
-
-@app.get("/api/videos")
-async def get_available_videos():
-    """Get list of available video files"""
-    print("\n[Videos] Starting video file scan...")
-
-    try:
-        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        video_dir = os.path.join(root_dir, "videos")
-        print(f"[Videos] Root directory: {root_dir}")
-        print(f"[Videos] Video directory: {video_dir}")
-
-        if not os.path.exists(video_dir):
-            print(f"[Videos] Directory does not exist, creating it")
-            os.makedirs(video_dir)
-
-        videos = []
-        print(f"[Videos] Reading directory contents...")
-        files = os.listdir(video_dir)
-        print(f"[Videos] Found {len(files)} total files")
-
-        for file in files:
-            print(f"[Videos] Checking file: {file}")
-            if file.lower().endswith(('.mp4', '.webm', '.mov', '.avi')):
-                print(f"[Videos] ✓ Adding video file: {file}")
-                videos.append(file)
-            else:
-                print(f"[Videos] ✗ Skipping non-video file: {file}")
-
-        print(f"[Videos] Scan complete. Found {len(videos)} videos: {videos}")
-        return videos
-
-    except Exception as e:
-        print(f"[Videos] Error scanning directory: {str(e)}")
-        print(f"[Videos] Current working directory: {os.getcwd()}")
-        return []
-
-
-@app.get("/api/config/active", response_model=schemas.Config)
-async def get_active_config(db: Session = Depends(get_db)):
-    """Get the active configuration for the landing page"""
-    config = db.query(models.Config).first()
-    if not config:
-        raise HTTPException(status_code=404, detail="No active configuration found")
-    return config
 
 @app.post("/api/configs/{config_id}/flows", response_model=schemas.ConversationFlow)
 async def create_conversation_flow(
@@ -102,93 +66,67 @@ async def create_conversation_flow(
     db: Session = Depends(get_db)
 ):
     """Create a new conversation flow"""
-    print(f"[API] Creating new flow for config {config_id}")
-    print(f"[API] Flow data: {flow.model_dump()}")
+    print(f"\n[API] Creating new flow for config {config_id}")
+    print(f"[API] Flow data received: {flow.model_dump_json()}")
 
     try:
-        db_flow = models.ConversationFlow(**flow.model_dump())
+        # Convert the flow data to dict and add config_id
+        flow_data = flow.model_dump()
+        flow_data["config_id"] = config_id
+
+        # Create new flow instance
+        db_flow = models.ConversationFlow(**flow_data)
         db.add(db_flow)
         db.commit()
         db.refresh(db_flow)
+
         print(f"[API] Flow created successfully with id {db_flow.id}")
         return db_flow
+
     except Exception as e:
         print(f"[API] Error creating flow: {str(e)}")
         db.rollback()
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
 async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
     """Get all conversation flows for a configuration"""
+    print(f"\n[API] Fetching flows for config {config_id}")
     flows = db.query(models.ConversationFlow).filter(
         models.ConversationFlow.config_id == config_id
     ).order_by(models.ConversationFlow.order).all()
+    print(f"[API] Found {len(flows)} flows")
     return flows
 
-
-@app.put("/api/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
-async def update_conversation_flow(
-    config_id: int,
-    flow_id: int,
-    flow: schemas.ConversationFlowCreate,
-    db: Session = Depends(get_db)
-):
-    """Update an existing conversation flow"""
-    db_flow = db.query(models.ConversationFlow).filter(
-        models.ConversationFlow.id == flow_id,
-        models.ConversationFlow.config_id == config_id
-    ).first()
-    if not db_flow:
-        raise HTTPException(status_code=404, detail="Conversation flow not found")
-
-    for key, value in flow.model_dump().items():
-        setattr(db_flow, key, value)
-
-    db.commit()
-    db.refresh(db_flow)
-    return db_flow
-
-
-@app.post("/api/heygen/streaming/sessions")
-async def create_streaming_session(db: Session = Depends(get_db)):
-    """Create a new HeyGen streaming session"""
+@app.get("/api/videos")
+async def get_available_videos():
+    """Get list of available video files"""
     try:
-        async with httpx.AsyncClient() as client:
-            headers = {
-                "accept": "application/json",
-                "content-type": "application/json",
-                "x-api-key": HEYGEN_API_KEY
-            }
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        video_dir = os.path.join(root_dir, "videos")
 
-            # Initialize streaming session with v1 parameters
-            session_response = await client.post(
-                "https://api.heygen.com/v1/streaming.new",
-                headers=headers,
-                json={
-                    "quality": "medium",
-                    "voice": {"rate": 1},
-                    "video_encoding": "VP8",
-                    "disable_idle_timeout": False
-                }
-            )
+        if not os.path.exists(video_dir):
+            os.makedirs(video_dir)
 
-            if session_response.status_code != 200:
-                print(f"HeyGen API Error: {session_response.status_code} {session_response.text}")  # Debug log
-                raise HTTPException(
-                    status_code=session_response.status_code,
-                    detail=f"HeyGen session initialization failed: {session_response.text}"
-                )
+        videos = []
+        for file in os.listdir(video_dir):
+            if file.lower().endswith(('.mp4', '.webm', '.mov', '.avi')):
+                videos.append(file)
 
-            session_data = session_response.json()
-            return session_data
+        return videos
+    except Exception as e:
+        print(f"[Videos] Error scanning directory: {str(e)}")
+        return []
 
-    except httpx.RequestError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error connecting to HeyGen API: {str(e)}"
-        )
-
+@app.get("/api/config/active", response_model=schemas.Config)
+async def get_active_config(db: Session = Depends(get_db)):
+    """Get the active configuration"""
+    config = db.query(models.Config).first()
+    if not config:
+        raise HTTPException(status_code=404, detail="No active configuration found")
+    return config
 
 if __name__ == "__main__":
-    print("[Server] Starting FastAPI server...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -11,24 +11,51 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
 
-  // Proxy FastAPI routes
+  // Configure FastAPI proxy with explicit middleware settings
+  app.use(express.json()); // Ensure JSON body parsing is enabled
+
   const fastApiProxy = createProxyMiddleware({
     target: 'http://localhost:8000',
     changeOrigin: true,
     secure: false,
     logLevel: 'debug',
-    pathRewrite: function (path) {
-      // Keep the original path for FastAPI
-      return path;
+    onProxyReq: (proxyReq, req, _res) => {
+      // Handle JSON body
+      if (req.body) {
+        const bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+        console.log('[FastAPI Proxy] Forwarding request:', {
+          method: req.method,
+          url: req.url,
+          body: req.body
+        });
+      }
     },
-    onError: (err: Error, _req: any, res: any) => {
-      console.error('[FastAPI Proxy Error]', err);
+    onProxyRes: (proxyRes, req, _res) => {
+      console.log('[FastAPI Proxy] Response:', {
+        method: req.method,
+        url: req.url,
+        status: proxyRes.statusCode
+      });
+    },
+    onError: (err, _req, res) => {
+      console.error('[FastAPI Proxy] Error:', err);
       res.status(500).json({ error: 'Failed to connect to backend service' });
     }
   });
 
-  // Apply proxy middleware to FastAPI routes
-  app.use(['/api/videos', '/api/config/active', '/api/configs/:configId/flows', '/api/configs/:configId/flows/:flowId'], fastApiProxy);
+  // Apply proxy for FastAPI routes with exact path matching
+  app.use([
+    '/api/videos',
+    '/api/config/active',
+    '/api/configs/:configId/flows',
+    '/api/configs/:configId/flows/:flowId'
+  ], (req, res, next) => {
+    console.log('[FastAPI Route]', req.method, req.url, req.body);
+    return fastApiProxy(req, res, next);
+  });
 
   // Rest of the routes...
   router.post("/api/heygen/streaming/sessions", async (req, res) => {
@@ -378,6 +405,9 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: "Failed to process chat message" });
     }
   });
+
+  // Register the router after the proxy middleware
   app.use(router);
+
   return httpServer;
 }
