@@ -45,30 +45,34 @@ export default function Flows() {
   // Create/Update flow mutation
   const { mutate: saveFlow, isPending: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
+      if (!selectedConfigId) throw new Error("No configuration selected");
+
       const url = flow.id
         ? `/api/configs/${selectedConfigId}/flows/${flow.id}`
         : `/api/configs/${selectedConfigId}/flows`;
 
-      console.log('Saving flow:', JSON.stringify(flow, null, 2));
+      // Transform to snake_case for API
+      const apiPayload = {
+        config_id: selectedConfigId,
+        order: flow.order || 1,
+        video_filename: flow.videoFilename || '',
+        system_prompt: flow.systemPrompt || '',
+        agent_question: flow.agentQuestion || '',
+        pass_next: flow.passNext,
+        fail_next: flow.failNext,
+        video_only: flow.videoOnly || false,
+        show_form: flow.showForm || false,
+        form_name: flow.formName,
+        input_delay: flow.inputDelay || 0
+      };
+
+      console.log('Saving flow:', JSON.stringify(apiPayload, null, 2));
       console.log('To URL:', url);
 
       const response = await fetch(url, {
         method: flow.id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...flow,
-          config_id: selectedConfigId,
-          order: flow.order || 1,
-          video_filename: flow.videoFilename || '',
-          system_prompt: flow.systemPrompt || '',
-          agent_question: flow.agentQuestion || '',
-          pass_next: flow.passNext,
-          fail_next: flow.failNext,
-          video_only: flow.videoOnly || false,
-          show_form: flow.showForm || false,
-          form_name: flow.formName,
-          input_delay: flow.inputDelay || 0
-        }),
+        body: JSON.stringify(apiPayload),
       });
 
       if (!response.ok) {
@@ -77,9 +81,7 @@ export default function Flows() {
         throw new Error(errorText || "Failed to save flow");
       }
 
-      const data = await response.json();
-      console.log('Save response:', data);
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/configs", selectedConfigId, "flows"] });
@@ -130,10 +132,7 @@ export default function Flows() {
     e.preventDefault();
     if (!selectedConfigId || !editingFlow) return;
 
-    saveFlow({
-      ...editingFlow,
-      configId: selectedConfigId,
-    });
+    saveFlow(editingFlow);
   };
 
   if (isLoadingConfigs) {
@@ -163,7 +162,7 @@ export default function Flows() {
 
       {selectedConfigId && (
         <div className="space-y-6">
-          <Button onClick={() => setEditingFlow({})} disabled={isSaving || isDeleting}>
+          <Button onClick={() => setEditingFlow({})} disabled={isSaving}>
             Add New Flow
           </Button>
 
@@ -361,7 +360,7 @@ export default function Flows() {
                       <Button
                         variant="outline"
                         onClick={() => setEditingFlow(flow)}
-                        disabled={isSaving || isDeleting}
+                        disabled={isSaving}
                       >
                         Edit
                       </Button>
