@@ -41,10 +41,11 @@ async def log_requests(request: Request, call_next):
     """Log all incoming requests and their responses"""
     print(f"\n[FastAPI] {request.method} {request.url.path}")
     try:
-        body = await request.json()
-        print("[FastAPI] Request body:", body)
+        body = await request.body()
+        if body:
+            print("[FastAPI] Request body:", body.decode())
     except:
-        print("[FastAPI] No JSON body")
+        print("[FastAPI] No request body")
 
     response = await call_next(request)
     print(f"[FastAPI] Response status: {response.status_code}")
@@ -59,7 +60,7 @@ app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
-@app.post("/api/configs/{config_id}/flows", response_model=schemas.ConversationFlow)
+@app.post("/configs/{config_id}/flows", response_model=schemas.ConversationFlow)
 async def create_conversation_flow(
     config_id: int,
     flow: schemas.ConversationFlowCreate,
@@ -90,7 +91,7 @@ async def create_conversation_flow(
             raise e
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/api/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
+@app.get("/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
 async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
     """Get all conversation flows for a configuration"""
     print(f"\n[API] Fetching flows for config {config_id}")
@@ -100,7 +101,7 @@ async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
     print(f"[API] Found {len(flows)} flows")
     return flows
 
-@app.get("/api/videos")
+@app.get("/videos")
 async def get_available_videos():
     """Get list of available video files"""
     try:
@@ -120,7 +121,7 @@ async def get_available_videos():
         print(f"[Videos] Error scanning directory: {str(e)}")
         return []
 
-@app.get("/api/config/active", response_model=schemas.Config)
+@app.get("/config/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
     """Get the active configuration"""
     config = db.query(models.Config).first()

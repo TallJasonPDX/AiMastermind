@@ -1,0 +1,73 @@
+> tsx server/index.ts
+
+[Server] Starting FastAPI server...
+2:30:29 AM [express] Express server serving on port 5000
+[FastAPI Error] INFO:     Started server process [23345]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+[FastAPI Route] GET / {}
+[FastAPI] 
+[FastAPI] GET /
+[FastAPI] No JSON body
+[FastAPI] Response status: 404
+INFO:     10.81.5.2:0 - "GET / HTTP/1.1" 404 Not Found
+
+2:30:34 AM [express] GET /api/config/active 404 in 27ms
+[FastAPI Route] GET / {}
+2:30:35 AM [express] GET /api/config/active 404 in 5ms
+[FastAPI] 
+[FastAPI] GET /
+[FastAPI] No JSON body
+[FastAPI] Response status: 404
+INFO:     10.81.6.26:0 - "GET / HTTP/1.1" 404 Not Found
+
+[FastAPI Route] GET / {}
+2:30:35 AM [express] GET /api/config/active 404 in 5ms
+[FastAPI] 
+[FastAPI] GET /
+[FastAPI] No JSON body
+[FastAPI] Response status: 404
+INFO:     10.81.6.26:0 - "GET / HTTP/1.1" 404 Not Found
+
+[FastAPI Route] GET / {}
+[FastAPI] 
+[FastAPI] GET /
+[FastAPI] No JSON body
+[FastAPI] Response status: 404
+INFO:     10.81.7.23:0 - "GET / HTTP/1.1" 404 Not Found
+
+2:48:27 AM [express] GET /api/config/active 404 in 9ms
+5:22:06 AM [express] GET /api/configs 304 in 824ms :: [{"id":2,"pageTitle":"West Linn AI Mastermind"…
+[FastAPI Route] GET / {}
+[FastAPI] 
+[FastAPI] GET /
+[FastAPI] No JSON body
+[FastAPI] Response status: 404
+INFO:     10.81.2.21:0 - "GET / HTTP/1.1" 404 Not Found
+
+5:22:08 AM [express] GET /api/configs/2/flows 404 in 3ms
+[FastAPI Route] POST / {
+  config_id: 2,
+  order: 1,
+  video_filename: 'pritch_welcome.mp4',
+  system_prompt: 'You must respond with only PASS or FAIL.  We asked the agent question to the user, and it is a yes or no type question.  Based on interpreting their response, return PASS if they said yes or gave a positive response and FAIL if they said No or gave a negative response.',
+  agent_question: 'Does this sound interesting to you?',
+  pass_next: 2,
+  fail_next: 10,
+  video_only: false,
+  show_form: false,
+  input_delay: 20
+}
+5:22:59 AM [express] GET /api/configs 304 in 193ms :: [{"id":2,"pageTitle":"West Linn AI Mastermind"…
+[FastAPI Route] GET / {}
+[FastAPI] 
+[FastAPI] POST /
+
+[FastAPI] GET /
+[FastAPI] No JSON body
+[FastAPI] Response status: 404
+INFO:     10.81.7.23:0 - "GET / HTTP/1.1" 404 Not Found
+
+5:23:01 AM [express] GET /api/configs/2/flows 404 in 4ms

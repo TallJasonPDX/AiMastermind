@@ -18,9 +18,11 @@ export function registerRoutes(app: Express): Server {
     target: 'http://localhost:8000',
     changeOrigin: true,
     secure: false,
-    logLevel: 'debug',
-    onProxyReq: (proxyReq, req, _res) => {
-      // Handle JSON body
+    pathRewrite: {
+      '^/api': '', // Remove /api prefix when forwarding to FastAPI
+    },
+    onProxyReq: (proxyReq: any, req: any, _res: any) => {
+      // Write the body if it exists
       if (req.body) {
         const bodyData = JSON.stringify(req.body);
         proxyReq.setHeader('Content-Type', 'application/json');
@@ -33,26 +35,21 @@ export function registerRoutes(app: Express): Server {
         });
       }
     },
-    onProxyRes: (proxyRes, req, _res) => {
+    onProxyRes: (proxyRes: any, req: any, _res: any) => {
       console.log('[FastAPI Proxy] Response:', {
         method: req.method,
         url: req.url,
         status: proxyRes.statusCode
       });
     },
-    onError: (err, _req, res) => {
+    onError: (err: any, _req: any, res: any) => {
       console.error('[FastAPI Proxy] Error:', err);
       res.status(500).json({ error: 'Failed to connect to backend service' });
     }
   });
 
-  // Apply proxy for FastAPI routes with exact path matching
-  app.use([
-    '/api/videos',
-    '/api/config/active',
-    '/api/configs/:configId/flows',
-    '/api/configs/:configId/flows/:flowId'
-  ], (req, res, next) => {
+  // Apply proxy for FastAPI routes
+  app.use('/api', (req, res, next) => {
     console.log('[FastAPI Route]', req.method, req.url, req.body);
     return fastApiProxy(req, res, next);
   });
