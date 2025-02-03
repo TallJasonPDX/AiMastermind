@@ -31,6 +31,15 @@ export default function Flows() {
   const { data: flows, isLoading: isLoadingFlows } = useQuery<ConversationFlow[]>({
     queryKey: ["/api/configs", selectedConfigId, "flows"],
     enabled: !!selectedConfigId,
+    queryFn: async () => {
+      if (!selectedConfigId) return [];
+      const response = await fetch(`/api/configs/${selectedConfigId}/flows`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to fetch flows");
+      }
+      return response.json();
+    }
   });
 
   // Create/Update flow mutation
@@ -42,10 +51,13 @@ export default function Flows() {
       const response = await fetch(url, {
         method: flow.id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(flow),
+        body: JSON.stringify({
+          ...flow,
+          config_id: selectedConfigId
+        }),
       });
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({ detail: "Failed to parse error response" }));
         throw new Error(error.detail || "Failed to save flow");
       }
       return response.json();
@@ -74,7 +86,7 @@ export default function Flows() {
         method: "DELETE",
       });
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({ detail: "Failed to parse error response" }));
         throw new Error(error.detail || "Failed to delete flow");
       }
     },

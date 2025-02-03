@@ -112,11 +112,20 @@ async def create_conversation_flow(
     db: Session = Depends(get_db)
 ):
     """Create a new conversation flow"""
-    db_flow = models.ConversationFlow(**flow.model_dump())
-    db.add(db_flow)
-    db.commit()
-    db.refresh(db_flow)
-    return db_flow
+    print(f"[API] Creating new flow for config {config_id}")
+    print(f"[API] Flow data: {flow.model_dump()}")
+
+    try:
+        db_flow = models.ConversationFlow(**flow.model_dump())
+        db.add(db_flow)
+        db.commit()
+        db.refresh(db_flow)
+        print(f"[API] Flow created successfully with id {db_flow.id}")
+        return db_flow
+    except Exception as e:
+        print(f"[API] Error creating flow: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.put("/api/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
