@@ -11,21 +11,24 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
 
-  // Proxy all FastAPI routes
-  app.use(['/api/videos', '/api/configs/:configId/flows', '/api/configs/:configId/flows/:flowId'], createProxyMiddleware({
+  // Proxy FastAPI routes
+  const fastApiProxy = createProxyMiddleware({
     target: 'http://localhost:8000',
     changeOrigin: true,
     secure: false,
-    pathRewrite: {
-      '^/api/configs/:configId/flows': '/api/configs/:configId/flows',
-      '^/api/videos': '/api/videos'
+    logLevel: 'debug',
+    pathRewrite: function (path) {
+      // Keep the original path for FastAPI
+      return path;
     },
     onError: (err: Error, _req: any, res: any) => {
       console.error('[FastAPI Proxy Error]', err);
       res.status(500).json({ error: 'Failed to connect to backend service' });
-    },
-    logLevel: 'debug'
-  }));
+    }
+  });
+
+  // Apply proxy middleware to FastAPI routes
+  app.use(['/api/videos', '/api/config/active', '/api/configs/:configId/flows', '/api/configs/:configId/flows/:flowId'], fastApiProxy);
 
   // Rest of the routes...
   router.post("/api/heygen/streaming/sessions", async (req, res) => {

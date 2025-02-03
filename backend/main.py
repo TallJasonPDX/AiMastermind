@@ -95,16 +95,6 @@ async def get_active_config(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No active configuration found")
     return config
 
-
-@app.get("/api/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
-async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
-    """Get all conversation flows for a configuration"""
-    flows = db.query(models.ConversationFlow).filter(
-        models.ConversationFlow.config_id == config_id
-    ).order_by(models.ConversationFlow.order).all()
-    return flows
-
-
 @app.post("/api/configs/{config_id}/flows", response_model=schemas.ConversationFlow)
 async def create_conversation_flow(
     config_id: int,
@@ -126,6 +116,14 @@ async def create_conversation_flow(
         print(f"[API] Error creating flow: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
+async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
+    """Get all conversation flows for a configuration"""
+    flows = db.query(models.ConversationFlow).filter(
+        models.ConversationFlow.config_id == config_id
+    ).order_by(models.ConversationFlow.order).all()
+    return flows
 
 
 @app.put("/api/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
@@ -149,7 +147,6 @@ async def update_conversation_flow(
     db.commit()
     db.refresh(db_flow)
     return db_flow
-
 
 
 @app.post("/api/heygen/streaming/sessions")
