@@ -35,8 +35,8 @@ export default function Flows() {
       if (!selectedConfigId) return [];
       const response = await fetch(`/api/configs/${selectedConfigId}/flows`);
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to fetch flows");
+        const error = await response.text();
+        throw new Error(error || "Failed to fetch flows");
       }
       return response.json();
     }
@@ -48,19 +48,38 @@ export default function Flows() {
       const url = flow.id
         ? `/api/configs/${selectedConfigId}/flows/${flow.id}`
         : `/api/configs/${selectedConfigId}/flows`;
+
+      console.log('Saving flow:', JSON.stringify(flow, null, 2));
+      console.log('To URL:', url);
+
       const response = await fetch(url, {
         method: flow.id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...flow,
-          config_id: selectedConfigId
+          config_id: selectedConfigId,
+          order: flow.order || 1,
+          video_filename: flow.videoFilename || '',
+          system_prompt: flow.systemPrompt || '',
+          agent_question: flow.agentQuestion || '',
+          pass_next: flow.passNext,
+          fail_next: flow.failNext,
+          video_only: flow.videoOnly || false,
+          show_form: flow.showForm || false,
+          form_name: flow.formName,
+          input_delay: flow.inputDelay || 0
         }),
       });
+
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: "Failed to parse error response" }));
-        throw new Error(error.detail || "Failed to save flow");
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(errorText || "Failed to save flow");
       }
-      return response.json();
+
+      const data = await response.json();
+      console.log('Save response:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/configs", selectedConfigId, "flows"] });
@@ -71,6 +90,7 @@ export default function Flows() {
       });
     },
     onError: (error: Error) => {
+      console.error('Save error:', error);
       toast({
         title: "Error",
         description: error.message,
