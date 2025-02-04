@@ -68,13 +68,19 @@ export default function ConversationFlows() {
 
   const { mutate: saveFlow, isLoading: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
-      const url = flow.id
-        ? `/api/configs/${selectedConfigId}/flows/${flow.id}`
-        : `/api/configs/${selectedConfigId}/flows`;
+      if (!selectedConfigId) {
+        throw new Error("No configuration selected");
+      }
+
+      const url = `/api/configs/${selectedConfigId}/flows`;
+      console.log("Saving flow:", JSON.stringify(flow));
+      console.log("To URL:", url);
 
       const response = await fetch(url, {
-        method: flow.id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(flow),
       });
 
