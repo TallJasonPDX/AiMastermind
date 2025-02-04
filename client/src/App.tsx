@@ -12,6 +12,7 @@ function Router() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/config" element={<Config />} />
+      <Route path="/conversations" element={<ConversationFlows />} />
       <Route path="/conversationflows" element={<ConversationFlows />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
