@@ -22,20 +22,15 @@ export function registerRoutes(app: Express): Server {
     pathRewrite: {
       '^/api': '', // Remove /api prefix when forwarding to FastAPI
     },
-    onProxyReq: (proxyReq, req, _res) => {
-      if (req.body) {
-        const bodyData = JSON.stringify(req.body);
-        // Update header
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-        // Write body data
-        proxyReq.write(bodyData);
-      }
-    },
-    logLevel: 'debug'
+    logLevel: 'debug',
     onProxyReq: (proxyReq: any, req: any, _res: any) => {
       proxyReq.path = proxyReq.path.replace(/^\/api/, '');
       if (req.body) {
+        const bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+      }
         const bodyData = JSON.stringify(req.body);
         proxyReq.setHeader('Content-Type', 'application/json');
         proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
