@@ -10,6 +10,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
+  app.use(router); // Mount the router
 
   // Configure FastAPI proxy with explicit middleware settings
   app.use(express.json()); // Ensure JSON body parsing is enabled
