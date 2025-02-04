@@ -369,32 +369,34 @@ export default function ConversationFlows() {
               </Card>
             )}
 
-            {flows?.length > 0 && (
-              <div className="space-y-4">
-                {flows.map((flow) => (
-                  <Card key={flow.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">Order: {flow.order}</p>
-                        <p className="text-sm">Video: {flow.videoFilename}</p>
-                        <p className="text-sm">
-                          Question: {flow.agentQuestion}
-                        </p>
-                        <p className="text-sm">Pass Next: {flow.passNext}</p>
-                        <p className="text-sm">Fail Next: {flow.failNext}</p>
+            <div className="mt-8 border-t pt-8">
+              <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
+              {flows?.length > 0 ? (
+                <div className="space-y-4">
+                  {flows.sort((a, b) => a.order - b.order).map((flow) => (
+                    <Card key={flow.id} className="p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2">
+                          <p className="font-medium text-lg">Step {flow.order}</p>
+                          <p className="text-sm"><span className="font-medium">Video:</span> {flow.videoFilename}</p>
+                          <p className="text-sm"><span className="font-medium">Question:</span> {flow.agentQuestion}</p>
+                          <p className="text-sm"><span className="font-medium">Next Steps:</span> Pass → {flow.passNext || 'End'}, Fail → {flow.failNext || 'End'}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleEdit(flow)}
+                          disabled={isSaving}
+                        >
+                          Edit
+                        </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleEdit(flow)}
-                        disabled={isSaving}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No flows created yet. Use the form above to add a new flow.</p>
+              )}
+            </div>
           </div>
         )}
       </div>
