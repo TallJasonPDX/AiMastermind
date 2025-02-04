@@ -76,6 +76,7 @@ export default function ConversationFlows() {
       console.log("Saving flow:", JSON.stringify(flow));
       console.log("To URL:", url);
 
+      console.log("[Client] Sending POST request to:", url);
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -84,16 +85,15 @@ export default function ConversationFlows() {
         body: JSON.stringify(flow),
       });
 
+      const responseData = await response.text();
+      console.log("[Client] Response status:", response.status);
+      console.log("[Client] Response data:", responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to save flow");
+        throw new Error(responseData || "Failed to save flow");
       }
 
-      const data = await response.json();
-      return data;
-
-      if (!response.ok) {
-        const error = await response.json();
+      return JSON.parse(responseData);
         throw new Error(error.detail || "Failed to save flow");
       }
 
