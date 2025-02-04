@@ -32,8 +32,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In production, replace with specific origins
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
 @app.middleware("http")
@@ -107,19 +109,22 @@ async def get_available_videos():
     try:
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         video_dir = os.path.join(root_dir, "videos")
+        print(f"[Videos] Scanning directory: {video_dir}")
 
         if not os.path.exists(video_dir):
+            print("[Videos] Directory not found, creating it")
             os.makedirs(video_dir)
 
         videos = []
         for file in os.listdir(video_dir):
             if file.lower().endswith(('.mp4', '.webm', '.mov', '.avi')):
                 videos.append(file)
-
+        
+        print(f"[Videos] Found {len(videos)} video files: {videos}")
         return videos
     except Exception as e:
         print(f"[Videos] Error scanning directory: {str(e)}")
-        return []
+        raise HTTPException(status_code=500, detail=f"Error scanning videos directory: {str(e)}")
 
 @app.get("/config/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
