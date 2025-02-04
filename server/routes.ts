@@ -171,11 +171,16 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Get all configurations
-  app.get("/api/configs", async (_req, res) => {
-    const configs = await db.query.configurations.findMany({
-      orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
-    });
-    res.json(configs);
+  router.get("/api/configs", async (_req, res) => {
+    try {
+      const configs = await db.query.configurations.findMany({
+        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
+      });
+      res.json(configs);
+    } catch (error) {
+      console.error("Error fetching configs:", error);
+      res.status(500).json({ error: "Failed to fetch configurations" });
+    }
   });
 
   // Get active configuration
