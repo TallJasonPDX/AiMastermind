@@ -93,9 +93,8 @@ export default function ConversationFlows() {
         throw new Error(responseData || "Failed to save flow");
       }
 
-      return JSON.parse(responseData);
-
-      return response.json();
+      const data = await response.json();
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

@@ -73,42 +73,21 @@ async def create_conversation_flow(
     print(f"[API] Flow data received: {flow.model_dump_json()}")
 
     try:
-        print("[API] Starting flow creation...")
         flow_data = flow.model_dump()
         flow_data["config_id"] = config_id
-
         print("[API] Creating flow with data:", flow_data)
         
-        # Create new flow instance
         db_flow = models.ConversationFlow(**flow_data)
-        print("[API] Created ConversationFlow instance")
-        
-        try:
-            print("[API] Adding to database session...")
-            db.add(db_flow)
-            print("[API] Committing to database...")
-            db.commit()
-            print("[API] Refreshing instance...")
-            db.refresh(db_flow)
-            print(f"[API] Flow created successfully with ID: {db_flow.id}")
-            return db_flow
-        except Exception as e:
-            print("[API] Database operation failed!")
-            print(f"[API] Error type: {type(e).__name__}")
-            print(f"[API] Error message: {str(e)}")
-            db.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
-
-        print(f"[API] Flow created successfully with id {db_flow.id}")
+        db.add(db_flow)
+        db.commit()
+        db.refresh(db_flow)
+        print(f"[API] Flow created successfully with ID: {db_flow.id}")
         return db_flow
 
     except Exception as e:
         print(f"[API] Error creating flow: {str(e)}")
-        print("[API] Error details:", e.__dict__)
         db.rollback()
-        if isinstance(e, HTTPException):
-            raise e
-        raise HTTPException(status_code=500, detail=f"Failed to create flow: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
 async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
