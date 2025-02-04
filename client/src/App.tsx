@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Config from './pages/Config';
 import Flows from './pages/Flows';
+import ConversationFlows from './pages/ConversationFlows';
 
 function Router() {
   return (
