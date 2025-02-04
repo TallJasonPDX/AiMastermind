@@ -23,18 +23,18 @@ export function registerRoutes(app: Express): Server {
       '^/api': '', // Remove /api prefix when forwarding to FastAPI
     },
     onProxyReq: (proxyReq: any, req: any, _res: any) => {
-      // Write the body if it exists
+      proxyReq.path = proxyReq.path.replace(/^\/api/, '');
       if (req.body) {
         const bodyData = JSON.stringify(req.body);
         proxyReq.setHeader('Content-Type', 'application/json');
         proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
-        console.log('[FastAPI Proxy] Forwarding request:', {
-          method: req.method,
-          url: req.url,
-          body: req.body
-        });
       }
+      console.log('[FastAPI Proxy] Forwarding request:', {
+        method: req.method,
+        url: proxyReq.path,
+        body: req.body
+      });
     },
     onProxyRes: (proxyRes: any, req: any, _res: any) => {
       console.log('[FastAPI Proxy] Response:', {
