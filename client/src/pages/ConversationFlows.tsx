@@ -94,8 +94,6 @@ export default function ConversationFlows() {
       }
 
       return JSON.parse(responseData);
-        throw new Error(error.detail || "Failed to save flow");
-      }
 
       return response.json();
     },
