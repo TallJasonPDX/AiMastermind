@@ -31,11 +31,6 @@ export function registerRoutes(app: Express): Server {
         proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
       }
-        const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-      }
       console.log('[FastAPI Proxy] Forwarding request:', {
         method: req.method,
         url: proxyReq.path,
