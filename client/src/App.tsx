@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Config from './pages/Config';
-import Flows from './pages/Flows';
 import ConversationFlows from './pages/ConversationFlows';
 
 function Router() {
@@ -13,7 +12,6 @@ function Router() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/config" element={<Config />} />
-      <Route path="/conversations" element={<Flows />} />
       <Route path="/conversationflows" element={<ConversationFlows />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
