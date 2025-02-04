@@ -85,6 +85,14 @@ export default function ConversationFlows() {
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to save flow");
+      }
+
+      const data = await response.json();
+      return data;
+
+      if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || "Failed to save flow");
       }

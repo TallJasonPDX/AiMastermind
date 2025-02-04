@@ -80,10 +80,17 @@ async def create_conversation_flow(
         print("[API] Creating flow with data:", flow_data)
 
         # Create new flow instance
-        db_flow = models.ConversationFlow(**flow_data)
-        db.add(db_flow)
-        db.commit()
-        db.refresh(db_flow)
+        try:
+            db_flow = models.ConversationFlow(**flow_data)
+            db.add(db_flow)
+            db.commit()
+            db.refresh(db_flow)
+            print(f"[API] Flow created successfully: {db_flow.id}")
+            return db_flow
+        except Exception as e:
+            db.rollback()
+            print(f"[API] Database error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
         print(f"[API] Flow created successfully with id {db_flow.id}")
         return db_flow
