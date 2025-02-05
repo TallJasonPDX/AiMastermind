@@ -361,6 +361,32 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Delete conversation flow
+  router.delete("/api/configs/:id/flows/:flowId", async (req, res) => {
+    const configId = parseInt(req.params.id);
+    const flowId = parseInt(req.params.flowId);
+    
+    if (isNaN(configId) || isNaN(flowId)) {
+      return res.status(400).json({ error: "Invalid ID format" });
+    }
+
+    try {
+      const result = await db.delete(conversationFlows)
+        .where(eq(conversationFlows.id, flowId))
+        .where(eq(conversationFlows.configId, configId))
+        .returning();
+
+      if (result.length === 0) {
+        return res.status(404).json({ error: "Flow not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete flow error:", error);
+      res.status(500).json({ error: "Failed to delete flow" });
+    }
+  });
+
   // Get chat history
   app.get("/api/chat", async (req, res) => {
     const { configId } = req.query;

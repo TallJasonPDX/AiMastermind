@@ -32,7 +32,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In production, replace with specific origins
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=600,
@@ -76,7 +76,7 @@ async def create_conversation_flow(
         flow_data = flow.model_dump()
         flow_data["config_id"] = config_id
         print("[API] Creating flow with data:", flow_data)
-        
+
         db_flow = models.ConversationFlow(**flow_data)
         db.add(db_flow)
         db.commit()
@@ -115,7 +115,7 @@ async def get_available_videos():
         for file in os.listdir(video_dir):
             if file.lower().endswith(('.mp4', '.webm', '.mov', '.avi')):
                 videos.append(file)
-        
+
         print(f"[Videos] Found {len(videos)} video files: {videos}")
         return videos
     except Exception as e:
