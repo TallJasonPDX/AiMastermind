@@ -514,7 +514,26 @@ export function registerRoutes(app: Express): Server {
         return res.status(response.status).json({ error: "Failed to fetch flows" });
       }
 
-      const flows = await response.json();
+      const rawFlows = await response.json();
+
+      // Transform snake_case to camelCase
+      const flows = rawFlows.map((flow: any) => ({
+        id: flow.id,
+        configId: flow.config_id,
+        order: flow.order,
+        videoFilename: flow.video_filename,
+        systemPrompt: flow.system_prompt,
+        agentQuestion: flow.agent_question,
+        passNext: flow.pass_next,
+        failNext: flow.fail_next,
+        videoOnly: flow.video_only,
+        showForm: flow.show_form,
+        formName: flow.form_name,
+        inputDelay: flow.input_delay,
+        createdAt: flow.created_at,
+        updatedAt: flow.updated_at
+      }));
+
       console.log(`[FastAPI] Found ${flows.length} flows for config ${configId}`);
       res.json(flows);
     } catch (error) {
