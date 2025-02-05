@@ -99,6 +99,42 @@ async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
     print(f"[API] Found {len(flows)} flows")
     return flows
 
+@app.put("/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
+async def update_conversation_flow(
+    config_id: int,
+    flow_id: int,
+    flow_update: schemas.ConversationFlowCreate,
+    db: Session = Depends(get_db)
+):
+    """Update an existing conversation flow"""
+    print(f"\n[API] Updating flow {flow_id} for config {config_id}")
+    print(f"[API] Update data received: {flow_update.model_dump_json()}")
+
+    try:
+        # First check if the flow exists and belongs to the config
+        db_flow = db.query(models.ConversationFlow).filter(
+            models.ConversationFlow.id == flow_id,
+            models.ConversationFlow.config_id == config_id
+        ).first()
+
+        if not db_flow:
+            raise HTTPException(status_code=404, detail="Flow not found")
+
+        # Update the flow with new values
+        flow_data = flow_update.model_dump(exclude_unset=True)
+        for key, value in flow_data.items():
+            setattr(db_flow, key, value)
+
+        db.commit()
+        db.refresh(db_flow)
+        print(f"[API] Flow updated successfully")
+        return db_flow
+
+    except Exception as e:
+        print(f"[API] Error updating flow: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/videos")
 async def get_available_videos():
     """Get list of available video files"""
