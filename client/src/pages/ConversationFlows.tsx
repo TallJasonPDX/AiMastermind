@@ -97,9 +97,12 @@ export default function ConversationFlows() {
       return data;
     },
     onSuccess: () => {
+      // Invalidate and refetch flows
       queryClient.invalidateQueries({
         queryKey: ["conversation-flows", selectedConfigId],
+        refetchType: 'active',
       });
+      // Reset form and hide it
       setEditingFlow(null);
       toast({
         title: "Success",
