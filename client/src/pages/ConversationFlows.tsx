@@ -167,19 +167,7 @@ const { mutate: saveFlow, isLoading: isSaving } = useMutation({
   };
 
   const handleEdit = (flow: ConversationFlow) => {
-    setEditingFlow({
-      ...flow,
-      order: flow.order,
-      videoFilename: flow.videoFilename,
-      systemPrompt: flow.systemPrompt,
-      agentQuestion: flow.agentQuestion,
-      passNext: flow.passNext,
-      failNext: flow.failNext,
-      videoOnly: flow.videoOnly,
-      showForm: flow.showForm,
-      formName: flow.formName,
-      inputDelay: flow.inputDelay,
-    });
+    setEditingFlow(flow); // The flow object already contains all needed fields
   };
 
   const handleDelete = (flowId: number) => {
