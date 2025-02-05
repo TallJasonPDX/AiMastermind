@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { processChat } from "../client/src/lib/openai";
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { conversationFlows } from "@db/schema";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
@@ -16,42 +17,42 @@ export function registerRoutes(app: Express): Server {
   app.use(express.json()); // Ensure JSON body parsing is enabled
 
   const fastApiProxy = createProxyMiddleware({
-    target: 'http://localhost:8000',
+    target: "http://localhost:8000",
     changeOrigin: true,
     secure: false,
     pathRewrite: {
-      '^/api': '', // Remove /api prefix when forwarding to FastAPI
+      "^/api": "", // Remove /api prefix when forwarding to FastAPI
     },
-    logLevel: 'debug',
+    logLevel: "debug",
     onProxyReq: (proxyReq: any, req: any, _res: any) => {
-      if (req.method === 'POST' && req.body) {
+      if (req.method === "POST" && req.body) {
         const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.setHeader("Content-Type", "application/json");
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
       }
-      console.log('[FastAPI Proxy] Forwarding request:', {
+      console.log("[FastAPI Proxy] Forwarding request:", {
         method: req.method,
         url: req.url,
-        body: req.body
+        body: req.body,
       });
     },
     onProxyRes: (proxyRes: any, req: any, _res: any) => {
-      console.log('[FastAPI Proxy] Response:', {
+      console.log("[FastAPI Proxy] Response:", {
         method: req.method,
         url: req.url,
-        status: proxyRes.statusCode
+        status: proxyRes.statusCode,
       });
     },
     onError: (err: any, _req: any, res: any) => {
-      console.error('[FastAPI Proxy] Error:', err);
-      res.status(500).json({ error: 'Failed to connect to backend service' });
-    }
+      console.error("[FastAPI Proxy] Error:", err);
+      res.status(500).json({ error: "Failed to connect to backend service" });
+    },
   });
 
   // Apply proxy for FastAPI routes
-  app.use('/api', (req, res, next) => {
-    console.log('[FastAPI Route]', req.method, req.url, req.body);
+  app.use("/api", (req, res, next) => {
+    console.log("[FastAPI Route]", req.method, req.url, req.body);
     return fastApiProxy(req, res, next);
   });
 
@@ -261,12 +262,10 @@ export function registerRoutes(app: Express): Server {
       res.json({ success: true });
     } catch (error) {
       console.error("Delete error:", error);
-      res
-        .status(500)
-        .json({
-          error: "Failed to delete configuration",
-          details: error.message,
-        });
+      res.status(500).json({
+        error: "Failed to delete configuration",
+        details: error.message,
+      });
     }
   });
 
@@ -298,6 +297,67 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Update error:", error);
       res.status(500).json({ error: "Failed to update configuration" });
+    }
+  });
+
+  // POST handler for creating a new ConversationFlow
+  router.post("/api/configs/:id/flows", async (req, res) => {
+    try {
+      const configId = parseInt(req.params.id);
+      if (isNaN(configId)) {
+        return res.status(400).json({ error: "Invalid configuration ID" });
+      }
+      const {
+        order,
+        videoFilename,
+        systemPrompt,
+        agentQuestion,
+        passNext,
+        failNext,
+        videoOnly,
+        showForm,
+        formName,
+        inputDelay,
+      } = req.body;
+      // Validate required fields
+      const requiredFields = {
+        order,
+        videoFilename,
+        systemPrompt,
+        agentQuestion,
+      };
+      const missingFields = Object.entries(requiredFields)
+        .filter(([_, value]) => !value)
+        .map(([key]) => key);
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          error: `Missing required fields: ${missingFields.join(", ")}`,
+        });
+      }
+      // Create the new ConversationFlow
+      const newFlow = {
+        configId,
+        order,
+        videoFilename,
+        systemPrompt,
+        agentQuestion,
+        passNext: passNext ?? null,
+        failNext: failNext ?? null,
+        videoOnly: videoOnly ?? false,
+        showForm: showForm ?? false,
+        formName: formName ?? null,
+        inputDelay: inputDelay ?? 0,
+      };
+      // Insert into the database, change it according to your actual insertion method
+      await db.insert(conversationFlows).values(newFlow);
+      // Respond with success
+      res.status(201).json({
+        message: "Conversation flow created successfully",
+        flow: newFlow,
+      });
+    } catch (error) {
+      console.error("[POST /api/configs/:id/flows] Error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
@@ -347,11 +407,9 @@ export function registerRoutes(app: Express): Server {
       const assistantId = (config.openaiAgentConfig as { assistantId: string })
         .assistantId;
       if (!assistantId) {
-        return res
-          .status(500)
-          .json({
-            error: "OpenAI Assistant ID not configured in this configuration",
-          });
+        return res.status(500).json({
+          error: "OpenAI Assistant ID not configured in this configuration",
+        });
       }
 
       // Initialize messages array
