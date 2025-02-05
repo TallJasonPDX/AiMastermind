@@ -84,15 +84,20 @@ export default function ConversationFlows() {
     },
   });
 
+  // Update the saveFlow mutation
   const { mutate: saveFlow, isLoading: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       if (!selectedConfigId) {
         throw new Error("No configuration selected");
       }
 
-      const url = `/api/configs/${selectedConfigId}/flows`;
+      const isEditing = Boolean(flow.id);
+      const url = isEditing
+        ? `/api/configs/${selectedConfigId}/flows/${flow.id}`
+        : `/api/configs/${selectedConfigId}/flows`;
+
       const response = await fetch(url, {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },

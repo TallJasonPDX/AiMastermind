@@ -391,6 +391,66 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add the PUT endpoint for updating flows
+  router.put("/api/configs/:id/flows/:flowId", async (req, res) => {
+    try {
+      const configId = parseInt(req.params.id);
+      const flowId = parseInt(req.params.flowId);
+
+      if (isNaN(configId) || isNaN(flowId)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+
+      const response = await fetch(`http://localhost:8000/configs/${configId}/flows/${flowId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          config_id: configId,
+          ...req.body,
+          // Convert camelCase to snake_case
+          video_filename: req.body.videoFilename,
+          system_prompt: req.body.systemPrompt,
+          agent_question: req.body.agentQuestion,
+          pass_next: req.body.passNext,
+          fail_next: req.body.failNext,
+          video_only: req.body.videoOnly,
+          show_form: req.body.showForm,
+          form_name: req.body.formName,
+          input_delay: req.body.inputDelay,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`[FastAPI] Error updating flow:`, error);
+        return res.status(response.status).json({ error: "Failed to update flow" });
+      }
+
+      const updatedFlow = await response.json();
+      res.json({
+        id: updatedFlow.id,
+        configId: updatedFlow.config_id,
+        order: updatedFlow.order,
+        videoFilename: updatedFlow.video_filename,
+        systemPrompt: updatedFlow.system_prompt,
+        agentQuestion: updatedFlow.agent_question,
+        passNext: updatedFlow.pass_next,
+        failNext: updatedFlow.fail_next,
+        videoOnly: updatedFlow.video_only,
+        showForm: updatedFlow.show_form,
+        formName: updatedFlow.form_name,
+        inputDelay: updatedFlow.input_delay,
+        createdAt: updatedFlow.created_at,
+        updatedAt: updatedFlow.updated_at
+      });
+    } catch (error) {
+      console.error("[FastAPI] Error in PUT /api/configs/:id/flows/:flowId:", error);
+      res.status(500).json({ error: "Failed to update conversation flow" });
+    }
+  });
+
   // Get chat history
   app.get("/api/chat", async (req, res) => {
     const { configId } = req.query;
