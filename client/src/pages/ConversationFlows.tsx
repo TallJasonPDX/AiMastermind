@@ -66,17 +66,31 @@ export default function ConversationFlows() {
     },
   });
 
-  const { mutate: saveFlow, isLoading: isSaving } = useMutation({
+  const { mutate: deleteFlow } = useMutation({
+    mutationFn: async (flowId: number) => {
+      if (!selectedConfigId) throw new Error("No configuration selected");
+      const response = await fetch(`/api/configs/${selectedConfigId}/flows/${flowId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete flow");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversation-flows", selectedConfigId] });
+      toast({ title: "Success", description: "Flow deleted successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+});
+
+const { mutate: saveFlow, isLoading: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       if (!selectedConfigId) {
         throw new Error("No configuration selected");
       }
 
       const url = `/api/configs/${selectedConfigId}/flows`;
-      console.log("Saving flow:", JSON.stringify(flow));
-      console.log("To URL:", url);
-
-      console.log("[Client] Sending POST request to:", url);
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -85,16 +99,12 @@ export default function ConversationFlows() {
         body: JSON.stringify(flow),
       });
 
-      const responseData = await response.text();
-      console.log("[Client] Response status:", response.status);
-      console.log("[Client] Response data:", responseData);
-
       if (!response.ok) {
-        throw new Error(responseData || "Failed to save flow");
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to save flow");
       }
 
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       // Invalidate and refetch flows
@@ -157,7 +167,25 @@ export default function ConversationFlows() {
   };
 
   const handleEdit = (flow: ConversationFlow) => {
-    setEditingFlow(flow);
+    setEditingFlow({
+      ...flow,
+      order: flow.order,
+      videoFilename: flow.videoFilename,
+      systemPrompt: flow.systemPrompt,
+      agentQuestion: flow.agentQuestion,
+      passNext: flow.passNext,
+      failNext: flow.failNext,
+      videoOnly: flow.videoOnly,
+      showForm: flow.showForm,
+      formName: flow.formName,
+      inputDelay: flow.inputDelay,
+    });
+  };
+
+  const handleDelete = (flowId: number) => {
+    if (window.confirm("Are you sure you want to delete this flow?")) {
+      deleteFlow(flowId);
+    }
   };
 
   return (
@@ -396,13 +424,22 @@ export default function ConversationFlows() {
                           <p className="text-sm"><span className="font-medium">Question:</span> {flow.agentQuestion}</p>
                           <p className="text-sm"><span className="font-medium">Next Steps:</span> Pass → {flow.passNext || 'End'}, Fail → {flow.failNext || 'End'}</p>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleEdit(flow)}
-                          disabled={isSaving}
-                        >
-                          Edit
-                        </Button>
+                        <div className="space-x-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => handleEdit(flow)}
+                            disabled={isSaving}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => handleDelete(flow.id)}
+                            disabled={isSaving}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   ))}
