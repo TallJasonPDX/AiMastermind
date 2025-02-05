@@ -82,9 +82,9 @@ export default function ConversationFlows() {
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
-});
+  });
 
-const { mutate: saveFlow, isLoading: isSaving } = useMutation({
+  const { mutate: saveFlow, isLoading: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       if (!selectedConfigId) {
         throw new Error("No configuration selected");
@@ -167,7 +167,21 @@ const { mutate: saveFlow, isLoading: isSaving } = useMutation({
   };
 
   const handleEdit = (flow: ConversationFlow) => {
-    setEditingFlow(flow); // The flow object already contains all needed fields
+    // Ensure all fields are properly set when editing
+    setEditingFlow({
+      id: flow.id,
+      configId: flow.configId,
+      order: flow.order,
+      videoFilename: flow.videoFilename,
+      systemPrompt: flow.systemPrompt,
+      agentQuestion: flow.agentQuestion,
+      passNext: flow.passNext,
+      failNext: flow.failNext,
+      videoOnly: flow.videoOnly,
+      showForm: flow.showForm,
+      formName: flow.formName,
+      inputDelay: flow.inputDelay,
+    });
   };
 
   const handleDelete = (flowId: number) => {
@@ -408,22 +422,43 @@ const { mutate: saveFlow, isLoading: isSaving } = useMutation({
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
                           <p className="font-medium text-lg">Step {flow.order}</p>
-                          <p className="text-sm"><span className="font-medium">Video:</span> {flow.videoFilename}</p>
-                          <p className="text-sm"><span className="font-medium">Question:</span> {flow.agentQuestion}</p>
-                          <p className="text-sm"><span className="font-medium">Next Steps:</span> Pass → {flow.passNext || 'End'}, Fail → {flow.failNext || 'End'}</p>
+                          <p className="text-sm">
+                            <span className="font-medium">Video:</span> {flow.videoFilename}
+                          </p>
+                          <p className="text-sm">
+                            <span className="font-medium">System Prompt:</span> {flow.systemPrompt}
+                          </p>
+                          <p className="text-sm">
+                            <span className="font-medium">Question:</span> {flow.agentQuestion}
+                          </p>
+                          <p className="text-sm">
+                            <span className="font-medium">Next Steps:</span> Pass → {flow.passNext || 'End'}, 
+                            Fail → {flow.failNext || 'End'}
+                          </p>
+                          {flow.showForm && (
+                            <p className="text-sm">
+                              <span className="font-medium">Form Name:</span> {flow.formName}
+                            </p>
+                          )}
+                          {flow.videoOnly && (
+                            <p className="text-sm text-blue-600">Video Only Mode</p>
+                          )}
+                          {flow.inputDelay > 0 && (
+                            <p className="text-sm">
+                              <span className="font-medium">Input Delay:</span> {flow.inputDelay}s
+                            </p>
+                          )}
                         </div>
                         <div className="space-x-2">
                           <Button
                             variant="outline"
                             onClick={() => handleEdit(flow)}
-                            disabled={isSaving}
                           >
                             Edit
                           </Button>
                           <Button
                             variant="destructive"
                             onClick={() => handleDelete(flow.id)}
-                            disabled={isSaving}
                           >
                             Delete
                           </Button>
@@ -433,7 +468,9 @@ const { mutate: saveFlow, isLoading: isSaving } = useMutation({
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No flows created yet. Use the form above to add a new flow.</p>
+                <p className="text-muted-foreground">
+                  No flows created yet. Use the form above to add a new flow.
+                </p>
               )}
             </div>
           </div>

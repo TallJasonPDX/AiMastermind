@@ -365,7 +365,7 @@ export function registerRoutes(app: Express): Server {
   router.delete("/api/configs/:id/flows/:flowId", async (req, res) => {
     const configId = parseInt(req.params.id);
     const flowId = parseInt(req.params.flowId);
-    
+
     if (isNaN(configId) || isNaN(flowId)) {
       return res.status(400).json({ error: "Invalid ID format" });
     }
@@ -494,6 +494,32 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Chat error:", error);
       res.status(500).json({ error: "Failed to process chat message" });
+    }
+  });
+
+  // Get conversation flows for a configuration
+  router.get("/api/configs/:id/flows", async (req, res) => {
+    try {
+      const configId = parseInt(req.params.id);
+      if (isNaN(configId)) {
+        return res.status(400).json({ error: "Invalid configuration ID" });
+      }
+
+      const response = await fetch(`http://localhost:8000/configs/${configId}/flows`);
+      console.log(`[FastAPI] Flows response status for config ${configId}:`, response.status);
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`[FastAPI] Error fetching flows:`, error);
+        return res.status(response.status).json({ error: "Failed to fetch flows" });
+      }
+
+      const flows = await response.json();
+      console.log(`[FastAPI] Found ${flows.length} flows for config ${configId}`);
+      res.json(flows);
+    } catch (error) {
+      console.error("[FastAPI] Error in /api/configs/:id/flows:", error);
+      res.status(500).json({ error: "Failed to fetch conversation flows" });
     }
   });
 
