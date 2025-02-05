@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { configurations, conversations } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { processChat } from "../client/src/lib/openai";
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -372,8 +372,12 @@ export function registerRoutes(app: Express): Server {
 
     try {
       const result = await db.delete(conversationFlows)
-        .where(eq(conversationFlows.id, flowId))
-        .where(eq(conversationFlows.configId, configId))
+        .where(
+          and(
+            eq(conversationFlows.id, flowId),
+            eq(conversationFlows.configId, configId)
+          )
+        )
         .returning();
 
       if (result.length === 0) {
