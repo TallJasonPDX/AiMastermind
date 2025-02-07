@@ -40,6 +40,7 @@ app.add_middleware(
     max_age=600,
 )
 
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Log all incoming requests and their responses"""
@@ -55,8 +56,10 @@ async def log_requests(request: Request, call_next):
     print(f"[FastAPI] Response status: {response.status_code}")
     return response
 
+
 # Mount videos directory
-videos_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
+videos_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
 if not os.path.exists(videos_path):
     os.makedirs(videos_path)
 app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
@@ -64,12 +67,12 @@ app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
-@app.post("/configs/{config_id}/flows", response_model=schemas.ConversationFlow)
-async def create_conversation_flow(
-    config_id: int,
-    flow: schemas.ConversationFlowCreate,
-    db: Session = Depends(get_db)
-):
+
+@app.post("/configs/{config_id}/flows",
+          response_model=schemas.ConversationFlow)
+async def create_conversation_flow(config_id: int,
+                                   flow: schemas.ConversationFlowCreate,
+                                   db: Session = Depends(get_db)):
     """Create a new conversation flow"""
     print(f"\n[API] Creating new flow for config {config_id}")
     print(f"[API] Flow data received: {flow.model_dump_json()}")
@@ -91,25 +94,30 @@ async def create_conversation_flow(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/configs/{config_id}/flows", response_model=List[schemas.ConversationFlow])
-async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
+
+@app.get("/configs/{config_id}/flows",
+         response_model=List[schemas.ConversationFlow])
+async def get_conversation_flows(config_id: int,
+                                 db: Session = Depends(get_db)):
     """Get all conversation flows for a configuration"""
     print(f"\n[API] Fetching flows for config {config_id}")
     flows = db.query(models.ConversationFlow).filter(
-        models.ConversationFlow.config_id == config_id
-    ).order_by(models.ConversationFlow.order).all()
+        models.ConversationFlow.config_id == config_id).order_by(
+            models.ConversationFlow.order).all()
     print(f"[API] Found {len(flows)} flows")
     for flow in flows:
-        print(f"[API] Flow {flow.id}: order={flow.order}, video_only={flow.video_only}")
+        print(
+            f"[API] Flow {flow.id}: order={flow.order}, video_only={flow.video_only}"
+        )
     return flows
 
-@app.put("/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
-async def update_conversation_flow(
-    config_id: int,
-    flow_id: int,
-    flow_update: schemas.ConversationFlowCreate,
-    db: Session = Depends(get_db)
-):
+
+@app.put("/configs/{config_id}/flows/{flow_id}",
+         response_model=schemas.ConversationFlow)
+async def update_conversation_flow(config_id: int,
+                                   flow_id: int,
+                                   flow_update: schemas.ConversationFlowCreate,
+                                   db: Session = Depends(get_db)):
     """Update an existing conversation flow"""
     print(f"\n[API] Updating flow {flow_id} for config {config_id}")
     print(f"[API] Update data received: {flow_update.model_dump_json()}")
@@ -118,8 +126,7 @@ async def update_conversation_flow(
         # First check if the flow exists and belongs to the config
         db_flow = db.query(models.ConversationFlow).filter(
             models.ConversationFlow.id == flow_id,
-            models.ConversationFlow.config_id == config_id
-        ).first()
+            models.ConversationFlow.config_id == config_id).first()
 
         if not db_flow:
             raise HTTPException(status_code=404, detail="Flow not found")
@@ -138,6 +145,7 @@ async def update_conversation_flow(
         print(f"[API] Error updating flow: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/videos")
 async def get_available_videos():
@@ -160,23 +168,30 @@ async def get_available_videos():
         return videos
     except Exception as e:
         print(f"[Videos] Error scanning directory: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error scanning videos directory: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error scanning videos directory: {str(e)}")
+
 
 @app.get("/api/config/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
     """Get the active configuration (first one by ID)"""
     print("\n[API] Fetching active configuration")
-    config = db.query(models.configurations).order_by(models.configurations.id.asc()).first()
+    config = db.query(models.Configurations).order_by(
+        models.Configurations.id.asc()).first()
     print(f"[API] Query result: {config}")
     if not config:
-        raise HTTPException(status_code=404, detail="No active configuration found")
+        raise HTTPException(status_code=404,
+                            detail="No active configuration found")
     print(f"[API] Found active config: {config.id} - {config.page_title}")
     return config
+
 
 class ChatRequest(BaseModel):
     systemPrompt: str
     agentQuestion: str
     userMessage: str
+
 
 @app.post("/chat")
 async def process_chat(request: ChatRequest):
@@ -187,18 +202,23 @@ async def process_chat(request: ChatRequest):
         print(f"[API] Agent question: {request.agentQuestion}")
         print(f"[API] User message: {request.userMessage}")
 
-        messages = [
-            {"role": "system", "content": request.systemPrompt},
-            {"role": "assistant", "content": request.agentQuestion},
-            {"role": "user", "content": request.userMessage}
-        ]
+        messages = [{
+            "role": "system",
+            "content": request.systemPrompt
+        }, {
+            "role": "assistant",
+            "content": request.agentQuestion
+        }, {
+            "role": "user",
+            "content": request.userMessage
+        }]
 
         response = await openai.chat.completions.create(
-            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            model=
+            "gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
             messages=messages,
             max_tokens=50,
-            temperature=0
-        )
+            temperature=0)
 
         ai_response = response.choices[0].message.content
         print(f"[API] OpenAI response: {ai_response}")
@@ -208,6 +228,7 @@ async def process_chat(request: ChatRequest):
     except Exception as e:
         print(f"[API] Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
