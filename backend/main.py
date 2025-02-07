@@ -11,6 +11,8 @@ from typing import List
 from . import models, schemas
 from .database import engine, get_db
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+import json
 
 # Load environment variables
 load_dotenv()
@@ -165,6 +167,42 @@ async def get_active_config(db: Session = Depends(get_db)):
     if not config:
         raise HTTPException(status_code=404, detail="No active configuration found")
     return config
+
+class ChatRequest(BaseModel):
+    systemPrompt: str
+    agentQuestion: str
+    userMessage: str
+
+@app.post("/chat")
+async def process_chat(request: ChatRequest):
+    """Process chat message and determine PASS/FAIL response"""
+    try:
+        print(f"\n[API] Processing chat message")
+        print(f"[API] System prompt: {request.systemPrompt}")
+        print(f"[API] Agent question: {request.agentQuestion}")
+        print(f"[API] User message: {request.userMessage}")
+
+        messages = [
+            {"role": "system", "content": request.systemPrompt},
+            {"role": "assistant", "content": request.agentQuestion},
+            {"role": "user", "content": request.userMessage}
+        ]
+
+        response = await openai.chat.completions.create(
+            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            messages=messages,
+            max_tokens=50,
+            temperature=0
+        )
+
+        ai_response = response.choices[0].message.content
+        print(f"[API] OpenAI response: {ai_response}")
+
+        return {"response": ai_response}
+
+    except Exception as e:
+        print(f"[API] Error processing chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
