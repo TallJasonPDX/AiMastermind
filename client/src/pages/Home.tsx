@@ -13,6 +13,15 @@ export default function Home() {
   const [currentFlow, setCurrentFlow] = useState<ConversationFlow | null>(null);
   const [isInputEnabled, setIsInputEnabled] = useState(false);
 
+  // Check if audio was previously confirmed
+  useEffect(() => {
+    const audioConfirmed = localStorage.getItem('audioConfirmed');
+    if (audioConfirmed) {
+      setShowAudioModal(false);
+      setAudioEnabled(true);
+    }
+  }, []);
+
   // Get config ID from URL or use null to fetch default
   const searchParams = new URLSearchParams(window.location.search);
   const configId = searchParams.get('id');
@@ -47,6 +56,7 @@ export default function Home() {
         throw new Error('Failed to fetch flows');
       }
       const data = await response.json();
+      console.log('[Home] Fetched flows:', data);
       return data.sort((a: ConversationFlow, b: ConversationFlow) => a.order - b.order);
     },
     enabled: !!config?.id
@@ -55,11 +65,13 @@ export default function Home() {
   // Initialize with first flow when flows are loaded
   useEffect(() => {
     if (flows?.length && !currentFlow) {
-      setCurrentFlow(flows[0]);
+      const firstFlow = flows[0];
+      console.log('[Home] Setting initial flow:', firstFlow);
+      setCurrentFlow(firstFlow);
       // Reset input state for new flow
       setIsInputEnabled(false);
-      if (flows[0].inputDelay > 0) {
-        setTimeout(() => setIsInputEnabled(true), flows[0].inputDelay * 1000);
+      if (firstFlow.inputDelay > 0) {
+        setTimeout(() => setIsInputEnabled(true), firstFlow.inputDelay * 1000);
       } else {
         setIsInputEnabled(true);
       }
@@ -96,6 +108,7 @@ export default function Home() {
 
       const nextFlow = flows?.find(f => f.order === nextFlowOrder);
       if (nextFlow) {
+        console.log('[Home] Moving to next flow:', nextFlow);
         setCurrentFlow(nextFlow);
         setIsInputEnabled(false);
         if (nextFlow.inputDelay > 0) {
@@ -108,6 +121,12 @@ export default function Home() {
       console.error('Error processing response:', error);
     }
   };
+
+  console.log('[Home] Render state:', {
+    currentFlow,
+    shouldShowChat: !currentFlow?.videoOnly && currentFlow?.systemPrompt,
+    isInputEnabled
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground">

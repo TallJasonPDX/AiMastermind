@@ -99,6 +99,8 @@ async def get_conversation_flows(config_id: int, db: Session = Depends(get_db)):
         models.ConversationFlow.config_id == config_id
     ).order_by(models.ConversationFlow.order).all()
     print(f"[API] Found {len(flows)} flows")
+    for flow in flows:
+        print(f"[API] Flow {flow.id}: order={flow.order}, video_only={flow.video_only}")
     return flows
 
 @app.put("/configs/{config_id}/flows/{flow_id}", response_model=schemas.ConversationFlow)
