@@ -20,32 +20,30 @@ interface ChatResponse {
 
 interface ChatInterfaceProps {
   configId?: number;
-  isAudioEnabled: boolean;
+  isEnabled: boolean;
+  onSubmit: (message: string) => void;
 }
 
-export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) {
+export function ChatInterface({ configId, isEnabled, onSubmit }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const queryClient = useQueryClient();
   const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
-  
+
   useEffect(() => {
-    // Reset chat response when component mounts
+    // Reset chat response when component mounts or configId changes
     setChatResponse(null);
   }, [configId]);
 
-  const sendMessage = useMutation({
-    mutationFn: async (content: string) => {
-      const res = await apiRequest('POST', '/api/chat', {
-        configId,
-        message: content,
-      });
-      return res.json() as Promise<ChatResponse>;
-    },
-    onSuccess: (data) => {
+  const handleSubmit = async () => {
+    if (!message.trim() || !isEnabled) return;
+
+    try {
+      onSubmit(message);
       setMessage('');
-      setChatResponse(data);
-    },
-  });
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   return (
     <div className="flex flex-col space-y-2">
@@ -71,10 +69,11 @@ export function ChatInterface({ configId, isAudioEnabled }: ChatInterfaceProps) 
           onChange={(e) => setMessage(e.target.value)}
           className="resize-none"
           rows={2}
+          disabled={!isEnabled}
         />
         <Button
-          onClick={() => sendMessage.mutate(message)}
-          disabled={!message.trim() || sendMessage.isPending || !isAudioEnabled}
+          onClick={handleSubmit}
+          disabled={!message.trim() || !isEnabled}
           size="icon"
           className="h-auto"
         >
