@@ -162,10 +162,12 @@ async def get_available_videos():
 
 @app.get("/config/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
-    """Get the active configuration"""
-    config = db.query(models.Config).first()
+    """Get the active configuration (first one by ID)"""
+    print("\n[API] Fetching active configuration")
+    config = db.query(models.Config).order_by(models.Config.id.asc()).first()
     if not config:
         raise HTTPException(status_code=404, detail="No active configuration found")
+    print(f"[API] Found active config: {config.id} - {config.page_title}")
     return config
 
 class ChatRequest(BaseModel):
