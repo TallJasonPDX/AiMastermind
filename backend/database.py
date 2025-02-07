@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = os.getenv("REMOTE_DATABASE_URL", os.getenv("DATABASE_URL"))
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 if not SQLALCHEMY_DATABASE_URL:
-    raise ValueError("Neither REMOTE_DATABASE_URL nor DATABASE_URL environment variable is set")
+    raise ValueError("DATABASE_URL environment variable is not set")
 
 # Create SQLAlchemy engine with proper PostgreSQL URL handling
 engine = create_engine(
