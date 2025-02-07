@@ -28,7 +28,7 @@ class ConversationFlow(Base):
     __tablename__ = "conversation_flows"
 
     id = Column(Integer, primary_key=True, index=True)
-    config_id = Column(Integer, ForeignKey("configs.id"), nullable=False)
+    config_id = Column(Integer, ForeignKey("configurations.id"), nullable=False)
     order = Column(Integer, nullable=False)
     video_filename = Column(String, nullable=False)
     system_prompt = Column(String, nullable=False)
