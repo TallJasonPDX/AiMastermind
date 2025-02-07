@@ -162,11 +162,12 @@ async def get_available_videos():
         print(f"[Videos] Error scanning directory: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error scanning videos directory: {str(e)}")
 
-@app.get("/config/active", response_model=schemas.Config)
+@app.get("/api/config/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
     """Get the active configuration (first one by ID)"""
     print("\n[API] Fetching active configuration")
     config = db.query(models.Config).order_by(models.Config.id.asc()).first()
+    print(f"[API] Query result: {config}")
     if not config:
         raise HTTPException(status_code=404, detail="No active configuration found")
     print(f"[API] Found active config: {config.id} - {config.page_title}")
