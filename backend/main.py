@@ -173,7 +173,7 @@ async def get_available_videos():
             detail=f"Error scanning videos directory: {str(e)}")
 
 
-@app.get("/api/config/active", response_model=schemas.Config)
+@app.get("/config/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
     """Get the active configuration (first one by ID)"""
     print("\n[API] Fetching active configuration")
