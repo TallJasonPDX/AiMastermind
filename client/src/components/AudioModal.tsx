@@ -14,8 +14,6 @@ export function AudioModal({ isOpen, onConfirm, onExit }: AudioModalProps) {
   const queryClient = useQueryClient();
 
   const handleConfirm = () => {
-    sessionStorage.setItem('audioConfirmed', 'true');
-    queryClient.setQueryData(['audioConfirmed'], true);
     onConfirm();
   };
 

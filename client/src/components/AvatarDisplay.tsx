@@ -13,9 +13,12 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
   const hasInitialized = useRef<boolean>(false);
 
   useEffect(() => {
-    if (videoRef.current && !hasInitialized.current) {
+    if (videoRef.current && !hasInitialized.current && isAudioEnabled) {
       hasInitialized.current = true;
       console.log('[AvatarDisplay] Initializing video for first time');
+      videoRef.current.play().catch(e => 
+        console.error('[AvatarDisplay] Autoplay failed:', e)
+      );
     }
 
     return () => {
@@ -25,7 +28,7 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
       }
       hasInitialized.current = false;
     };
-  }, [videoFilename]);
+  }, [videoFilename, isAudioEnabled]);
 
   console.log('[AvatarDisplay] Rendering with props:', { videoFilename, isAudioEnabled });
 

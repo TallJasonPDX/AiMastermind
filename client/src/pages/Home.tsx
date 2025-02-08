@@ -11,15 +11,14 @@ export default function Home() {
   const [currentFlow, setCurrentFlow] = useState<ConversationFlow | null>(null);
   const [isInputEnabled, setIsInputEnabled] = useState(false);
   
-  const audioConfirmed = queryClient.getQueryData(['audioConfirmed']) || sessionStorage.getItem('audioConfirmed');
-  const [showAudioModal, setShowAudioModal] = useState(!audioConfirmed);
-  const [audioEnabled, setAudioEnabled] = useState(!!audioConfirmed);
+  const [showAudioModal, setShowAudioModal] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
+  // Reset audio confirmation on mount
   useEffect(() => {
-    if (audioConfirmed) {
-      queryClient.setQueryData(['audioConfirmed'], true);
-    }
-  }, [audioConfirmed, queryClient]);
+    queryClient.setQueryData(['audioConfirmed'], false);
+    sessionStorage.removeItem('audioConfirmed');
+  }, []);
 
   // Get config ID from URL or use null to fetch default
   const searchParams = new URLSearchParams(window.location.search);
