@@ -44,5 +44,5 @@ class ConversationFlow(Base):
                         nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Add relationship to Config
-    config = relationship("Config", back_populates="conversation_flows")
+    # Add relationship to Configurations
+    config = relationship("Configurations", back_populates="conversation_flows")

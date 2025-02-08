@@ -12,9 +12,9 @@ export default function Config() {
   const [formData, setFormData] = useState<Partial<Config>>({});
 
   const { data: configs } = useQuery<Config[]>({
-    queryKey: ['configs'],
+    queryKey: ['configurations'],
     queryFn: async () => {
-      const response = await fetch('/api/configs');
+      const response = await fetch('/api/configurations');
       return response.json();
     }
   });
