@@ -183,8 +183,23 @@ async def get_active_config(db: Session = Depends(get_db)):
     if not config:
         raise HTTPException(status_code=404,
                             detail="No active configuration found")
+    
+    # Ensure proper field mapping
+    config_dict = {
+        "id": config.id,
+        "page_title": config.page_title,
+        "heygen_scene_id": config.heygen_scene_id,
+        "voice_id": config.voice_id,
+        "openai_agent_config": {
+            "assistant_id": config.openai_agent_config["assistantId"]
+        } if config.openai_agent_config else None,
+        "pass_response": config.pass_response,
+        "fail_response": config.fail_response,
+        "created_at": config.created_at,
+        "updated_at": config.updated_at
+    }
     print(f"[API] Found active config: {config.id} - {config.page_title}")
-    return config
+    return config_dict
 
 
 class ChatRequest(BaseModel):
