@@ -1,3 +1,5 @@
+
+import { useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -7,6 +9,24 @@ interface AvatarDisplayProps {
 }
 
 export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hasInitialized = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (videoRef.current && !hasInitialized.current) {
+      hasInitialized.current = true;
+      console.log('[AvatarDisplay] Initializing video for first time');
+    }
+
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+      hasInitialized.current = false;
+    };
+  }, [videoFilename]);
+
   console.log('[AvatarDisplay] Rendering with props:', { videoFilename, isAudioEnabled });
 
   if (!videoFilename) {
@@ -24,6 +44,7 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
   return (
     <Card className="w-full aspect-video bg-black rounded-lg overflow-hidden relative">
       <video
+        ref={videoRef}
         className="w-full h-full absolute inset-0"
         controls
         autoPlay

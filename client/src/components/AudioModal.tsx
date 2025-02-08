@@ -1,6 +1,8 @@
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { VolumeIcon, BookmarkIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AudioModalProps {
   isOpen: boolean;
@@ -9,8 +11,11 @@ interface AudioModalProps {
 }
 
 export function AudioModal({ isOpen, onConfirm, onExit }: AudioModalProps) {
+  const queryClient = useQueryClient();
+
   const handleConfirm = () => {
     sessionStorage.setItem('audioConfirmed', 'true');
+    queryClient.setQueryData(['audioConfirmed'], true);
     onConfirm();
   };
 

@@ -8,19 +8,18 @@ import type { Config, ConversationFlow } from '@/lib/types';
 
 export default function Home() {
   const queryClient = useQueryClient();
-  const [showAudioModal, setShowAudioModal] = useState(true);
-  const [audioEnabled, setAudioEnabled] = useState(false);
   const [currentFlow, setCurrentFlow] = useState<ConversationFlow | null>(null);
   const [isInputEnabled, setIsInputEnabled] = useState(false);
+  
+  const audioConfirmed = queryClient.getQueryData(['audioConfirmed']) || sessionStorage.getItem('audioConfirmed');
+  const [showAudioModal, setShowAudioModal] = useState(!audioConfirmed);
+  const [audioEnabled, setAudioEnabled] = useState(!!audioConfirmed);
 
-  // Check if audio was previously confirmed
   useEffect(() => {
-    const audioConfirmed = sessionStorage.getItem('audioConfirmed');
     if (audioConfirmed) {
-      setShowAudioModal(false);
-      setAudioEnabled(true);
+      queryClient.setQueryData(['audioConfirmed'], true);
     }
-  }, []);
+  }, [audioConfirmed, queryClient]);
 
   // Get config ID from URL or use null to fetch default
   const searchParams = new URLSearchParams(window.location.search);
