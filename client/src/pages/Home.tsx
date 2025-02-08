@@ -12,15 +12,17 @@ export default function Home() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [currentFlow, setCurrentFlow] = useState<ConversationFlow | null>(null);
   const [isInputEnabled, setIsInputEnabled] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   // Check if audio was previously confirmed
   useEffect(() => {
     const audioConfirmed = localStorage.getItem('audioConfirmed');
-    if (audioConfirmed) {
+    if (audioConfirmed && !hasInteracted) {
       setShowAudioModal(false);
       setAudioEnabled(true);
+      setHasInteracted(true);
     }
-  }, []);
+  }, [hasInteracted]);
 
   // Get config ID from URL or use null to fetch default
   const searchParams = new URLSearchParams(window.location.search);

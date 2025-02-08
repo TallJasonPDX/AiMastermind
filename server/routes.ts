@@ -13,6 +13,11 @@ export function registerRoutes(app: Express): Server {
   const router = express.Router();
   app.use(router); // Mount the router
 
+  // Handle root route
+  app.get('/', (_req, res) => {
+    res.sendFile('index.html', { root: './client' });
+  });
+
   // Configure FastAPI proxy with explicit middleware settings
   app.use(express.json()); // Ensure JSON body parsing is enabled
 
