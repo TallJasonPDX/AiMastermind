@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { VolumeIcon, BookmarkIcon } from "lucide-react";
 
@@ -9,6 +9,11 @@ interface AudioModalProps {
 }
 
 export function AudioModal({ isOpen, onConfirm, onExit }: AudioModalProps) {
+  const handleConfirm = () => {
+    sessionStorage.setItem('audioConfirmed', 'true');
+    onConfirm();
+  };
+
   return (
     <Dialog open={isOpen}>
       <DialogContent className="sm:max-w-md">
@@ -31,7 +36,7 @@ export function AudioModal({ isOpen, onConfirm, onExit }: AudioModalProps) {
             Bookmark & Exit
           </Button>
           <Button 
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="w-full sm:w-auto"
           >
             Confirm Audio Enabled

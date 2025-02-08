@@ -15,7 +15,7 @@ export default function Home() {
 
   // Check if audio was previously confirmed
   useEffect(() => {
-    const audioConfirmed = localStorage.getItem('audioConfirmed');
+    const audioConfirmed = sessionStorage.getItem('audioConfirmed');
     if (audioConfirmed) {
       setShowAudioModal(false);
       setAudioEnabled(true);
