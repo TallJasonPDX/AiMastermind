@@ -13,17 +13,17 @@ export function registerRoutes(app: Express): Server {
   const router = express.Router();
   app.use(router); // Mount the router
 
-  // Handle root route and static files based on environment
+  // Handle static files and SPA routing
   if (process.env.NODE_ENV === 'production') {
-    app.get('/', (_req, res) => {
+    app.use(express.static('./client/dist'));
+    app.get('*', (_req, res) => {
       res.sendFile('index.html', { root: './client/dist' });
     });
-    app.use(express.static('./client/dist'));
   } else {
-    app.get('/', (_req, res) => {
+    app.use(express.static('./client'));
+    app.get('*', (_req, res) => {
       res.sendFile('index.html', { root: './client' });
     });
-    app.use(express.static('./client'));
   }
 
   // Configure FastAPI proxy with explicit middleware settings
