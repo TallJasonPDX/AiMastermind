@@ -202,18 +202,19 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/config/active", async (_req, res) => {
     try {
       console.log("[Config/active] Fetching active configuration");
-      const response = await fetch("http://localhost:8000/api/config/active");
-      console.log("[Config/active] FastAPI response status:", response.status);
+      // Get the first config from the database
+      const configs = await db.query.configurations.findMany({
+        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
+        limit: 1
+      });
 
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[Config/active] FastAPI error:", error);
-        return res.status(response.status).json({ error: "Failed to fetch active configuration" });
+      if (!configs || configs.length === 0) {
+        console.error("[Config/active] No configurations found");
+        return res.status(404).json({ error: "No active configuration found" });
       }
 
-      const config = await response.json();
-      console.log("[Config/active] Received config:", config);
-      res.json(config);
+      console.log("[Config/active] Received config:", configs[0]);
+      res.json(configs[0]);
     } catch (error) {
       console.error("[Config/active] Error:", error);
       res.status(500).json({ error: "Failed to fetch active configuration" });

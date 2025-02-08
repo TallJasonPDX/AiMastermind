@@ -32,20 +32,13 @@ export default function Home() {
   const { data: config, error: configError } = useQuery<Config>({
     queryKey: ['/api/config', configId],
     queryFn: async () => {
-      if (!configId) {
-        const response = await fetch('/api/config/active');
-        if (!response.ok) {
-          throw new Error('Failed to fetch active config');
-        }
-        return response.json();
-      }
-
-      const response = await fetch(`/api/config/${configId}`);
+      const response = await fetch('/api/config/active');
       if (!response.ok) {
-        throw new Error('Failed to fetch config');
+        throw new Error('Failed to fetch active config');
       }
       return response.json();
-    }
+    },
+    retry: 3
   });
 
   // Fetch conversation flows for the config
