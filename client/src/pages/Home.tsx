@@ -86,9 +86,8 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemPrompt: currentFlow.systemPrompt,
-          agentQuestion: currentFlow.agentQuestion,
-          userMessage: message,
+          configId: config.id,
+          message: message
         }),
       });
 
@@ -97,24 +96,25 @@ export default function Home() {
       }
 
       const data = await response.json();
-      const isPassed = data.response.toLowerCase().includes('pass');
+      console.log('[Home] Chat response:', data);
 
-      // Find next flow based on pass/fail
-      const nextFlowOrder = isPassed ? currentFlow.passNext : currentFlow.failNext;
-      if (nextFlowOrder === null || nextFlowOrder === undefined) {
-        setCurrentFlow(null); // End of conversation
-        return;
-      }
+      if (data.status === 'pass' || data.status === 'fail') {
+        const nextFlowOrder = data.status === 'pass' ? currentFlow.passNext : currentFlow.failNext;
+        if (nextFlowOrder === null || nextFlowOrder === undefined) {
+          setCurrentFlow(null); // End of conversation
+          return;
+        }
 
-      const nextFlow = flows?.find(f => f.order === nextFlowOrder);
-      if (nextFlow) {
-        console.log('[Home] Moving to next flow:', nextFlow);
-        setCurrentFlow(nextFlow);
-        setIsInputEnabled(false);
-        if (nextFlow.inputDelay > 0) {
-          setTimeout(() => setIsInputEnabled(true), nextFlow.inputDelay * 1000);
-        } else {
-          setIsInputEnabled(true);
+        const nextFlow = flows?.find(f => f.order === nextFlowOrder);
+        if (nextFlow) {
+          console.log('[Home] Moving to next flow:', nextFlow);
+          setCurrentFlow(nextFlow);
+          setIsInputEnabled(false);
+          if (nextFlow.inputDelay > 0) {
+            setTimeout(() => setIsInputEnabled(true), nextFlow.inputDelay * 1000);
+          } else {
+            setIsInputEnabled(true);
+          }
         }
       }
     } catch (error) {
