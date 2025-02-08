@@ -29,6 +29,13 @@ if not HEYGEN_API_KEY:
 # Create FastAPI app instance with debug mode
 app = FastAPI(title="AI Landing Page Generator", debug=True)
 
+# Mount static files
+from fastapi.staticfiles import StaticFiles
+import os
+
+client_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "client")
+app.mount("/", StaticFiles(directory=client_path, html=True), name="client")
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
