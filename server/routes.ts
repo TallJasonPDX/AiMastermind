@@ -13,19 +13,6 @@ export function registerRoutes(app: Express): Server {
   const router = express.Router();
   app.use(router); // Mount the router
 
-  // Handle static files and SPA routing
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static('./client/dist'));
-    app.get('*', (_req, res) => {
-      res.sendFile('index.html', { root: './client/dist' });
-    });
-  } else {
-    app.use(express.static('./client'));
-    app.get('*', (_req, res) => {
-      res.sendFile('index.html', { root: './client' });
-    });
-  }
-
   // Configure FastAPI proxy with explicit middleware settings
   app.use(express.json()); // Ensure JSON body parsing is enabled
 
@@ -202,19 +189,18 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/config/active", async (_req, res) => {
     try {
       console.log("[Config/active] Fetching active configuration");
-      // Get the first config from the database
-      const configs = await db.query.configurations.findMany({
-        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
-        limit: 1
-      });
+      const response = await fetch("http://localhost:8000/api/config/active");
+      console.log("[Config/active] FastAPI response status:", response.status);
 
-      if (!configs || configs.length === 0) {
-        console.error("[Config/active] No configurations found");
-        return res.status(404).json({ error: "No active configuration found" });
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("[Config/active] FastAPI error:", error);
+        return res.status(response.status).json({ error: "Failed to fetch active configuration" });
       }
 
-      console.log("[Config/active] Received config:", configs[0]);
-      res.json(configs[0]);
+      const config = await response.json();
+      console.log("[Config/active] Received config:", config);
+      res.json(config);
     } catch (error) {
       console.error("[Config/active] Error:", error);
       res.status(500).json({ error: "Failed to fetch active configuration" });

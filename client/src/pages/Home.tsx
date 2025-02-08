@@ -12,17 +12,15 @@ export default function Home() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [currentFlow, setCurrentFlow] = useState<ConversationFlow | null>(null);
   const [isInputEnabled, setIsInputEnabled] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
 
   // Check if audio was previously confirmed
   useEffect(() => {
     const audioConfirmed = localStorage.getItem('audioConfirmed');
-    if (audioConfirmed && !hasInteracted) {
+    if (audioConfirmed) {
       setShowAudioModal(false);
       setAudioEnabled(true);
-      setHasInteracted(true);
     }
-  }, [hasInteracted]);
+  }, []);
 
   // Get config ID from URL or use null to fetch default
   const searchParams = new URLSearchParams(window.location.search);
@@ -32,13 +30,20 @@ export default function Home() {
   const { data: config, error: configError } = useQuery<Config>({
     queryKey: ['/api/config', configId],
     queryFn: async () => {
-      const response = await fetch('/api/config/active');
+      if (!configId) {
+        const response = await fetch('/api/config/active');
+        if (!response.ok) {
+          throw new Error('Failed to fetch active config');
+        }
+        return response.json();
+      }
+
+      const response = await fetch(`/api/config/${configId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch active config');
+        throw new Error('Failed to fetch config');
       }
       return response.json();
-    },
-    retry: 3
+    }
   });
 
   // Fetch conversation flows for the config
