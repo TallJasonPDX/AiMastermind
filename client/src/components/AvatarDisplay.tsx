@@ -24,9 +24,17 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
   return (
     <Card className="w-full aspect-video bg-black rounded-lg overflow-hidden relative">
       <video
+        ref={(el) => {
+          if (el) {
+            el.load(); // Force reload when src changes
+            const playPromise = el.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(e => console.error('[AvatarDisplay] Playback error:', e));
+            }
+          }
+        }}
         className="w-full h-full absolute inset-0"
         controls
-        autoPlay
         playsInline
         src={`/videos/${videoFilename}`}
         onError={(e) => console.error('[AvatarDisplay] Video loading error:', e)}
