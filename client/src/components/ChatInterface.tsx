@@ -22,9 +22,10 @@ interface ChatInterfaceProps {
   configId?: number;
   isEnabled: boolean;
   onSubmit: (message: string) => void;
+  agentQuestion?: string;
 }
 
-export function ChatInterface({ configId, isEnabled, onSubmit }: ChatInterfaceProps) {
+export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const queryClient = useQueryClient();
   const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
@@ -54,11 +55,11 @@ export function ChatInterface({ configId, isEnabled, onSubmit }: ChatInterfacePr
             <p className="text-sm text-muted-foreground mb-1">AI Response:</p>
             <p className="whitespace-pre-wrap text-sm">{chatResponse.response}</p>
           </div>
-        ) : (
+        ) : isEnabled && agentQuestion ? (
           <div className="text-center text-muted-foreground text-sm py-2">
-            No messages yet. Start a conversation!
+            {agentQuestion}
           </div>
-        )}
+        ) : null}
       </ScrollArea>
 
       {/* Message Input Area */}

@@ -159,6 +159,7 @@ export default function Home() {
               isEnabled={isInputEnabled}
               onSubmit={handleUserResponse}
               configId={config?.id}
+              agentQuestion={currentFlow?.agentQuestion}
             />
           )}
           {currentFlow?.showForm && (
