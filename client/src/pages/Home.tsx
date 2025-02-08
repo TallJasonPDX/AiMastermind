@@ -137,6 +137,9 @@ export default function Home() {
           setAudioEnabled(true);
           localStorage.setItem('audioConfirmed', 'true');
         }}
+        onExit={() => {
+          window.location.href = '/';
+        }}
       />
 
       <header className="fixed top-0 w-full bg-card/80 backdrop-blur-sm z-10 border-b">
