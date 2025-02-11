@@ -151,7 +151,8 @@ async def update_conversation_flow(config_id: int,
 async def get_conversations(db: Session = Depends(get_db)):
     """Get all conversations"""
     conversations = db.query(models.Conversations).all()
-    return conversations
+    print(f"[API] Found {len(conversations)} conversations")
+    return [{"id": c.id, "configId": c.config_id, "messages": c.messages, "status": c.status, "createdAt": c.created_at, "updatedAt": c.updated_at} for c in conversations]
 
 @app.get("/videos")
 async def get_available_videos():
