@@ -21,18 +21,22 @@ export default function ConversationFlows() {
   const [editingFlow, setEditingFlow] =
     useState<Partial<ConversationFlow> | null>(null);
 
-  // Fetch configurations
-  const { data: configs } = useQuery<Config[]>({
+  // Fetch configurations with better error handling and logging
+  const { data: configs, error: configError } = useQuery<Config[]>({
     queryKey: ["configs"],
     queryFn: async () => {
-      console.log("Fetching configurations...");
+      console.log("[ConversationFlows] Fetching configurations...");
       const response = await fetch("/api/configurations");
+      console.log("[ConversationFlows] Response status:", response.status);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to fetch configurations");
+        const errorData = await response.text();
+        console.error("[ConversationFlows] Error fetching configurations:", errorData);
+        throw new Error(errorData || "Failed to fetch configurations");
       }
+
       const data = await response.json();
-      console.log("Fetched configurations:", data);
+      console.log("[ConversationFlows] Fetched configurations:", data);
       return data;
     },
   });
