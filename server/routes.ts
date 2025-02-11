@@ -13,7 +13,7 @@ export function registerRoutes(app: Express): Server {
   const router = express.Router();
   app.use(router);
 
-  // Configure FastAPI proxy with explicit middleware settings
+  // Configure middleware
   app.use(express.json());
 
   // Get all configurations
@@ -29,6 +29,30 @@ export function registerRoutes(app: Express): Server {
       console.error("[API] Error fetching configurations:", error);
       res.status(500).json({ 
         error: "Failed to fetch configurations",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Get active configuration (first one by ID)
+  router.get("/api/config/active", async (_req, res) => {
+    try {
+      console.log("[Config/active] Fetching active configuration from database");
+      const config = await db.query.configurations.findFirst({
+        orderBy: (configurations, { asc }) => [asc(configurations.id)],
+      });
+
+      if (!config) {
+        console.log("[Config/active] No active configuration found");
+        return res.status(404).json({ error: "No active configuration found" });
+      }
+
+      console.log("[Config/active] Found active config:", config.id);
+      res.json(config);
+    } catch (error) {
+      console.error("[Config/active] Database error:", error);
+      res.status(500).json({
+        error: "Failed to fetch active configuration",
         details: error instanceof Error ? error.message : String(error)
       });
     }
@@ -153,28 +177,6 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
-
-  // Get active configuration
-  app.get("/api/config/active", async (_req, res) => {
-    try {
-      console.log("[Config/active] Fetching active configuration");
-      const response = await fetch("http://localhost:8000/api/config/active");
-      console.log("[Config/active] FastAPI response status:", response.status);
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[Config/active] FastAPI error:", error);
-        return res.status(response.status).json({ error: "Failed to fetch active configuration" });
-      }
-
-      const config = await response.json();
-      console.log("[Config/active] Received config:", config);
-      res.json(config);
-    } catch (error) {
-      console.error("[Config/active] Error:", error);
-      res.status(500).json({ error: "Failed to fetch active configuration" });
-    }
-  });
 
   // Get specific configuration
   app.get("/api/config/:id", async (req, res) => {
