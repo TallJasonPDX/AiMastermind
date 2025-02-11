@@ -33,7 +33,10 @@ export default function ConversationFlows() {
 
       if (!response.ok) {
         const errorData = await response.text();
-        console.error("[ConversationFlows] Error fetching configurations:", errorData);
+        console.error(
+          "[ConversationFlows] Error fetching configurations:",
+          errorData,
+        );
         throw new Error(errorData || "Failed to fetch configurations");
       }
 
@@ -440,9 +443,7 @@ export default function ConversationFlows() {
             )}
 
             <div className="mt-8 border-t pt-8">
-              <h2 className="text-xl font-semibold mb-4">
-                Conversation Flows
-              </h2>
+              <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
               {flows && flows.length > 0 ? (
                 <div className="space-y-4">
                   {flows
