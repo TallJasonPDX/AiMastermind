@@ -6,14 +6,13 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-// Configure connection pool with proper settings for remote database
+// Configure connection pool with less restrictive settings
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 3, // Reduce max connections to prevent overwhelming remote DB
-  idleTimeoutMillis: 10000, // Close idle clients after 10 seconds
-  connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
-  query_timeout: 5000, // Timeout queries after 5 seconds
-  keepAlive: true // Add TCP keepalive
+  max: 10, // Increase max connections
+  idleTimeoutMillis: 30000, // Increase idle timeout
+  connectionTimeoutMillis: 10000, // Increase connection timeout
+  keepAlive: true // Keep TCP connection alive
 });
 
 // Add error handler for the pool

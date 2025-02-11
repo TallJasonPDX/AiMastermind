@@ -20,23 +20,14 @@ export function registerRoutes(app: Express): Server {
   router.get("/api/configurations", async (_req, res) => {
     console.log("[API] Starting configurations fetch request");
     try {
-      // Add timeout to prevent hanging requests
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database query timeout')), 5000);
+      const configs = await db.query.configurations.findMany({
+        orderBy: (configurations, { desc }) => [desc(configurations.id)],
       });
-
-      const queryPromise = db.query.configurations.findMany({
-        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
-      });
-
-      const configs = await Promise.race([queryPromise, timeoutPromise]);
-
       console.log("[API] Database query completed successfully");
       if (!configs || configs.length === 0) {
         console.log("[API] No configurations found in database");
         return res.json([]);
       }
-
       console.log("[API] Returning configurations:", configs.length);
       return res.json(configs);
     } catch (error) {
@@ -45,8 +36,6 @@ export function registerRoutes(app: Express): Server {
         error: "Failed to fetch configurations",
         details: error instanceof Error ? error.message : String(error)
       });
-    } finally {
-      console.log("[API] Request completed");
     }
   });
 
