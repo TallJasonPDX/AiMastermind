@@ -23,13 +23,13 @@ export default function ConversationFlows() {
 
   // Fetch configurations
   const { data: configs } = useQuery<Config[]>({
-    queryKey: ["configs"],
+    queryKey: ["configurations"],
     queryFn: async () => {
-      const response = await fetch("/api/config/active");
+      const response = await fetch("/api/configurations");
       if (!response.ok) {
         throw new Error('Failed to fetch configurations');
       }
-      return [response.json()];
+      return response.json();
     },
   });
 
