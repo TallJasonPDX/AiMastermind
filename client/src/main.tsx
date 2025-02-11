@@ -1,6 +1,4 @@
-
 import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 
@@ -11,11 +9,9 @@ console.log('[Main] Root element found:', rootElement ? 'yes' : 'no');
 if (rootElement) {
   console.log('[Main] Creating React root');
   const root = createRoot(rootElement);
-  console.log('[Main] Rendering app with BrowserRouter');
+  console.log('[Main] Rendering app');
   root.render(
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <App />
   );
   console.log('[Main] Initial render complete');
 } else {
