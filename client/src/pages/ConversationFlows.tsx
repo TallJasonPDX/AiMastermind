@@ -94,7 +94,7 @@ export default function ConversationFlows() {
   });
 
   // Update the saveFlow mutation
-  const { mutate: saveFlow, isLoading: isSaving } = useMutation({
+  const { mutate: saveFlow, isPending: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       if (!selectedConfigId) {
         throw new Error("No configuration selected");
@@ -428,8 +428,10 @@ export default function ConversationFlows() {
             )}
 
             <div className="mt-8 border-t pt-8">
-              <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
-              {flows?.length > 0 ? (
+              <h2 className="text-xl font-semibold mb-4">
+                Conversation Flows
+              </h2>
+              {flows && flows.length > 0 ? (
                 <div className="space-y-4">
                   {flows
                     .sort((a, b) => a.order - b.order)

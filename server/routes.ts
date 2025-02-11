@@ -173,6 +173,27 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Get all configurations
+  router.get("/api/configs", async (_req, res) => {
+    try {
+      const response = await fetch("http://localhost:8000/api/configurations");
+      console.log("[FastAPI] Configurations response status:", response.status);
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("[FastAPI] Error fetching configurations:", error);
+        return res.status(response.status).json({ error: "Failed to fetch configurations" });
+      }
+
+      const configs = await response.json();
+      console.log(`[FastAPI] Found ${configs.length} configurations`);
+      res.json(configs);
+    } catch (error) {
+      console.error("[FastAPI] Error in /api/configs:", error);
+      res.status(500).json({ error: "Failed to fetch configurations" });
+    }
+  });
+
+  // Get all configurations
   router.get("/api/configurations", async (_req, res) => {
     try {
       const configs = await db.query.configurations.findMany({
