@@ -25,12 +25,15 @@ export default function ConversationFlows() {
   const { data: configs } = useQuery<Config[]>({
     queryKey: ["configs"],
     queryFn: async () => {
-      const response = await fetch("/configs");
+      console.log("Fetching configurations...");
+      const response = await fetch("/api/configurations");
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || "Failed to fetch configurations");
       }
-      return response.json();
+      const data = await response.json();
+      console.log("Fetched configurations:", data);
+      return data;
     },
   });
 
