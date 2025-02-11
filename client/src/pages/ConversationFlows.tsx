@@ -21,9 +21,11 @@ export default function ConversationFlows() {
   const [editingFlow, setEditingFlow] =
     useState<Partial<ConversationFlow> | null>(null);
 
+  console.log("[ConversationFlows] Component mounted");
+
   // Fetch configurations with better error handling and logging
   const { data: configs, error: configError } = useQuery<Config[]>({
-    queryKey: ["configs"],
+    queryKey: ["configurations"],
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching configurations...");
       const response = await fetch("/api/configurations");
@@ -39,6 +41,9 @@ export default function ConversationFlows() {
       console.log("[ConversationFlows] Fetched configurations:", data);
       return data;
     },
+    // Enable the query and set stale time
+    enabled: true,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Fetch conversation flows for selected config
