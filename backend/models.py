@@ -4,19 +4,6 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
-class Conversations(Base):
-    __tablename__ = "conversations"
-
-    id = Column(Integer, primary_key=True, index=True)
-    config_id = Column(Integer, ForeignKey("configurations.id"), nullable=False)
-    messages = Column(JSON, nullable=False, default=list)
-    status = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    config = relationship("Configurations", back_populates="conversations")
-
-
 class Configurations(Base):
     __tablename__ = "configurations"
 
@@ -32,9 +19,9 @@ class Configurations(Base):
                         nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Add relationships
-    conversation_flows = relationship("ConversationFlow", back_populates="config")
-    conversations = relationship("Conversations", back_populates="config")
+    # Add relationship to ConversationFlow
+    conversation_flows = relationship("ConversationFlow",
+                                      back_populates="config")
 
 
 class ConversationFlow(Base):

@@ -29,8 +29,7 @@ export default function ConversationFlows() {
       if (!response.ok) {
         throw new Error('Failed to fetch configurations');
       }
-      const config = await response.json();
-      return [config];
+      return [response.json()];
     },
   });
 
