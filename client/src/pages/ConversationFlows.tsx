@@ -21,32 +21,33 @@ export default function ConversationFlows() {
   const [editingFlow, setEditingFlow] =
     useState<Partial<ConversationFlow> | null>(null);
 
-  console.log("[ConversationFlows] Component mounted");
-
-  // Fetch configurations with better error handling and logging
+  // Fetch configurations with better error handling
   const { data: configs, error: configError } = useQuery<Config[]>({
     queryKey: ["configurations"],
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching configurations...");
-      const response = await fetch("/api/configurations");
-      console.log("[ConversationFlows] Response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error(
-          "[ConversationFlows] Error fetching configurations:",
-          errorData,
-        );
-        throw new Error(errorData || "Failed to fetch configurations");
+      try {
+        const response = await fetch("/api/configurations");
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(
+            "[ConversationFlows] Error response:",
+            response.status,
+            errorText
+          );
+          throw new Error(
+            `Failed to fetch configurations: ${response.status} ${errorText || response.statusText}`
+          );
+        }
+        const data = await response.json();
+        console.log("[ConversationFlows] Fetched configurations:", data);
+        return data;
+      } catch (error) {
+        console.error("[ConversationFlows] Fetch error:", error);
+        throw error;
       }
-
-      const data = await response.json();
-      console.log("[ConversationFlows] Fetched configurations:", data);
-      return data;
     },
-    // Enable the query and set stale time
-    enabled: true,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 30000,
   });
 
   // Fetch conversation flows for selected config
@@ -443,7 +444,9 @@ export default function ConversationFlows() {
             )}
 
             <div className="mt-8 border-t pt-8">
-              <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                Conversation Flows
+              </h2>
               {flows && flows.length > 0 ? (
                 <div className="space-y-4">
                   {flows

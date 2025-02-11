@@ -11,50 +11,31 @@ import { conversationFlows } from "@db/schema";
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
-  app.use(router); // Mount the router
+  app.use(router);
 
   // Configure FastAPI proxy with explicit middleware settings
-  app.use(express.json()); // Ensure JSON body parsing is enabled
+  app.use(express.json());
 
-  const fastApiProxy = createProxyMiddleware({
-    target: "http://localhost:8000",
-    changeOrigin: true,
-    secure: false,
-    pathRewrite: {
-      "^/api": "", // Remove /api prefix when forwarding to FastAPI
-    },
-    logLevel: "debug",
-    onProxyReq: (proxyReq: any, req: any, _res: any) => {
-      if (req.method === "POST" && req.body) {
-        const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader("Content-Type", "application/json");
-        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-      }
-      console.log("[FastAPI Proxy] Forwarding request:", {
-        method: req.method,
-        url: req.url,
-        body: req.body,
+  // Get all configurations
+  router.get("/api/configurations", async (_req, res) => {
+    try {
+      const configs = await db.query.configurations.findMany({
+        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
       });
-    },
-    onProxyRes: (proxyRes: any, req: any, _res: any) => {
-      console.log("[FastAPI Proxy] Response:", {
-        method: req.method,
-        url: req.url,
-        status: proxyRes.statusCode,
+
+      console.log("[API] Found configurations:", configs.length);
+      res.json(configs);
+    } catch (error) {
+      console.error("[API] Error fetching configurations:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch configurations",
+        details: error instanceof Error ? error.message : String(error)
       });
-    },
-    onError: (err: any, _req: any, res: any) => {
-      console.error("[FastAPI Proxy] Error:", err);
-      res.status(500).json({ error: "Failed to connect to backend service" });
-    },
+    }
   });
 
-  // Apply proxy for FastAPI routes
-  app.use("/api", (req, res, next) => {
-    console.log("[FastAPI Route]", req.method, req.url, req.body);
-    return fastApiProxy(req, res, next);
-  });
+  // Remove duplicate /api/configs endpoint
+
 
   // Rest of the routes...
   router.post("/api/heygen/streaming/sessions", async (req, res) => {
@@ -172,39 +153,6 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
-  // Get all configurations
-  router.get("/api/configs", async (_req, res) => {
-    try {
-      const response = await fetch("http://localhost:8000/api/configurations");
-      console.log("[FastAPI] Configurations response status:", response.status);
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[FastAPI] Error fetching configurations:", error);
-        return res.status(response.status).json({ error: "Failed to fetch configurations" });
-      }
-
-      const configs = await response.json();
-      console.log(`[FastAPI] Found ${configs.length} configurations`);
-      res.json(configs);
-    } catch (error) {
-      console.error("[FastAPI] Error in /api/configs:", error);
-      res.status(500).json({ error: "Failed to fetch configurations" });
-    }
-  });
-
-  // Get all configurations
-  router.get("/api/configurations", async (_req, res) => {
-    try {
-      const configs = await db.query.configurations.findMany({
-        orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
-      });
-      res.json(configs);
-    } catch (error) {
-      console.error("Error fetching configurations:", error);
-      res.status(500).json({ error: "Failed to fetch configurations" });
-    }
-  });
 
   // Get active configuration
   app.get("/api/config/active", async (_req, res) => {
@@ -627,7 +575,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Register the router after the proxy middleware
+  // Register the router after all route definitions
   app.use(router);
 
   return httpServer;
