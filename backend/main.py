@@ -59,7 +59,7 @@ async def log_requests(request: Request, call_next):
 
 # Mount videos directory
 videos_path = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "client/src/videos")
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "client", "src", "videos")
 if not os.path.exists(videos_path):
     os.makedirs(videos_path)
 app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
