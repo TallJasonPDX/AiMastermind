@@ -147,6 +147,12 @@ async def update_conversation_flow(config_id: int,
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/conversations")
+async def get_conversations(db: Session = Depends(get_db)):
+    """Get all conversations"""
+    conversations = db.query(models.Conversations).all()
+    return conversations
+
 @app.get("/videos")
 async def get_available_videos():
     """Get list of available video files"""
