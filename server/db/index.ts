@@ -6,18 +6,29 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-// Configure connection pool for remote database
+// Configure connection pool with proper settings for remote database
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 5, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+  max: 3, // Reduce max connections to prevent overwhelming remote DB
+  idleTimeoutMillis: 10000, // Close idle clients after 10 seconds
+  connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
+  query_timeout: 5000, // Timeout queries after 5 seconds
+  keepAlive: true // Add TCP keepalive
 });
 
 // Add error handler for the pool
 pool.on('error', (err) => {
   console.error('Unexpected error on idle database client', err);
-  process.exit(-1);
+  // Don't exit process on connection error, just log it
 });
 
+// Add connection validation
+pool.on('connect', (client) => {
+  console.log('New database client connected');
+  client.on('error', (err) => {
+    console.error('Database client error:', err);
+  });
+});
+
+// Export configured drizzle instance
 export const db = drizzle(pool, { schema });

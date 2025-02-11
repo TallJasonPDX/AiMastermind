@@ -18,28 +18,35 @@ export function registerRoutes(app: Express): Server {
 
   // Get all configurations
   router.get("/api/configurations", async (_req, res) => {
+    console.log("[API] Starting configurations fetch request");
     try {
-      console.log("[API] Attempting to fetch configurations from database");
-      const configs = await db.query.configurations.findMany({
+      // Add timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database query timeout')), 5000);
+      });
+
+      const queryPromise = db.query.configurations.findMany({
         orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
       });
 
-      console.log("[API] Database query completed");
-      console.log("[API] Found configurations:", configs);
+      const configs = await Promise.race([queryPromise, timeoutPromise]);
 
+      console.log("[API] Database query completed successfully");
       if (!configs || configs.length === 0) {
         console.log("[API] No configurations found in database");
         return res.json([]);
       }
 
       console.log("[API] Returning configurations:", configs.length);
-      res.json(configs);
+      return res.json(configs);
     } catch (error) {
       console.error("[API] Error fetching configurations:", error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: "Failed to fetch configurations",
         details: error instanceof Error ? error.message : String(error)
       });
+    } finally {
+      console.log("[API] Request completed");
     }
   });
 
@@ -66,6 +73,7 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
+
 
   // Remove duplicate /api/configs endpoint
 
