@@ -19,11 +19,20 @@ export function registerRoutes(app: Express): Server {
   // Get all configurations
   router.get("/api/configurations", async (_req, res) => {
     try {
+      console.log("[API] Attempting to fetch configurations from database");
       const configs = await db.query.configurations.findMany({
         orderBy: (configurations, { desc }) => [desc(configurations.createdAt)],
       });
 
-      console.log("[API] Found configurations:", configs.length);
+      console.log("[API] Database query completed");
+      console.log("[API] Found configurations:", configs);
+
+      if (!configs || configs.length === 0) {
+        console.log("[API] No configurations found in database");
+        return res.json([]);
+      }
+
+      console.log("[API] Returning configurations:", configs.length);
       res.json(configs);
     } catch (error) {
       console.error("[API] Error fetching configurations:", error);
