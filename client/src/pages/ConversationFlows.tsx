@@ -227,7 +227,7 @@ export default function ConversationFlows() {
             </SelectTrigger>
             <SelectContent>
               {isLoadingConfigs ? (
-                <SelectItem value="" disabled>
+                <SelectItem value="loading-state" disabled>
                   Loading configurations...
                 </SelectItem>
               ) : configs && configs.length > 0 ? (
@@ -237,7 +237,7 @@ export default function ConversationFlows() {
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="" disabled>
+                <SelectItem value="no-configs-state" disabled>
                   No configurations available
                 </SelectItem>
               )}
