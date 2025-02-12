@@ -22,15 +22,18 @@ export default function ConversationFlows() {
     useState<Partial<ConversationFlow> | null>(null);
 
   // Fetch configurations
-  const { data: configs } = useQuery<Config[]>({
+  const { data: configs, isLoading: isLoadingConfigs } = useQuery<Config[]>({
     queryKey: ["configs"],
     queryFn: async () => {
+      console.log("[ConversationFlows] Fetching configurations...");
       const response = await fetch("/api/configs");
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || "Failed to fetch configurations");
       }
-      return response.json();
+      const data = await response.json();
+      console.log("[ConversationFlows] Received configurations:", data);
+      return data;
     },
   });
 
@@ -208,11 +211,21 @@ export default function ConversationFlows() {
               <SelectValue placeholder="Select a configuration" />
             </SelectTrigger>
             <SelectContent>
-              {configs?.map((config) => (
-                <SelectItem key={config.id} value={config.id.toString()}>
-                  {config.pageTitle}
+              {isLoadingConfigs ? (
+                <SelectItem value="loading" disabled>
+                  Loading configurations...
                 </SelectItem>
-              ))}
+              ) : configs && configs.length > 0 ? (
+                configs.map((config) => (
+                  <SelectItem key={config.id} value={config.id.toString()}>
+                    {config.pageTitle}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-configs" disabled>
+                  No configurations available
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
