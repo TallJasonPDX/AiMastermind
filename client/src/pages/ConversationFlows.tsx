@@ -18,11 +18,12 @@ export default function ConversationFlows() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedConfigId, setSelectedConfigId] = useState<number | null>(null);
-  const [editingFlow, setEditingFlow] = useState<Partial<ConversationFlow> | null>(null);
+  const [editingFlow, setEditingFlow] =
+    useState<Partial<ConversationFlow> | null>(null);
 
   // Fetch configurations
   const { data: configs, isLoading: isLoadingConfigs } = useQuery<Config[]>({
-    queryKey: ['/api/configs'],
+    queryKey: ["/api/configs"],
     staleTime: 0,
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching configurations...");
@@ -42,15 +43,18 @@ export default function ConversationFlows() {
         console.log("[ConversationFlows] Setting default config:", data[0].id);
         setSelectedConfigId(data[0].id);
       }
-    }
+    },
   });
 
   // Fetch conversation flows for selected config
   const { data: flows } = useQuery<ConversationFlow[]>({
-    queryKey: ['/api/flows', selectedConfigId],
+    queryKey: ["/api/flows", selectedConfigId],
     queryFn: async () => {
       if (!selectedConfigId) return [];
-      console.log("[ConversationFlows] Fetching flows for config:", selectedConfigId);
+      console.log(
+        "[ConversationFlows] Fetching flows for config:",
+        selectedConfigId,
+      );
       const response = await fetch(`/api/configs/${selectedConfigId}/flows`);
       if (!response.ok) {
         const error = await response.text();
@@ -66,7 +70,7 @@ export default function ConversationFlows() {
 
   // Fetch available videos
   const { data: videos, isLoading: isLoadingVideos } = useQuery<string[]>({
-    queryKey: ['/api/videos'],
+    queryKey: ["/api/videos"],
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching videos...");
       const response = await fetch(`/api/videos`);
@@ -82,18 +86,27 @@ export default function ConversationFlows() {
   const { mutate: deleteFlow } = useMutation({
     mutationFn: async (flowId: number) => {
       if (!selectedConfigId) throw new Error("No configuration selected");
-      const response = await fetch(`/api/configs/${selectedConfigId}/flows/${flowId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/configs/${selectedConfigId}/flows/${flowId}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) throw new Error("Failed to delete flow");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/flows', selectedConfigId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/flows", selectedConfigId],
+      });
       toast({ title: "Success", description: "Flow deleted successfully" });
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -125,7 +138,7 @@ export default function ConversationFlows() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['/api/flows', selectedConfigId],
+        queryKey: ["/api/flows", selectedConfigId],
       });
       setEditingFlow(null);
       toast({
@@ -223,7 +236,7 @@ export default function ConversationFlows() {
     configs,
     selectedConfigId,
     isLoadingConfigs,
-    configsLength: configs?.length
+    configsLength: configs?.length,
   });
 
   return (
@@ -231,24 +244,26 @@ export default function ConversationFlows() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Conversation Flows</h1>
-          <div className="text-xs text-muted-foreground mb-2">
-            Configs loaded: {configs?.length || 0},
-            Selected: {selectedConfigId}
-          </div>
           <div className="w-[300px]">
             <Select
               value={selectedConfigId?.toString() || "placeholder"}
               onValueChange={handleConfigSelect}
             >
               <SelectTrigger disabled={isLoadingConfigs}>
-                <SelectValue placeholder={isLoadingConfigs ? "Loading..." : "Select a configuration"} />
+                <SelectValue
+                  placeholder={
+                    isLoadingConfigs ? "Loading..." : "Select a configuration"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="placeholder" disabled>Choose a configuration</SelectItem>
+                <SelectItem value="placeholder" disabled>
+                  Choose a configuration
+                </SelectItem>
                 {configs && configs.length > 0 ? (
                   configs.map((config) => (
                     <SelectItem key={config.id} value={config.id.toString()}>
-                      {config.pageTitle}
+                      {config.page_title}
                     </SelectItem>
                   ))
                 ) : (
@@ -333,7 +348,7 @@ export default function ConversationFlows() {
                       <label className="block font-medium mb-1 text-red-500">
                         System Prompt *
                       </label>
-                      <Input
+                      <textarea
                         value={editingFlow.systemPrompt || ""}
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
@@ -342,6 +357,7 @@ export default function ConversationFlows() {
                           }))
                         }
                         required
+                        className="border rounded p-2 w-full bg-black text-white"
                       />
                     </div>
                     <div className="col-span-2">
@@ -466,56 +482,74 @@ export default function ConversationFlows() {
               <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
               {flows?.length ? (
                 <div className="space-y-4">
-                  {flows.sort((a, b) => a.order - b.order).map((flow) => (
-                    <Card key={flow.id} className="p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <p className="font-medium text-lg">Step {flow.order}</p>
-                          <p className="text-sm">
-                            <span className="font-medium">Video:</span> {flow.videoFilename}
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium">System Prompt:</span>{" "}
-                            {flow.systemPrompt}
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium">Question:</span>{" "}
-                            {flow.agentQuestion}
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-medium">Next Steps:</span> Pass →{" "}
-                            {flow.passNext || "End"}, Fail → {flow.failNext || "End"}
-                          </p>
-                          {flow.showForm && (
-                            <p className="text-sm">
-                              <span className="font-medium">Form Name:</span>{" "}
-                              {flow.formName}
+                  {flows
+                    .sort((a, b) => a.order - b.order)
+                    .map((flow) => (
+                      <Card
+                        key={flow.id}
+                        className="p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                            <p className="font-medium text-lg">
+                              Step {flow.order}
                             </p>
-                          )}
-                          {flow.videoOnly && (
-                            <p className="text-sm text-blue-600">Video Only Mode</p>
-                          )}
-                          {flow.inputDelay > 0 && (
                             <p className="text-sm">
-                              <span className="font-medium">Input Delay:</span>{" "}
-                              {flow.inputDelay}s
+                              <span className="font-medium">Video:</span>{" "}
+                              {flow.videoFilename}
                             </p>
-                          )}
+                            <p className="text-sm">
+                              <span className="font-medium">
+                                System Prompt:
+                              </span>{" "}
+                              {flow.systemPrompt}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-medium">Question:</span>{" "}
+                              {flow.agentQuestion}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-medium">Next Steps:</span>{" "}
+                              Pass → {flow.passNext || "End"}, Fail →{" "}
+                              {flow.failNext || "End"}
+                            </p>
+                            {flow.showForm && (
+                              <p className="text-sm">
+                                <span className="font-medium">Form Name:</span>{" "}
+                                {flow.formName}
+                              </p>
+                            )}
+                            {flow.videoOnly && (
+                              <p className="text-sm text-blue-600">
+                                Video Only Mode
+                              </p>
+                            )}
+                            {flow.inputDelay > 0 && (
+                              <p className="text-sm">
+                                <span className="font-medium">
+                                  Input Delay:
+                                </span>{" "}
+                                {flow.inputDelay}s
+                              </p>
+                            )}
+                          </div>
+                          <div className="space-x-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleEdit(flow)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDelete(flow.id)}
+                            >
+                              Delete
+                            </Button>
+                          </div>
                         </div>
-                        <div className="space-x-2">
-                          <Button variant="outline" onClick={() => handleEdit(flow)}>
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => handleDelete(flow.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    ))}
                 </div>
               ) : (
                 <p className="text-muted-foreground">

@@ -152,7 +152,7 @@ async def get_available_videos():
     """Get list of available video files"""
     try:
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        video_dir = os.path.join(root_dir, "videos")
+        video_dir = os.path.join(root_dir, "client/videos")
         print(f"[Videos] Scanning directory: {video_dir}")
 
         if not os.path.exists(video_dir):
