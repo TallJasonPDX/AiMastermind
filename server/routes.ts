@@ -177,7 +177,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("[Configs] Fetching all configurations");
       // Forward the request to the FastAPI endpoint that returns all configurations.
-      const response = await fetch("http://localhost:8000/api/configs");
+      const response = await fetch("http://localhost:8000/configs");
       console.log("[Configs] FastAPI response status:", response.status);
 
       if (!response.ok) {
@@ -186,8 +186,21 @@ export function registerRoutes(app: Express): Server {
         return res.status(response.status).json({ error: "Failed to fetch configurations" });
       }
 
-      const configs = await response.json();
-      console.log("[Configs] Received configs:", configs);
+      const rawConfigs = await response.json();
+      // Transform snake_case to camelCase for frontend consumption
+      const configs = rawConfigs.map((config: any) => ({
+        id: config.id,
+        pageTitle: config.page_title,
+        heygenSceneId: config.heygen_scene_id,
+        voiceId: config.voice_id,
+        openaiAgentConfig: config.openai_agent_config,
+        passResponse: config.pass_response,
+        failResponse: config.fail_response,
+        createdAt: config.created_at,
+        updatedAt: config.updated_at
+      }));
+
+      console.log("[Configs] Transformed configs:", configs);
       res.json(configs);
     } catch (error) {
       console.error("[Configs] Error:", error);
