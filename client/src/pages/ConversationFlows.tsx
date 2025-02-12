@@ -23,7 +23,7 @@ export default function ConversationFlows() {
 
   // Fetch configurations
   const { data: configs, isLoading: isLoadingConfigs } = useQuery<Config[]>({
-    queryKey: ["configs"],
+    queryKey: ['/api/configs'],
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching configurations...");
       const response = await fetch("/api/configs");
@@ -35,6 +35,13 @@ export default function ConversationFlows() {
       console.log("[ConversationFlows] Received configurations:", data);
       return data;
     },
+  });
+
+  // Debug output for config state
+  console.log("[ConversationFlows] Current state:", {
+    configsLength: configs?.length,
+    selectedConfigId,
+    isLoadingConfigs
   });
 
   // Fetch conversation flows for selected config
@@ -203,16 +210,24 @@ export default function ConversationFlows() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Conversation Flows</h1>
+          {/* Debug output */}
+          <div className="text-xs text-muted-foreground mb-2">
+            Configs loaded: {configs?.length || 0},
+            Selected: {selectedConfigId}
+          </div>
           <Select
             value={selectedConfigId?.toString()}
-            onValueChange={(value) => setSelectedConfigId(Number(value))}
+            onValueChange={(value) => {
+              console.log("[Select] Selected value:", value);
+              setSelectedConfigId(Number(value));
+            }}
           >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Select a configuration" />
+            <SelectTrigger className="w-[300px]" disabled={isLoadingConfigs}>
+              <SelectValue placeholder={isLoadingConfigs ? "Loading..." : "Select a configuration"} />
             </SelectTrigger>
             <SelectContent>
               {isLoadingConfigs ? (
-                <SelectItem value="loading" disabled>
+                <SelectItem value="" disabled>
                   Loading configurations...
                 </SelectItem>
               ) : configs && configs.length > 0 ? (
@@ -222,7 +237,7 @@ export default function ConversationFlows() {
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="no-configs" disabled>
+                <SelectItem value="" disabled>
                   No configurations available
                 </SelectItem>
               )}
@@ -450,7 +465,7 @@ export default function ConversationFlows() {
                             <span className="font-medium">Question:</span> {flow.agentQuestion}
                           </p>
                           <p className="text-sm">
-                            <span className="font-medium">Next Steps:</span> Pass → {flow.passNext || 'End'}, 
+                            <span className="font-medium">Next Steps:</span> Pass → {flow.passNext || 'End'},
                             Fail → {flow.failNext || 'End'}
                           </p>
                           {flow.showForm && (
