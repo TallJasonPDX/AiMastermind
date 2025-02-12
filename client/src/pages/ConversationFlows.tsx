@@ -41,7 +41,8 @@ export default function ConversationFlows() {
   console.log("[ConversationFlows] Current state:", {
     configsLength: configs?.length,
     selectedConfigId,
-    isLoadingConfigs
+    isLoadingConfigs,
+    configs: configs
   });
 
   // Fetch conversation flows for selected config
