@@ -204,7 +204,7 @@ export default function ConversationFlows() {
   // Update the select handling
   const handleConfigSelect = (value: string) => {
     console.log("[Select] Handling selection. Value:", value);
-    if(value === "placeholder") {
+    if (value === "placeholder") {
       setSelectedConfigId(null);
       return;
     }
@@ -216,6 +216,13 @@ export default function ConversationFlows() {
       setSelectedConfigId(null);
     }
   };
+
+  // Debug output for rendering
+  console.log("[ConversationFlows] Render state:", {
+    configs,
+    selectedConfigId,
+    isLoadingConfigs
+  });
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -236,11 +243,17 @@ export default function ConversationFlows() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="placeholder" disabled>Choose a configuration</SelectItem>
-                {configs?.map((config) => (
-                  <SelectItem key={config.id} value={config.id.toString()}>
-                    {config.pageTitle}
+                {configs && configs.length > 0 ? (
+                  configs.map((config) => (
+                    <SelectItem key={config.id} value={config.id.toString()}>
+                      {config.pageTitle}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-configs" disabled>
+                    No configurations available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
