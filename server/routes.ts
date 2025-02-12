@@ -501,88 +501,67 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  // Send chat message
+  // Send chat message - REPLACED with edited snippet
   app.post("/api/chat", async (req, res) => {
-    const { configId, message } = req.body;
+    const { configId, message, currentFlowOrder } = req.body;
+    if (!configId || !message) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
     try {
-      // Get configuration first
-      const config = await db.query.configurations.findFirst({
-        where: eq(configurations.id, configId),
-      });
+      console.log("[Chat] Forwarding chat request to FastAPI");
+      // Get the current flow data from the request
+      const flows = await fetch(`http://localhost:8000/configs/${configId}/flows`);
+      if (!flows.ok) {
+        throw new Error("Failed to fetch flows");
+      }
+      const flowsData = await flows.json();
+      const currentFlow = flowsData.find((f: any) =>
+        f.order === (currentFlowOrder || 1)
+      );
 
-      if (!config) {
-        return res.status(404).json({ error: "Configuration not found" });
+      if (!currentFlow) {
+        throw new Error("Current flow not found");
       }
 
-      // Get or create conversation
-      let conversation = await db.query.conversations.findFirst({
-        where: eq(conversations.configId, configId),
-        orderBy: (conversations, { desc }) => [desc(conversations.createdAt)],
-      });
-
-      const assistantId = (config.openaiAgentConfig as { assistantId: string })
-        .assistantId;
-      if (!assistantId) {
-        return res.status(500).json({
-          error: "OpenAI Assistant ID not configured in this configuration",
-        });
-      }
-
-      // Initialize messages array
-      const messages: Array<{ role: "user" | "assistant"; content: string }> =
-        (conversation?.messages as typeof messages) || [];
-
-      // Add user message
-      messages.push({
-        role: "user",
-        content: message || "Hey, what's up?",
-      });
-
-      const chatResponse = await processChat(messages, {
-        pageTitle: config.pageTitle,
-        openaiAgentConfig: {
-          assistantId: assistantId,
-          systemPrompt: (config.openaiAgentConfig as { systemPrompt: string })
-            .systemPrompt,
+      // Forward to FastAPI with all required data
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        passResponse: config.passResponse,
-        failResponse: config.failResponse,
+        body: JSON.stringify({
+          systemPrompt: currentFlow.system_prompt,
+          agentQuestion: currentFlow.agent_question,
+          userMessage: message,
+        }),
       });
 
-      // Add assistant response
-      messages.push({
-        role: "assistant",
-        content: chatResponse.response,
-      });
-
-      if (conversation) {
-        await db
-          .update(conversations)
-          .set({
-            messages,
-            status: chatResponse.status,
-            updatedAt: new Date(),
-          })
-          .where(eq(conversations.id, conversation.id));
-      } else {
-        await db.insert(conversations).values({
-          configId,
-          messages,
-          status: chatResponse.status,
-        });
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("[Chat] FastAPI error:", error);
+        return res.status(response.status).json({ error: "Failed to process chat message" });
       }
+
+      const data = await response.json();
+      console.log("[Chat] FastAPI response:", data);
+
+      // Determine next flow based on PASS/FAIL
+      const nextFlowOrder = data.response.toUpperCase().includes("PASS")
+        ? currentFlow.pass_next
+        : currentFlow.fail_next;
 
       res.json({
-        response: chatResponse.response,
-        messages,
-        status: chatResponse.status,
+        response: data.response,
+        status: data.response.toUpperCase().includes("PASS") ? "pass" : "fail",
+        nextFlowOrder
       });
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("[Chat] Error:", error);
       res.status(500).json({ error: "Failed to process chat message" });
     }
   });
+
 
   // Get conversation flows for a configuration
   router.get("/api/configs/:id/flows", async (req, res) => {

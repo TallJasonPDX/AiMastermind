@@ -263,13 +263,13 @@ async def process_chat(request: ChatRequest):
         }]
 
         response = await openai.chat.completions.create(
-            model=
-            "gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            model="gpt-4",
             messages=messages,
             max_tokens=50,
-            temperature=0)
+            temperature=0
+        )
 
-        ai_response = response.choices[0].message.content
+        ai_response = response.choices[0].message.content.strip()
         print(f"[API] OpenAI response: {ai_response}")
 
         return {"response": ai_response}

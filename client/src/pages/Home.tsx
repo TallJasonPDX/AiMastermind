@@ -85,7 +85,8 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           configId: config.id,
-          message: message
+          message: message,
+          currentFlowOrder: currentFlow.order
         }),
       });
 
