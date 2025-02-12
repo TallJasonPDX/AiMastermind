@@ -35,14 +35,13 @@ export default function ConversationFlows() {
       console.log("[ConversationFlows] Received configurations:", data);
       return data;
     },
-  });
-
-  // Debug output for config state
-  console.log("[ConversationFlows] Current state:", {
-    configsLength: configs?.length,
-    selectedConfigId,
-    isLoadingConfigs,
-    configs: configs
+    onSuccess: (data) => {
+      // Set the first config as default if none is selected
+      if (data?.length > 0 && !selectedConfigId) {
+        console.log("[ConversationFlows] Setting default config:", data[0].id);
+        setSelectedConfigId(data[0].id);
+      }
+    }
   });
 
   // Fetch conversation flows for selected config
@@ -202,13 +201,15 @@ export default function ConversationFlows() {
     }
   };
 
-  // Debug the select handling
+  // Update the select handling
   const handleConfigSelect = (value: string) => {
     console.log("[Select] Handling selection. Value:", value);
     const numValue = parseInt(value, 10);
     if (!isNaN(numValue)) {
       setSelectedConfigId(numValue);
       console.log("[Select] Updated selectedConfigId to:", numValue);
+    } else {
+      setSelectedConfigId(null);
     }
   };
 
@@ -223,28 +224,19 @@ export default function ConversationFlows() {
           </div>
           <div className="w-[300px]">
             <Select
-              value={selectedConfigId?.toString()}
+              value={selectedConfigId?.toString() || ""}
               onValueChange={handleConfigSelect}
             >
               <SelectTrigger disabled={isLoadingConfigs}>
                 <SelectValue placeholder={isLoadingConfigs ? "Loading..." : "Select a configuration"} />
               </SelectTrigger>
               <SelectContent>
-                {isLoadingConfigs ? (
-                  <SelectItem value="loading-state" disabled>
-                    Loading configurations...
+                <SelectItem value="" disabled>Choose a configuration</SelectItem>
+                {configs?.map((config) => (
+                  <SelectItem key={config.id} value={config.id.toString()}>
+                    {config.pageTitle}
                   </SelectItem>
-                ) : configs && configs.length > 0 ? (
-                  configs.map((config) => (
-                    <SelectItem key={config.id} value={config.id.toString()}>
-                      {config.pageTitle}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-configs-state" disabled>
-                    No configurations available
-                  </SelectItem>
-                )}
+                ))}
               </SelectContent>
             </Select>
           </div>
