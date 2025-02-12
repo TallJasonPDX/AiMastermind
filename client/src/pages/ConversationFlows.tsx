@@ -23,6 +23,7 @@ export default function ConversationFlows() {
   // Fetch configurations
   const { data: configs, isLoading: isLoadingConfigs } = useQuery<Config[]>({
     queryKey: ['/api/configs'],
+    staleTime: 0,
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching configurations...");
       const response = await fetch("/api/configs");
@@ -37,7 +38,7 @@ export default function ConversationFlows() {
     },
     onSuccess: (data) => {
       // Set the first config as default if none is selected
-      if (data?.length > 0 && !selectedConfigId) {
+      if (data && data.length > 0 && !selectedConfigId) {
         console.log("[ConversationFlows] Setting default config:", data[0].id);
         setSelectedConfigId(data[0].id);
       }
@@ -221,7 +222,8 @@ export default function ConversationFlows() {
   console.log("[ConversationFlows] Render state:", {
     configs,
     selectedConfigId,
-    isLoadingConfigs
+    isLoadingConfigs,
+    configsLength: configs?.length
   });
 
   return (
