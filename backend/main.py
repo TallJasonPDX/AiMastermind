@@ -202,6 +202,40 @@ async def get_active_config(db: Session = Depends(get_db)):
     return config_dict
 
 
+@app.get("/configs", response_model=List[schemas.Config])
+async def get_all_configs(db: Session = Depends(get_db)):
+    """
+    Fetch all configurations from the database.
+    """
+    print("\n[API] Fetching all configurations")
+    configs = db.query(models.Configurations).order_by(
+        models.Configurations.id.asc()).all()
+
+    if not configs:
+        raise HTTPException(status_code=404, detail="No configurations found")
+
+    # Map each configuration to a dictionary (or let FastAPI handle it via your schema)
+    result = []
+    for config in configs:
+        config_dict = {
+            "id": config.id,
+            "page_title": config.page_title,
+            "heygen_scene_id": config.heygen_scene_id,
+            "voice_id": config.voice_id,
+            "openai_agent_config": {
+                "assistant_id": config.openai_agent_config["assistantId"]
+            } if config.openai_agent_config else None,
+            "pass_response": config.pass_response,
+            "fail_response": config.fail_response,
+            "created_at": config.created_at,
+            "updated_at": config.updated_at,
+        }
+        result.append(config_dict)
+
+    print(f"[API] Found {len(result)} configurations")
+    return result
+
+
 class ChatRequest(BaseModel):
     systemPrompt: str
     agentQuestion: str
@@ -244,31 +278,6 @@ async def process_chat(request: ChatRequest):
         print(f"[API] Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@app.get("/api/configurations", response_model=List[schemas.Config])
-async def get_configurations(db: Session = Depends(get_db)):
-    """Get all configurations"""
-    print("\n[API] Fetching all configurations")
-    configs = db.query(models.Configurations).order_by(
-        models.Configurations.id.desc()).all()
-    print(f"[API] Found {len(configs)} configurations")
-
-    configs_list = []
-    for config in configs:
-        config_dict = {
-            "id": config.id,
-            "page_title": config.page_title,
-            "heygen_scene_id": config.heygen_scene_id,
-            "voice_id": config.voice_id,
-            "openai_agent_config": config.openai_agent_config,
-            "pass_response": config.pass_response,
-            "fail_response": config.fail_response,
-            "created_at": config.created_at,
-            "updated_at": config.updated_at
-        }
-        configs_list.append(config_dict)
-
-    return configs_list
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

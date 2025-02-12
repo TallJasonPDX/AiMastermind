@@ -11,61 +11,50 @@ import { conversationFlows } from "@db/schema";
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const router = express.Router();
-  app.use(router);
+  app.use(router); // Mount the router
 
-  // Configure middleware
-  app.use(express.json());
+  // Configure FastAPI proxy with explicit middleware settings
+  app.use(express.json()); // Ensure JSON body parsing is enabled
 
-  // Get all configurations
-  router.get("/api/configurations", async (_req, res) => {
-    console.log("[API] Starting configurations fetch request");
-    try {
-      const configs = await db.query.configurations.findMany({
-        orderBy: (configurations, { desc }) => [desc(configurations.id)],
-      });
-      console.log("[API] Database query completed successfully");
-      if (!configs || configs.length === 0) {
-        console.log("[API] No configurations found in database");
-        return res.json([]);
+  const fastApiProxy = createProxyMiddleware({
+    target: "http://localhost:8000",
+    changeOrigin: true,
+    secure: false,
+    pathRewrite: {
+      "^/api": "", // Remove /api prefix when forwarding to FastAPI
+    },
+    logLevel: "debug",
+    onProxyReq: (proxyReq: any, req: any, _res: any) => {
+      if (req.method === "POST" && req.body) {
+        const bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader("Content-Type", "application/json");
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
       }
-      console.log("[API] Returning configurations:", configs.length);
-      return res.json(configs);
-    } catch (error) {
-      console.error("[API] Error fetching configurations:", error);
-      return res.status(500).json({ 
-        error: "Failed to fetch configurations",
-        details: error instanceof Error ? error.message : String(error)
+      console.log("[FastAPI Proxy] Forwarding request:", {
+        method: req.method,
+        url: req.url,
+        body: req.body,
       });
-    }
+    },
+    onProxyRes: (proxyRes: any, req: any, _res: any) => {
+      console.log("[FastAPI Proxy] Response:", {
+        method: req.method,
+        url: req.url,
+        status: proxyRes.statusCode,
+      });
+    },
+    onError: (err: any, _req: any, res: any) => {
+      console.error("[FastAPI Proxy] Error:", err);
+      res.status(500).json({ error: "Failed to connect to backend service" });
+    },
   });
 
-  // Get active configuration (first one by ID)
-  router.get("/api/config/active", async (_req, res) => {
-    try {
-      console.log("[Config/active] Fetching active configuration from database");
-      const config = await db.query.configurations.findFirst({
-        orderBy: (configurations, { asc }) => [asc(configurations.id)],
-      });
-
-      if (!config) {
-        console.log("[Config/active] No active configuration found");
-        return res.status(404).json({ error: "No active configuration found" });
-      }
-
-      console.log("[Config/active] Found active config:", config.id);
-      res.json(config);
-    } catch (error) {
-      console.error("[Config/active] Database error:", error);
-      res.status(500).json({
-        error: "Failed to fetch active configuration",
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
+  // Apply proxy for FastAPI routes
+  app.use("/api", (req, res, next) => {
+    console.log("[FastAPI Route]", req.method, req.url, req.body);
+    return fastApiProxy(req, res, next);
   });
-
-
-  // Remove duplicate /api/configs endpoint
-
 
   // Rest of the routes...
   router.post("/api/heygen/streaming/sessions", async (req, res) => {
@@ -183,6 +172,50 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Get all configurations
+  app.get("/api/configs", async (_req, res) => {
+    try {
+      console.log("[Configs] Fetching all configurations");
+      // Forward the request to the FastAPI endpoint that returns all configurations.
+      const response = await fetch("http://localhost:8000/api/configs");
+      console.log("[Configs] FastAPI response status:", response.status);
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("[Configs] FastAPI error:", error);
+        return res.status(response.status).json({ error: "Failed to fetch configurations" });
+      }
+
+      const configs = await response.json();
+      console.log("[Configs] Received configs:", configs);
+      res.json(configs);
+    } catch (error) {
+      console.error("[Configs] Error:", error);
+      res.status(500).json({ error: "Failed to fetch configurations" });
+    }
+  });
+
+  // Get active configuration
+  app.get("/api/config/active", async (_req, res) => {
+    try {
+      console.log("[Config/active] Fetching active configuration");
+      const response = await fetch("http://localhost:8000/api/config/active");
+      console.log("[Config/active] FastAPI response status:", response.status);
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("[Config/active] FastAPI error:", error);
+        return res.status(response.status).json({ error: "Failed to fetch active configuration" });
+      }
+
+      const config = await response.json();
+      console.log("[Config/active] Received config:", config);
+      res.json(config);
+    } catch (error) {
+      console.error("[Config/active] Error:", error);
+      res.status(500).json({ error: "Failed to fetch active configuration" });
+    }
+  });
 
   // Get specific configuration
   app.get("/api/config/:id", async (req, res) => {
@@ -583,7 +616,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Register the router after all route definitions
+  // Register the router after the proxy middleware
   app.use(router);
 
   return httpServer;
