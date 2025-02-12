@@ -18,8 +18,7 @@ export default function ConversationFlows() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedConfigId, setSelectedConfigId] = useState<number | null>(null);
-  const [editingFlow, setEditingFlow] =
-    useState<Partial<ConversationFlow> | null>(null);
+  const [editingFlow, setEditingFlow] = useState<Partial<ConversationFlow> | null>(null);
 
   // Fetch configurations
   const { data: configs, isLoading: isLoadingConfigs } = useQuery<Config[]>({
@@ -28,8 +27,9 @@ export default function ConversationFlows() {
       console.log("[ConversationFlows] Fetching configurations...");
       const response = await fetch("/api/configs");
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to fetch configurations");
+        const error = await response.text();
+        console.error("[ConversationFlows] Error fetching configs:", error);
+        throw new Error(error || "Failed to fetch configurations");
       }
       const data = await response.json();
       console.log("[ConversationFlows] Received configurations:", data);
@@ -47,31 +47,33 @@ export default function ConversationFlows() {
 
   // Fetch conversation flows for selected config
   const { data: flows } = useQuery<ConversationFlow[]>({
-    queryKey: ["conversation-flows", selectedConfigId],
+    queryKey: ['/api/flows', selectedConfigId],
     queryFn: async () => {
       if (!selectedConfigId) return [];
-      console.log("Fetching flows...");
+      console.log("[ConversationFlows] Fetching flows for config:", selectedConfigId);
       const response = await fetch(`/api/configs/${selectedConfigId}/flows`);
-      console.log("Flows response status:", response.status);
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to fetch flows");
+        const error = await response.text();
+        console.error("[ConversationFlows] Error fetching flows:", error);
+        throw new Error(error || "Failed to fetch flows");
       }
-      return response.json();
+      const data = await response.json();
+      console.log("[ConversationFlows] Received flows:", data);
+      return data;
     },
     enabled: !!selectedConfigId,
   });
 
   // Fetch available videos
   const { data: videos, isLoading: isLoadingVideos } = useQuery<string[]>({
-    queryKey: ["videos"],
+    queryKey: ['/api/videos'],
     queryFn: async () => {
-      console.log("Fetching videos...");
+      console.log("[ConversationFlows] Fetching videos...");
       const response = await fetch(`/api/videos`);
-      console.log("Videos response status:", response.status);
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to fetch videos");
+        const error = await response.text();
+        console.error("[ConversationFlows] Error fetching videos:", error);
+        throw new Error(error || "Failed to fetch videos");
       }
       return response.json();
     },
@@ -87,7 +89,7 @@ export default function ConversationFlows() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversation-flows", selectedConfigId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/flows', selectedConfigId] });
       toast({ title: "Success", description: "Flow deleted successfully" });
     },
     onError: (error: Error) => {
@@ -95,8 +97,7 @@ export default function ConversationFlows() {
     },
   });
 
-  // Update the saveFlow mutation
-  const { mutate: saveFlow, isLoading: isSaving } = useMutation({
+  const { mutate: saveFlow, isPending: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       if (!selectedConfigId) {
         throw new Error("No configuration selected");
@@ -123,12 +124,9 @@ export default function ConversationFlows() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate and refetch flows
       queryClient.invalidateQueries({
-        queryKey: ["conversation-flows", selectedConfigId],
-        refetchType: 'active',
+        queryKey: ['/api/flows', selectedConfigId],
       });
-      // Reset form and hide it
       setEditingFlow(null);
       toast({
         title: "Success",
@@ -155,7 +153,6 @@ export default function ConversationFlows() {
       return;
     }
 
-    // Validate required fields
     const requiredFields = {
       order: editingFlow.order,
       videoFilename: editingFlow.videoFilename,
@@ -183,7 +180,6 @@ export default function ConversationFlows() {
   };
 
   const handleEdit = (flow: ConversationFlow) => {
-    // Ensure all fields are properly set when editing
     setEditingFlow({
       id: flow.id,
       configId: flow.configId,
@@ -206,44 +202,52 @@ export default function ConversationFlows() {
     }
   };
 
+  // Debug the select handling
+  const handleConfigSelect = (value: string) => {
+    console.log("[Select] Handling selection. Value:", value);
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue)) {
+      setSelectedConfigId(numValue);
+      console.log("[Select] Updated selectedConfigId to:", numValue);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Conversation Flows</h1>
-          {/* Debug output */}
           <div className="text-xs text-muted-foreground mb-2">
             Configs loaded: {configs?.length || 0},
             Selected: {selectedConfigId}
           </div>
-          <Select
-            value={selectedConfigId?.toString()}
-            onValueChange={(value) => {
-              console.log("[Select] Selected value:", value);
-              setSelectedConfigId(Number(value));
-            }}
-          >
-            <SelectTrigger className="w-[300px]" disabled={isLoadingConfigs}>
-              <SelectValue placeholder={isLoadingConfigs ? "Loading..." : "Select a configuration"} />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoadingConfigs ? (
-                <SelectItem value="loading-state" disabled>
-                  Loading configurations...
-                </SelectItem>
-              ) : configs && configs.length > 0 ? (
-                configs.map((config) => (
-                  <SelectItem key={config.id} value={config.id.toString()}>
-                    {config.pageTitle}
+          <div className="w-[300px]">
+            <Select
+              value={selectedConfigId?.toString()}
+              onValueChange={handleConfigSelect}
+            >
+              <SelectTrigger disabled={isLoadingConfigs}>
+                <SelectValue placeholder={isLoadingConfigs ? "Loading..." : "Select a configuration"} />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingConfigs ? (
+                  <SelectItem value="loading-state" disabled>
+                    Loading configurations...
                   </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="no-configs-state" disabled>
-                  No configurations available
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+                ) : configs && configs.length > 0 ? (
+                  configs.map((config) => (
+                    <SelectItem key={config.id} value={config.id.toString()}>
+                      {config.pageTitle}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-configs-state" disabled>
+                    No configurations available
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {selectedConfigId && (
@@ -449,7 +453,7 @@ export default function ConversationFlows() {
 
             <div className="mt-8 border-t pt-8">
               <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
-              {flows?.length > 0 ? (
+              {flows?.length ? (
                 <div className="space-y-4">
                   {flows.sort((a, b) => a.order - b.order).map((flow) => (
                     <Card key={flow.id} className="p-4 hover:shadow-md transition-shadow">
@@ -460,18 +464,21 @@ export default function ConversationFlows() {
                             <span className="font-medium">Video:</span> {flow.videoFilename}
                           </p>
                           <p className="text-sm">
-                            <span className="font-medium">System Prompt:</span> {flow.systemPrompt}
+                            <span className="font-medium">System Prompt:</span>{" "}
+                            {flow.systemPrompt}
                           </p>
                           <p className="text-sm">
-                            <span className="font-medium">Question:</span> {flow.agentQuestion}
+                            <span className="font-medium">Question:</span>{" "}
+                            {flow.agentQuestion}
                           </p>
                           <p className="text-sm">
-                            <span className="font-medium">Next Steps:</span> Pass → {flow.passNext || 'End'},
-                            Fail → {flow.failNext || 'End'}
+                            <span className="font-medium">Next Steps:</span> Pass →{" "}
+                            {flow.passNext || "End"}, Fail → {flow.failNext || "End"}
                           </p>
                           {flow.showForm && (
                             <p className="text-sm">
-                              <span className="font-medium">Form Name:</span> {flow.formName}
+                              <span className="font-medium">Form Name:</span>{" "}
+                              {flow.formName}
                             </p>
                           )}
                           {flow.videoOnly && (
@@ -479,15 +486,13 @@ export default function ConversationFlows() {
                           )}
                           {flow.inputDelay > 0 && (
                             <p className="text-sm">
-                              <span className="font-medium">Input Delay:</span> {flow.inputDelay}s
+                              <span className="font-medium">Input Delay:</span>{" "}
+                              {flow.inputDelay}s
                             </p>
                           )}
                         </div>
                         <div className="space-x-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => handleEdit(flow)}
-                          >
+                          <Button variant="outline" onClick={() => handleEdit(flow)}>
                             Edit
                           </Button>
                           <Button
