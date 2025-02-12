@@ -501,7 +501,7 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  // Send chat message - REPLACED with edited snippet
+  // Send chat message
   app.post("/api/chat", async (req, res) => {
     const { configId, message, currentFlowOrder } = req.body;
     if (!configId || !message) {
@@ -509,8 +509,8 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      console.log("[Chat] Forwarding chat request to FastAPI");
-      // Get the current flow data from the request
+      console.log("[Chat] Processing chat request");
+      // Get the current flow data from the config
       const flows = await fetch(`http://localhost:8000/configs/${configId}/flows`);
       if (!flows.ok) {
         throw new Error("Failed to fetch flows");
@@ -524,7 +524,14 @@ export function registerRoutes(app: Express): Server {
         throw new Error("Current flow not found");
       }
 
-      // Forward to FastAPI with all required data
+      console.log("[Chat] Current flow:", currentFlow);
+      console.log("[Chat] Forwarding request to FastAPI with:", {
+        systemPrompt: currentFlow.system_prompt,
+        agentQuestion: currentFlow.agent_question,
+        userMessage: message
+      });
+
+      // Forward to FastAPI with the correct format
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: {
