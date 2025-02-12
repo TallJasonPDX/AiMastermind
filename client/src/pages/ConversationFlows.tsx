@@ -204,6 +204,10 @@ export default function ConversationFlows() {
   // Update the select handling
   const handleConfigSelect = (value: string) => {
     console.log("[Select] Handling selection. Value:", value);
+    if(value === "placeholder") {
+      setSelectedConfigId(null);
+      return;
+    }
     const numValue = parseInt(value, 10);
     if (!isNaN(numValue)) {
       setSelectedConfigId(numValue);
@@ -224,14 +228,14 @@ export default function ConversationFlows() {
           </div>
           <div className="w-[300px]">
             <Select
-              value={selectedConfigId?.toString() || ""}
+              value={selectedConfigId?.toString() || "placeholder"}
               onValueChange={handleConfigSelect}
             >
               <SelectTrigger disabled={isLoadingConfigs}>
                 <SelectValue placeholder={isLoadingConfigs ? "Loading..." : "Select a configuration"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="" disabled>Choose a configuration</SelectItem>
+                <SelectItem value="placeholder" disabled>Choose a configuration</SelectItem>
                 {configs?.map((config) => (
                   <SelectItem key={config.id} value={config.id.toString()}>
                     {config.pageTitle}
