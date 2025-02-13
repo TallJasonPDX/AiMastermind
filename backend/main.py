@@ -5,21 +5,22 @@ from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
-import openai
+from openai import OpenAI
 import httpx
 from typing import List
 from . import models, schemas
 from .database import engine, get_db
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
 import json
 
 # Load environment variables
 load_dotenv()
 
 # Configure API keys
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if not openai.api_key:
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
     print("[WARNING] OPENAI_API_KEY environment variable is not set")
 
 HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY")
@@ -242,37 +243,33 @@ class ChatRequest(BaseModel):
     userMessage: str
 
 
-@app.post("/chat")
+@app.post("/chat", response_model=str)
 async def process_chat(request: ChatRequest):
     """Process chat message and determine PASS/FAIL response"""
     try:
-        print(f"\n[API] Processing chat message")
+        client = OpenAI(api_key=api_key)
+        print("\n[API] Processing chat message")
         print(f"[API] System prompt: {request.systemPrompt}")
         print(f"[API] Agent question: {request.agentQuestion}")
         print(f"[API] User message: {request.userMessage}")
-
-        messages = [{
-            "role": "system",
-            "content": request.systemPrompt
-        }, {
-            "role": "assistant",
-            "content": request.agentQuestion
-        }, {
-            "role": "user",
-            "content": request.userMessage
-        }]
-
-        response = await openai.chat.completions.create(
+        print(f"API Key: {client.api_key}")
+        response = client.chat.completions.create(
             model="gpt-4",
-            messages=messages,
-            max_tokens=50,
-            temperature=0
+            messages=[{
+                "role": "system",
+                "content": request.systemPrompt
+            }, {
+                "role": "assistant",
+                "content": request.agentQuestion
+            }, {
+                "role": "user",
+                "content": request.userMessage
+            }],
         )
 
-        ai_response = response.choices[0].message.content.strip()
+        ai_response = response.choices[0].message.content
         print(f"[API] OpenAI response: {ai_response}")
-
-        return {"response": ai_response}
+        return ai_response
 
     except Exception as e:
         print(f"[API] Error processing chat: {str(e)}")

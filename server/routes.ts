@@ -183,7 +183,9 @@ export function registerRoutes(app: Express): Server {
       if (!response.ok) {
         const error = await response.text();
         console.error("[Configs] FastAPI error:", error);
-        return res.status(response.status).json({ error: "Failed to fetch configurations" });
+        return res
+          .status(response.status)
+          .json({ error: "Failed to fetch configurations" });
       }
 
       const rawConfigs = await response.json();
@@ -197,7 +199,7 @@ export function registerRoutes(app: Express): Server {
         passResponse: config.pass_response,
         failResponse: config.fail_response,
         createdAt: config.created_at,
-        updatedAt: config.updated_at
+        updatedAt: config.updated_at,
       }));
 
       console.log("[Configs] Transformed configs:", configs);
@@ -218,7 +220,9 @@ export function registerRoutes(app: Express): Server {
       if (!response.ok) {
         const error = await response.text();
         console.error("[Config/active] FastAPI error:", error);
-        return res.status(response.status).json({ error: "Failed to fetch active configuration" });
+        return res
+          .status(response.status)
+          .json({ error: "Failed to fetch active configuration" });
       }
 
       const config = await response.json();
@@ -398,12 +402,13 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      const result = await db.delete(conversationFlows)
+      const result = await db
+        .delete(conversationFlows)
         .where(
           and(
             eq(conversationFlows.id, flowId),
-            eq(conversationFlows.configId, configId)
-          )
+            eq(conversationFlows.configId, configId),
+          ),
         )
         .returning();
 
@@ -428,31 +433,36 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid ID format" });
       }
 
-      const response = await fetch(`http://localhost:8000/configs/${configId}/flows/${flowId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `http://localhost:8000/configs/${configId}/flows/${flowId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            config_id: configId,
+            ...req.body,
+            // Convert camelCase to snake_case
+            video_filename: req.body.videoFilename,
+            system_prompt: req.body.systemPrompt,
+            agent_question: req.body.agentQuestion,
+            pass_next: req.body.passNext,
+            fail_next: req.body.failNext,
+            video_only: req.body.videoOnly,
+            show_form: req.body.showForm,
+            form_name: req.body.formName,
+            input_delay: req.body.inputDelay,
+          }),
         },
-        body: JSON.stringify({
-          config_id: configId,
-          ...req.body,
-          // Convert camelCase to snake_case
-          video_filename: req.body.videoFilename,
-          system_prompt: req.body.systemPrompt,
-          agent_question: req.body.agentQuestion,
-          pass_next: req.body.passNext,
-          fail_next: req.body.failNext,
-          video_only: req.body.videoOnly,
-          show_form: req.body.showForm,
-          form_name: req.body.formName,
-          input_delay: req.body.inputDelay,
-        }),
-      });
+      );
 
       if (!response.ok) {
         const error = await response.text();
         console.error(`[FastAPI] Error updating flow:`, error);
-        return res.status(response.status).json({ error: "Failed to update flow" });
+        return res
+          .status(response.status)
+          .json({ error: "Failed to update flow" });
       }
 
       const updatedFlow = await response.json();
@@ -470,10 +480,13 @@ export function registerRoutes(app: Express): Server {
         formName: updatedFlow.form_name,
         inputDelay: updatedFlow.input_delay,
         createdAt: updatedFlow.created_at,
-        updatedAt: updatedFlow.updated_at
+        updatedAt: updatedFlow.updated_at,
       });
     } catch (error) {
-      console.error("[FastAPI] Error in PUT /api/configs/:id/flows/:flowId:", error);
+      console.error(
+        "[FastAPI] Error in PUT /api/configs/:id/flows/:flowId:",
+        error,
+      );
       res.status(500).json({ error: "Failed to update conversation flow" });
     }
   });
@@ -501,74 +514,34 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  // Send chat message
+  // Send chat message: simply forward the request body to FastAPI
   app.post("/api/chat", async (req, res) => {
-    const { configId, message, currentFlowOrder } = req.body;
-    if (!configId || !message) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
     try {
-      console.log("[Chat] Processing chat request");
-      // Get the current flow data from the config
-      const flows = await fetch(`http://localhost:8000/configs/${configId}/flows`);
-      if (!flows.ok) {
-        throw new Error("Failed to fetch flows");
-      }
-      const flowsData = await flows.json();
-      const currentFlow = flowsData.find((f: any) =>
-        f.order === (currentFlowOrder || 1)
-      );
+      console.log("[Chat] Forwarding request to FastAPI with body:", req.body);
 
-      if (!currentFlow) {
-        throw new Error("Current flow not found");
-      }
-
-      console.log("[Chat] Current flow:", currentFlow);
-      console.log("[Chat] Forwarding request to FastAPI with:", {
-        systemPrompt: currentFlow.system_prompt,
-        agentQuestion: currentFlow.agent_question,
-        userMessage: message
-      });
-
-      // Forward to FastAPI with the correct format
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          systemPrompt: currentFlow.system_prompt,
-          agentQuestion: currentFlow.agent_question,
-          userMessage: message,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body),
       });
 
       if (!response.ok) {
         const error = await response.text();
         console.error("[Chat] FastAPI error:", error);
-        return res.status(response.status).json({ error: "Failed to process chat message" });
+        return res
+          .status(response.status)
+          .json({ error: "Failed to process chat message" });
       }
 
       const data = await response.json();
       console.log("[Chat] FastAPI response:", data);
 
-      // Determine next flow based on PASS/FAIL
-      const nextFlowOrder = data.response.toUpperCase().includes("PASS")
-        ? currentFlow.pass_next
-        : currentFlow.fail_next;
-
-      res.json({
-        response: data.response,
-        status: data.response.toUpperCase().includes("PASS") ? "pass" : "fail",
-        nextFlowOrder
-      });
+      res.json(data);
     } catch (error) {
       console.error("[Chat] Error:", error);
       res.status(500).json({ error: "Failed to process chat message" });
     }
   });
-
 
   // Get conversation flows for a configuration
   router.get("/api/configs/:id/flows", async (req, res) => {
@@ -578,13 +551,20 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid configuration ID" });
       }
 
-      const response = await fetch(`http://localhost:8000/configs/${configId}/flows`);
-      console.log(`[FastAPI] Flows response status for config ${configId}:`, response.status);
+      const response = await fetch(
+        `http://localhost:8000/configs/${configId}/flows`,
+      );
+      console.log(
+        `[FastAPI] Flows response status for config ${configId}:`,
+        response.status,
+      );
 
       if (!response.ok) {
         const error = await response.text();
         console.error(`[FastAPI] Error fetching flows:`, error);
-        return res.status(response.status).json({ error: "Failed to fetch flows" });
+        return res
+          .status(response.status)
+          .json({ error: "Failed to fetch flows" });
       }
 
       const rawFlows = await response.json();
@@ -604,10 +584,12 @@ export function registerRoutes(app: Express): Server {
         formName: flow.form_name,
         inputDelay: flow.input_delay,
         createdAt: flow.created_at,
-        updatedAt: flow.updated_at
+        updatedAt: flow.updated_at,
       }));
 
-      console.log(`[FastAPI] Found ${flows.length} flows for config ${configId}`);
+      console.log(
+        `[FastAPI] Found ${flows.length} flows for config ${configId}`,
+      );
       res.json(flows);
     } catch (error) {
       console.error("[FastAPI] Error in /api/configs/:id/flows:", error);
