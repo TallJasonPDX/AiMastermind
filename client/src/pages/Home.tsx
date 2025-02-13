@@ -83,8 +83,14 @@ export default function Home() {
 
     console.log("Sending user response:", message);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutDuration = 25000; // 25 second timeout to match backend
+    let timeoutId: NodeJS.Timeout | null = null;
+
     try {
+      timeoutId = setTimeout(() => {
+        controller.abort();
+      }, timeoutDuration);
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -93,9 +99,8 @@ export default function Home() {
           agentQuestion: currentFlow.agentQuestion,
           userMessage: message,
         }),
-        signal: controller.signal
+        signal: controller.signal,
       });
-      clearTimeout(timeout);
 
       if (!response.ok) {
         console.error("Response not OK:", response);
@@ -135,14 +140,18 @@ export default function Home() {
       } else {
         console.error("[Home] Unexpected status in response:", data.status);
       }
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.error("Request timed out after 10 seconds");
-      } else {
-        console.error("Error processing response:", error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          console.error("Request timed out after 25 seconds");
+        } else {
+          console.error("Error processing response:", error);
+        }
       }
     } finally {
-      clearTimeout(timeout);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   };
 
