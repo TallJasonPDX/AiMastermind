@@ -247,18 +247,18 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 def process_chat(request: ChatRequest):
     """Process chat message and determine PASS/FAIL response"""
-    try:
-        print(f"\n[API] Processing chat message with OpenAI")
-        print(f"[API] System prompt: {request.systemPrompt}")
-        print(f"[API] Agent question: {request.agentQuestion}")
-        print(f"[API] User message: {request.userMessage}")
+    print("\n[API] ==== Starting chat processing ====")
+    print(f"[API] Received request: {request.model_dump_json()}")
 
+    try:
         if not api_key:
             print("[API] Error: OpenAI API key not configured")
             raise HTTPException(status_code=500, detail="OpenAI API key not configured")
 
+        print("[API] Creating OpenAI client")
         client = OpenAI(api_key=api_key)
 
+        print("[API] Sending request to OpenAI")
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -270,8 +270,13 @@ def process_chat(request: ChatRequest):
         )
 
         ai_response = response.choices[0].message.content
-        print(f"[API] OpenAI response: {ai_response}")
-        return ai_response
+        print(f"[API] OpenAI response received: {ai_response}")
+
+        # Determine the status based on the response
+        status = "pass" if ai_response.strip() == "PASS" else "fail"
+        result = {"status": status, "response": ai_response}
+        print(f"[API] Returning result: {result}")
+        return result
 
     except Exception as e:
         print(f"[API] Error processing chat: {str(e)}")
