@@ -23,7 +23,6 @@ export function registerRoutes(app: Express): Server {
     pathRewrite: {
       "^/api": "", // Remove /api prefix when forwarding to FastAPI
     },
-    logLevel: "debug",
     onProxyReq: (proxyReq: any, req: any, _res: any) => {
       if (req.method === "POST" && req.body) {
         const bodyData = JSON.stringify(req.body);
@@ -491,68 +490,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get chat history
-  app.get("/api/chat", async (req, res) => {
-    const { configId } = req.query;
-    if (!configId) {
-      return res.status(400).json({ error: "Configuration ID is required" });
-    }
-
-    // Create a new conversation
-    const newConversation = await db
-      .insert(conversations)
-      .values({
-        configId: Number(configId),
-        messages: [], // Start with empty messages since we're using an assistant
-        status: "ongoing",
-      })
-      .returning();
-
-    res.json({
-      messages: newConversation[0].messages,
-      status: newConversation[0].status,
-    });
-  });
-
-  // Send chat message: simply forward the request body to FastAPI
-  app.post("/api/chat", async (req, res) => {
-    try {
-      console.log("[Chat] Forwarding request to FastAPI with body:", req.body);
-
-      // Add timeout handling on the Express side
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-      const response = await fetch("http://localhost:8000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(req.body),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[Chat] FastAPI error:", error);
-        return res.status(response.status).json({ error: "Failed to process chat message" });
-      }
-
-      const aiResponse = await response.text(); // Get raw text response
-      console.log("[Chat] FastAPI response:", aiResponse);
-
-      // Parse the response and determine status
-      const status = aiResponse.trim() === "PASS" ? "pass" : "fail";
-      res.json({ status, response: aiResponse });
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.error("[Chat] Request timed out");
-        return res.status(504).json({ error: "Request timed out" });
-      }
-      console.error("[Chat] Error:", error);
-      res.status(500).json({ error: "Failed to process chat message" });
-    }
-  });
 
   // Get conversation flows for a configuration
   router.get("/api/configs/:id/flows", async (req, res) => {

@@ -245,7 +245,7 @@ class ChatRequest(BaseModel):
 
 
 @app.post("/chat")
-async def process_chat(request: ChatRequest):
+def process_chat(request: ChatRequest):
     """Process chat message and determine PASS/FAIL response"""
     try:
         print(f"\n[API] Processing chat message with OpenAI")
@@ -253,36 +253,26 @@ async def process_chat(request: ChatRequest):
         print(f"[API] Agent question: {request.agentQuestion}")
         print(f"[API] User message: {request.userMessage}")
 
-        client = OpenAI(api_key=api_key)
-
         if not api_key:
+            print("[API] Error: OpenAI API key not configured")
             raise HTTPException(status_code=500, detail="OpenAI API key not configured")
 
-        # Set a shorter timeout for OpenAI request
-        response = await asyncio.wait_for(
-            asyncio.create_task(
-                client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": request.systemPrompt},
-                        {"role": "assistant", "content": request.agentQuestion},
-                        {"role": "user", "content": request.userMessage}
-                    ],
-                    timeout=25  # 25 second timeout for OpenAI request
-                )
-            ),
-            timeout=25
+        client = OpenAI(api_key=api_key)
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": request.systemPrompt},
+                {"role": "assistant", "content": request.agentQuestion},
+                {"role": "user", "content": request.userMessage}
+            ],
+            timeout=25  # 25 second timeout
         )
 
         ai_response = response.choices[0].message.content
         print(f"[API] OpenAI response: {ai_response}")
-
-        # Return the raw response
         return ai_response
 
-    except asyncio.TimeoutError:
-        print("[API] Request timed out")
-        raise HTTPException(status_code=504, detail="Request timed out")
     except Exception as e:
         print(f"[API] Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
