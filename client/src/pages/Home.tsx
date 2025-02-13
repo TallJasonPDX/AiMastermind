@@ -83,15 +83,21 @@ export default function Home() {
 
     try {
       console.log("Sending user response:", message);
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemPrompt: currentFlow.systemPrompt,
-          agentQuestion: currentFlow.agentQuestion,
-          userMessage: message,
-        }),
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemPrompt: currentFlow.systemPrompt,
+            agentQuestion: currentFlow.agentQuestion,
+            userMessage: message,
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
 
       if (!response.ok) {
         console.error("Response not OK:", response);
@@ -132,7 +138,11 @@ export default function Home() {
         console.error("[Home] Unexpected status in response:", data.status);
       }
     } catch (error) {
-      console.error("Error processing response:", error);
+      if (error.name === 'AbortError') {
+        console.error("Request timed out after 10 seconds");
+      } else {
+        console.error("Error processing response:", error);
+      }
     }
   };
 
