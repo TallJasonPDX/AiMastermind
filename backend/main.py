@@ -55,31 +55,42 @@ async def get_configurations(
     db: Session = Depends(get_db)
 ):
     """Get all configurations with pagination"""
-    print("\n[API] Fetching all configurations")
-    configs = db.query(models.Configurations).offset(skip).limit(limit).all()
+    try:
+        print("\n[API] Fetching all configurations")
+        query = db.query(models.Configurations)
+        print(f"[API] Executing query: {str(query)}")
+        configs = query.offset(skip).limit(limit).all()
+        print(f"[API] Query result: {configs}")
 
-    if not configs:
-        return []  # Return empty list instead of 404 error
+        if not configs:
+            print("[API] No configurations found")
+            return []
 
-    result = []
-    for config in configs:
-        config_dict = {
-            "id": config.id,
-            "pageTitle": config.page_title,
-            "heygenSceneId": config.heygen_scene_id,
-            "voiceId": config.voice_id,
-            "openaiAgentConfig": {
-                "assistantId": config.openai_agent_config["assistantId"]
-            } if config.openai_agent_config else None,
-            "passResponse": config.pass_response,
-            "failResponse": config.fail_response,
-            "createdAt": config.created_at,
-            "updatedAt": config.updated_at
-        }
-        result.append(config_dict)
+        result = []
+        for config in configs:
+            config_dict = {
+                "id": config.id,
+                "pageTitle": config.page_title,
+                "heygenSceneId": config.heygen_scene_id,
+                "voiceId": config.voice_id,
+                "openaiAgentConfig": {
+                    "assistantId": config.openai_agent_config["assistantId"]
+                } if config.openai_agent_config else None,
+                "passResponse": config.pass_response,
+                "failResponse": config.fail_response,
+                "createdAt": config.created_at,
+                "updatedAt": config.updated_at
+            }
+            result.append(config_dict)
 
-    print(f"[API] Found {len(result)} configurations")
-    return result
+        print(f"[API] Returning {len(result)} configurations")
+        return result
+    except Exception as e:
+        print(f"[API] Error fetching configurations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error: {str(e)}"
+        )
 
 @app.get("/api/configurations/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
