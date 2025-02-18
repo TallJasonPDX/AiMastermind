@@ -12,6 +12,11 @@ from .database import engine, get_db
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -56,14 +61,16 @@ async def get_configurations(
 ):
     """Get all configurations with pagination"""
     try:
-        print("\n[API] Fetching all configurations")
+        logger.info("[API] Fetching all configurations")
+        logger.info(f"[API] Skip: {skip}, Limit: {limit}")
+
         query = db.query(models.Configurations)
-        print(f"[API] Executing query: {str(query)}")
+        logger.info(f"[API] Executing query: {str(query)}")
         configs = query.offset(skip).limit(limit).all()
-        print(f"[API] Query result: {configs}")
+        logger.info(f"[API] Found {len(configs)} configurations")
 
         if not configs:
-            print("[API] No configurations found")
+            logger.info("[API] No configurations found")
             return []
 
         result = []
@@ -83,10 +90,10 @@ async def get_configurations(
             }
             result.append(config_dict)
 
-        print(f"[API] Returning {len(result)} configurations")
+        logger.info(f"[API] Returning {len(result)} configurations")
         return result
     except Exception as e:
-        print(f"[API] Error fetching configurations: {str(e)}")
+        logger.error(f"[API] Error fetching configurations: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Database error: {str(e)}"
@@ -439,35 +446,6 @@ async def get_available_videos():
         raise HTTPException(
             status_code=500,
             detail=f"Error scanning videos directory: {str(e)}")
-
-
-@app.get("/config/active", response_model=schemas.Config)
-async def get_active_config(db: Session = Depends(get_db)):
-    """Get the active configuration (first one by ID)"""
-    print("\n[API] Fetching active configuration")
-    config = db.query(models.Configurations).order_by(
-        models.Configurations.id.asc()).first()
-    print(f"[API] Query result: {config}")
-    if not config:
-        raise HTTPException(status_code=404,
-                            detail="No active configuration found")
-
-    # Ensure proper field mapping
-    config_dict = {
-        "id": config.id,
-        "page_title": config.page_title,
-        "heygen_scene_id": config.heygen_scene_id,
-        "voice_id": config.voice_id,
-        "openai_agent_config": {
-            "assistant_id": config.openai_agent_config["assistantId"]
-        } if config.openai_agent_config else None,
-        "pass_response": config.pass_response,
-        "fail_response": config.fail_response,
-        "created_at": config.created_at,
-        "updated_at": config.updated_at
-    }
-    print(f"[API] Found active config: {config.id} - {config.page_title}")
-    return config_dict
 
 
 @app.get("/configs", response_model=List[schemas.Config])
