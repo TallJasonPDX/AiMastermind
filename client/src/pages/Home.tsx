@@ -26,17 +26,17 @@ export default function Home() {
 
   // Fetch configuration
   const { data: config, error: configError } = useQuery<Config>({
-    queryKey: ["/api/config", configId],
+    queryKey: [configId ? `/api/configurations/${configId}` : "/api/configurations/active"],
     queryFn: async () => {
       if (!configId) {
-        const response = await fetch("/api/config/active");
+        const response = await fetch("/api/configurations/active");
         if (!response.ok) {
           throw new Error("Failed to fetch active config");
         }
         return response.json();
       }
 
-      const response = await fetch(`/api/config/${configId}`);
+      const response = await fetch(`/api/configurations/${configId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch config");
       }
@@ -46,10 +46,10 @@ export default function Home() {
 
   // Fetch conversation flows for the config
   const { data: flows } = useQuery<ConversationFlow[]>({
-    queryKey: ["/api/flows", config?.id],
+    queryKey: ["/api/conversation-flows", config?.id],
     queryFn: async () => {
       if (!config?.id) return [];
-      const response = await fetch(`/api/configs/${config.id}/flows`);
+      const response = await fetch(`/api/conversation-flows?config_id=${config.id}`);
       if (!response.ok) {
         throw new Error("Failed to fetch flows");
       }
@@ -91,13 +91,13 @@ export default function Home() {
         controller.abort();
       }, timeoutDuration);
 
-      const response = await fetch("/api/chat", {
+      const response = await fetch("/api/openai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          systemPrompt: currentFlow.systemPrompt,
-          agentQuestion: currentFlow.agentQuestion,
-          userMessage: message,
+          system_prompt: currentFlow.systemPrompt,
+          agent_question: currentFlow.agentQuestion,
+          user_message: message,
         }),
         signal: controller.signal,
       });

@@ -1,10 +1,12 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict
 from datetime import datetime
 
+# Base OpenAI config schema
 class OpenAIAgentConfig(BaseModel):
     assistant_id: str = Field(..., description="OpenAI Assistant ID")
 
+# Configuration schemas
 class ConfigBase(BaseModel):
     page_title: str = Field(..., min_length=1, description="Title of the landing page")
     heygen_scene_id: str = Field(..., min_length=1, description="HeyGen scene identifier")
@@ -16,6 +18,9 @@ class ConfigBase(BaseModel):
 class ConfigCreate(ConfigBase):
     pass
 
+class ConfigUpdate(ConfigBase):
+    pass
+
 class Config(ConfigBase):
     id: int = Field(..., description="Unique identifier for the configuration")
     created_at: datetime = Field(..., description="Timestamp when the config was created")
@@ -24,6 +29,7 @@ class Config(ConfigBase):
     class Config:
         from_attributes = True
 
+# Conversation Flow schemas
 class ConversationFlowBase(BaseModel):
     config_id: int = Field(..., description="ID of the associated configuration")
     order: int = Field(..., ge=1, description="Order in which this flow appears")
@@ -40,10 +46,37 @@ class ConversationFlowBase(BaseModel):
 class ConversationFlowCreate(ConversationFlowBase):
     pass
 
+class ConversationFlowUpdate(ConversationFlowBase):
+    pass
+
 class ConversationFlow(ConversationFlowBase):
     id: int = Field(..., description="Unique identifier for the flow")
     created_at: datetime = Field(..., description="Timestamp when the flow was created")
     updated_at: Optional[datetime] = Field(None, description="Timestamp when the flow was last updated")
+
+    class Config:
+        from_attributes = True
+
+# Conversation schemas
+class Message(BaseModel):
+    role: str = Field(..., description="Role of the message sender (user/assistant/system)")
+    content: str = Field(..., description="Content of the message")
+
+class ConversationBase(BaseModel):
+    config_id: int = Field(..., description="ID of the associated configuration")
+    messages: List[Message] = Field(..., description="List of conversation messages")
+    status: str = Field(default="ongoing", description="Status of the conversation")
+
+class ConversationCreate(ConversationBase):
+    pass
+
+class ConversationUpdate(ConversationBase):
+    pass
+
+class Conversation(ConversationBase):
+    id: int = Field(..., description="Unique identifier for the conversation")
+    created_at: datetime = Field(..., description="Timestamp when the conversation was created")
+    updated_at: Optional[datetime] = Field(None, description="Timestamp when the conversation was last updated")
 
     class Config:
         from_attributes = True

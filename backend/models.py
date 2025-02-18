@@ -14,14 +14,12 @@ class Configurations(Base):
     openai_agent_config = Column(JSON, nullable=False)
     pass_response = Column(String, nullable=False)
     fail_response = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True),
-                        server_default=func.now(),
-                        nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Add relationship to ConversationFlow
-    conversation_flows = relationship("ConversationFlow",
-                                      back_populates="config")
+    # Relationships
+    conversations = relationship("Conversations", back_populates="configuration")
+    conversation_flows = relationship("ConversationFlow", back_populates="configuration")
 
 
 class ConversationFlow(Base):
@@ -39,10 +37,22 @@ class ConversationFlow(Base):
     show_form = Column(Boolean, default=False, nullable=False)
     form_name = Column(String)
     input_delay = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime(timezone=True),
-                        server_default=func.now(),
-                        nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Add relationship to Configurations
-    config = relationship("Configurations", back_populates="conversation_flows")
+    # Relationships
+    configuration = relationship("Configurations", back_populates="conversation_flows")
+
+
+class Conversations(Base):
+    __tablename__ = "conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    config_id = Column(Integer, ForeignKey("configurations.id"), nullable=False)
+    messages = Column(JSON, nullable=False)
+    status = Column(String, nullable=False, default='ongoing')
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    configuration = relationship("Configurations", back_populates="conversations")

@@ -14,6 +14,23 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { Config, ConversationFlow } from "@/lib/types";
 
+// Placeholder for apiRequest function - needs to be implemented elsewhere
+const apiRequest = async (method: string, url: string, body?: any) => {
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "API request failed");
+  }
+  return response;
+};
+
+
 export default function ConversationFlows() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -23,11 +40,11 @@ export default function ConversationFlows() {
 
   // Fetch configurations
   const { data: configs, isLoading: isLoadingConfigs } = useQuery<Config[]>({
-    queryKey: ["/api/configs"],
+    queryKey: ["/api/configurations"],
     staleTime: 0,
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching configurations...");
-      const response = await fetch("/api/configs");
+      const response = await fetch("/api/configurations");
       if (!response.ok) {
         const error = await response.text();
         console.error("[ConversationFlows] Error fetching configs:", error);
@@ -48,14 +65,14 @@ export default function ConversationFlows() {
 
   // Fetch conversation flows for selected config
   const { data: flows } = useQuery<ConversationFlow[]>({
-    queryKey: ["/api/flows", selectedConfigId],
+    queryKey: ["/api/conversation-flows", selectedConfigId],
     queryFn: async () => {
       if (!selectedConfigId) return [];
       console.log(
         "[ConversationFlows] Fetching flows for config:",
         selectedConfigId,
       );
-      const response = await fetch(`/api/configs/${selectedConfigId}/flows`);
+      const response = await fetch(`/api/conversation-flows?config_id=${selectedConfigId}`);
       if (!response.ok) {
         const error = await response.text();
         console.error("[ConversationFlows] Error fetching flows:", error);
@@ -85,19 +102,11 @@ export default function ConversationFlows() {
 
   const { mutate: deleteFlow } = useMutation({
     mutationFn: async (flowId: number) => {
-      if (!selectedConfigId) throw new Error("No configuration selected");
-      const response = await fetch(
-        `/api/configs/${selectedConfigId}/flows/${flowId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!response.ok) throw new Error("Failed to delete flow");
-      return response.json();
+      return apiRequest('DELETE', `/api/conversation-flows/${flowId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/flows", selectedConfigId],
+        queryKey: ["/api/conversation-flows", selectedConfigId],
       });
       toast({ title: "Success", description: "Flow deleted successfully" });
     },
@@ -112,33 +121,17 @@ export default function ConversationFlows() {
 
   const { mutate: saveFlow, isPending: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
-      if (!selectedConfigId) {
-        throw new Error("No configuration selected");
-      }
-
       const isEditing = Boolean(flow.id);
-      const url = isEditing
-        ? `/api/configs/${selectedConfigId}/flows/${flow.id}`
-        : `/api/configs/${selectedConfigId}/flows`;
-
-      const response = await fetch(url, {
-        method: isEditing ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(flow),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to save flow");
-      }
-
+      const response = await apiRequest(
+        isEditing ? 'PUT' : 'POST',
+        isEditing ? `/api/conversation-flows/${flow.id}` : '/api/conversation-flows',
+        flow
+      );
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/flows", selectedConfigId],
+        queryKey: ["/api/conversation-flows", selectedConfigId],
       });
       setEditingFlow(null);
       toast({
@@ -479,7 +472,9 @@ export default function ConversationFlows() {
             )}
 
             <div className="mt-8 border-t pt-8">
-              <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                Conversation Flows
+              </h2>
               {flows?.length ? (
                 <div className="space-y-4">
                   {flows

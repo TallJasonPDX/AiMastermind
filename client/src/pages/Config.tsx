@@ -5,6 +5,19 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { Config } from '@/lib/types';
 
+async function apiRequest(method: string, url: string, data?: any) {
+  const response = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: data ? JSON.stringify(data) : undefined,
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || response.statusText);
+  }
+  return response;
+}
+
 export default function Config() {
   const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
@@ -12,24 +25,24 @@ export default function Config() {
   const [formData, setFormData] = useState<Partial<Config>>({});
 
   const { data: configs } = useQuery<Config[]>({
-    queryKey: ['configurations'],
+    queryKey: ['/api/configurations'],
     queryFn: async () => {
-      const response = await fetch('/api/configurations');
+      const response = await apiRequest('GET', '/api/configurations');
       return response.json();
     }
   });
 
   const { mutate: updateConfig } = useMutation({
     mutationFn: async (data: Partial<Config>) => {
-      const response = await fetch('/api/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest(
+        'PUT',
+        `/api/configurations/${data.id}`,
+        data
+      );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['configs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/configurations'] });
       setEditMode(false);
       setSelectedConfig(null);
     },
@@ -37,13 +50,14 @@ export default function Config() {
 
   const { mutate: deleteConfig } = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/config/${id}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest(
+        'DELETE',
+        `/api/configurations/${id}`
+      );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['configs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/configurations'] });
     },
   });
 
