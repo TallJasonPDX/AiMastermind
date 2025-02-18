@@ -11,6 +11,7 @@ from . import models, schemas
 from .database import engine, get_db
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()

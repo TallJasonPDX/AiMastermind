@@ -6,6 +6,12 @@ from datetime import datetime
 class OpenAIAgentConfig(BaseModel):
     assistant_id: str = Field(..., description="OpenAI Assistant ID")
 
+# Chat Request Schema
+class ChatRequest(BaseModel):
+    system_prompt: str = Field(..., description="System prompt for OpenAI")
+    agent_question: str = Field(..., description="Question to be asked by the agent")
+    user_message: str = Field(..., description="Message from the user")
+
 # Configuration schemas
 class ConfigBase(BaseModel):
     page_title: str = Field(..., min_length=1, description="Title of the landing page")
