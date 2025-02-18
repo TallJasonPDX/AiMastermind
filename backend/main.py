@@ -55,8 +55,72 @@ async def get_configurations(
     db: Session = Depends(get_db)
 ):
     """Get all configurations with pagination"""
+    print("\n[API] Fetching all configurations")
     configs = db.query(models.Configurations).offset(skip).limit(limit).all()
-    return configs
+
+    if not configs:
+        return []  # Return empty list instead of 404 error
+
+    result = []
+    for config in configs:
+        config_dict = {
+            "id": config.id,
+            "pageTitle": config.page_title,
+            "heygenSceneId": config.heygen_scene_id,
+            "voiceId": config.voice_id,
+            "openaiAgentConfig": {
+                "assistantId": config.openai_agent_config["assistantId"]
+            } if config.openai_agent_config else None,
+            "passResponse": config.pass_response,
+            "failResponse": config.fail_response,
+            "createdAt": config.created_at,
+            "updatedAt": config.updated_at
+        }
+        result.append(config_dict)
+
+    print(f"[API] Found {len(result)} configurations")
+    return result
+
+@app.get("/api/configurations/active", response_model=schemas.Config)
+async def get_active_config(db: Session = Depends(get_db)):
+    """Get the active configuration (first one by ID)"""
+    print("\n[API] Fetching active configuration")
+    config = db.query(models.Configurations).order_by(
+        models.Configurations.id.asc()).first()
+
+    if not config:
+        return {}  # Return empty object instead of 404 error
+
+    config_dict = {
+        "id": config.id,
+        "pageTitle": config.page_title,
+        "heygenSceneId": config.heygen_scene_id,
+        "voiceId": config.voice_id,
+        "openaiAgentConfig": {
+            "assistantId": config.openai_agent_config["assistantId"]
+        } if config.openai_agent_config else None,
+        "passResponse": config.pass_response,
+        "failResponse": config.fail_response,
+        "createdAt": config.created_at,
+        "updatedAt": config.updated_at
+    }
+
+    print(f"[API] Found active config: {config.id} - {config.page_title}")
+    return config_dict
+
+@app.get("/api/conversation-flows", response_model=List[schemas.ConversationFlow])
+async def get_conversation_flows(
+    config_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """Get all conversation flows with optional filtering by config_id"""
+    query = db.query(models.ConversationFlow)
+    if config_id:
+        query = query.filter(models.ConversationFlow.config_id == config_id)
+    flows = query.offset(skip).limit(limit).all()
+    return flows or []  # Return empty list if no flows found
 
 @app.get("/api/configurations/{config_id}", response_model=schemas.Config)
 async def get_configuration(config_id: int, db: Session = Depends(get_db)):
@@ -105,20 +169,6 @@ async def delete_configuration(config_id: int, db: Session = Depends(get_db)):
     return None
 
 # Conversation Flow Endpoints
-@app.get("/api/conversation-flows", response_model=List[schemas.ConversationFlow])
-async def get_conversation_flows(
-    config_id: Optional[int] = None,
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    """Get all conversation flows with optional filtering by config_id"""
-    query = db.query(models.ConversationFlow)
-    if config_id:
-        query = query.filter(models.ConversationFlow.config_id == config_id)
-    flows = query.offset(skip).limit(limit).all()
-    return flows
-
 @app.get("/api/conversation-flows/{flow_id}", response_model=schemas.ConversationFlow)
 async def get_conversation_flow(flow_id: int, db: Session = Depends(get_db)):
     """Get a specific conversation flow by ID"""
