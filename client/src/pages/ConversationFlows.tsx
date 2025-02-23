@@ -126,6 +126,29 @@ export default function ConversationFlows() {
     }
   };
 
+  const handleEdit = (flow: ConversationFlow) => {
+    setEditingFlow({
+      id: flow.id,
+      configId: flow.config_id,
+      order: flow.order,
+      videoFilename: flow.video_filename,
+      systemPrompt: flow.system_prompt,
+      agentQuestion: flow.agent_question,
+      passNext: flow.pass_next,
+      failNext: flow.fail_next,
+      videoOnly: flow.video_only,
+      showForm: flow.show_form,
+      formName: flow.form_name,
+      inputDelay: flow.input_delay,
+    });
+  };
+
+  const handleDelete = (flowId: number) => {
+    if (window.confirm("Are you sure you want to delete this flow?")) {
+      deleteFlow(flowId);
+    }
+  };
+
   // Debug output for rendering
   console.log("[ConversationFlows] Render state:", {
     configs,
@@ -496,25 +519,4 @@ const handleSubmit = (e: React.FormEvent) => {
   });
 };
 
-const handleEdit = (flow: ConversationFlow) => {
-  setEditingFlow({
-    id: flow.id,
-    configId: flow.config_id,
-    order: flow.order,
-    videoFilename: flow.video_filename,
-    systemPrompt: flow.system_prompt,
-    agentQuestion: flow.agent_question,
-    passNext: flow.pass_next,
-    failNext: flow.fail_next,
-    videoOnly: flow.video_only,
-    showForm: flow.show_form,
-    formName: flow.form_name,
-    inputDelay: flow.input_delay,
-  });
-};
 
-const handleDelete = (flowId: number) => {
-  if (window.confirm("Are you sure you want to delete this flow?")) {
-    deleteFlow(flowId);
-  }
-};
