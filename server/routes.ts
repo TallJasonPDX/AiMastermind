@@ -17,7 +17,6 @@ export function registerRoutes(app: Express): Server {
     changeOrigin: true,
     secure: false,
     logLevel: 'debug',
-    pathRewrite: undefined, // Do not rewrite paths, keep /api prefix
     onProxyReq: function onProxyReq(proxyReq: any, req: IncomingMessage, res: ServerResponse) {
       if (req instanceof express.Request && ['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
         const bodyData = JSON.stringify(req.body);
