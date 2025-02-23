@@ -480,13 +480,14 @@ export default function ConversationFlows() {
       </div>
     </div>
   );
+}
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedConfigId || !editingFlow) {
-      toast({
-        title: "Error",
-        description: "Please select a configuration and fill out the form",
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!selectedConfigId || !editingFlow) {
+    toast({
+      title: "Error",
+      description: "Please select a configuration and fill out the form",
       variant: "destructive",
     });
     return;
@@ -505,7 +506,7 @@ export default function ConversationFlows() {
 
   if (missingFields.length > 0) {
     toast({
-      title: "Error", 
+      title: "Error",
       description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
       variant: "destructive",
     });
@@ -514,7 +515,6 @@ export default function ConversationFlows() {
 
   saveFlow({
     ...editingFlow,
-    config_id: selectedConfigId,
+    configId: selectedConfigId,
   });
-  };
-}
+};
