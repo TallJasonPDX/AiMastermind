@@ -83,11 +83,12 @@ export default function ConversationFlows() {
   const { mutate: saveFlow, isPending: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       const isEditing = Boolean(flow.id);
+      const url = isEditing 
+        ? `/api/conversation-flows/${flow.id}`
+        : "/api/conversation-flows";
       return apiRequest(
         isEditing ? "PUT" : "POST",
-        isEditing
-          ? `/api/conversation-flows/${flow.id}`
-          : "/api/conversation-flows",
+        url,
         flow,
       );
     },
