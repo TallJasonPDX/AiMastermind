@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import express from "express";
-import { createProxyMiddleware } from "http-proxy-middleware";
+import { createProxyMiddleware, type Options } from "http-proxy-middleware";
+import type { IncomingMessage, ServerResponse } from "http";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
@@ -15,36 +16,37 @@ export function registerRoutes(app: Express): Server {
     target: "http://localhost:8000",
     changeOrigin: true,
     secure: false,
-    pathRewrite: undefined, // Changed to undefined to reflect default behavior
-    onProxyReq: (proxyReq, req, res) => { // Renamed _res to res for consistency
+    logLevel: 'debug',
+    // Using proper types for the handlers
+    onProxyReq: (proxyReq: any, req: express.Request, res: express.Response) => {
       console.log("[FastAPI Proxy] Forwarding request:", {
         method: req.method,
         path: req.path,
         body: req.body
       });
 
-      // Ensure proper body forwarding for POST requests
-      if (req.method === "POST" && req.body) {
+      // Ensure proper body forwarding for POST/PUT/PATCH requests
+      if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
         const bodyData = JSON.stringify(req.body);
         proxyReq.setHeader("Content-Type", "application/json");
         proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
       }
     },
-    onProxyRes: (proxyRes, req, _res) => {
+    onProxyRes: (proxyRes: any, req: express.Request, res: express.Response) => {
       console.log("[FastAPI Proxy] Received response:", {
         method: req.method,
         path: req.path,
         status: proxyRes.statusCode
       });
     },
-    onError: (err, req, res) => {
+    onError: (err: Error, req: express.Request, res: express.Response) => {
       console.error("[FastAPI Proxy] Error:", err);
       res.status(500).send("Proxy Error");
     }
-  });
+  } as Options);
 
-  // Apply proxy for all /api routes
+  // Apply proxy middleware for all /api routes 
   app.use("/api", (req, res, next) => {
     console.log("[FastAPI Route]", req.method, req.url);
     return fastApiProxy(req, res, next);
