@@ -67,7 +67,9 @@ export function registerRoutes(app: Express): Server {
   // Configure FastAPI proxy middleware
   app.use("/api", (req, res, next) => {
     console.log("[FastAPI Route]", req.method, req.url);
-    // Don't modify the URL - let the proxy handle it
+    if (["POST", "PUT", "PATCH"].includes(req.method)) {
+      console.log("[FastAPI Route] Request body:", req.body);
+    }
     return fastApiProxy(req, res, next);
   });
 
