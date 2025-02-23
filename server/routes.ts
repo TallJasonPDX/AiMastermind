@@ -64,11 +64,11 @@ export function registerRoutes(app: Express): Server {
   } as Options);
 
   app.use("/api", (req, res, next) => {
-    console.log("[FastAPI Route]", req.method, req.url);
     // Always ensure /api prefix
-    if (!req.url.startsWith('/api')) {
+    if (!req.url.startsWith("/api")) {
       req.url = `/api${req.url}`;
     }
+    console.log("[FastAPI Route]", req.method, req.url);
     return fastApiProxy(req, res, next);
   });
 
