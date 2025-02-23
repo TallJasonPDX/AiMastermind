@@ -14,9 +14,9 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { Config, ConversationFlow } from "@/lib/types";
 
-// Placeholder for apiRequest function - needs to be implemented elsewhere
+// API request helper function
 const apiRequest = async (method: string, url: string, body?: any) => {
-  const response = await fetch(url, {
+  const response = await fetch(url.startsWith('/api/') ? url : `/api${url}`, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -27,7 +27,7 @@ const apiRequest = async (method: string, url: string, body?: any) => {
     const errorText = await response.text();
     throw new Error(errorText || "API request failed");
   }
-  return response;
+  return response.json();
 };
 
 export default function ConversationFlows() {
@@ -40,71 +40,28 @@ export default function ConversationFlows() {
   // Fetch configurations
   const { data: configs, isLoading: isLoadingConfigs } = useQuery<Config[]>({
     queryKey: ["/api/configurations"],
-    staleTime: 0,
-    queryFn: async () => {
-      console.log("[ConversationFlows] Fetching configurations...");
-      const response = await fetch("/api/configurations");
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[ConversationFlows] Error fetching configs:", error);
-        throw new Error(error || "Failed to fetch configurations");
-      }
-      const data = await response.json();
-      console.log("[ConversationFlows] Received configurations:", data);
-      return data;
-    },
-    onSuccess: (data) => {
-      // Set the first config as default if none is selected
-      if (data && data.length > 0 && !selectedConfigId) {
-        console.log("[ConversationFlows] Setting default config:", data[0].id);
-        setSelectedConfigId(data[0].id);
-      }
-    },
+    queryFn: () => apiRequest("GET", "/api/configurations"),
   });
 
   // Fetch conversation flows for selected config
   const { data: flows } = useQuery<ConversationFlow[]>({
     queryKey: ["/api/conversation-flows", selectedConfigId],
-    queryFn: async () => {
-      if (!selectedConfigId) return [];
-      console.log(
-        "[ConversationFlows] Fetching flows for config:",
-        selectedConfigId,
-      );
-      const response = await fetch(
-        `/api/conversation-flows?config_id=${selectedConfigId}`,
-      );
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[ConversationFlows] Error fetching flows:", error);
-        throw new Error(error || "Failed to fetch flows");
-      }
-      const data = await response.json();
-      console.log("[ConversationFlows] Received flows:", data);
-      return data;
-    },
+    queryFn: () =>
+      selectedConfigId
+        ? apiRequest("GET", `/api/conversation-flows?config_id=${selectedConfigId}`)
+        : Promise.resolve([]),
     enabled: !!selectedConfigId,
   });
 
   // Fetch available videos
   const { data: videos, isLoading: isLoadingVideos } = useQuery<string[]>({
     queryKey: ["/api/videos"],
-    queryFn: async () => {
-      console.log("[ConversationFlows] Fetching videos...");
-      const response = await fetch("/api/videos");
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("[ConversationFlows] Error fetching videos:", error);
-        throw new Error(error || "Failed to fetch videos");
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest("GET", "/api/videos"),
   });
 
   const { mutate: deleteFlow } = useMutation({
-    mutationFn: async (flowId: number) => {
-      return apiRequest("DELETE", `/api/conversation-flows/${flowId}`);
-    },
+    mutationFn: async (flowId: number) =>
+      apiRequest("DELETE", `/api/conversation-flows/${flowId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["/api/conversation-flows", selectedConfigId],
@@ -123,14 +80,13 @@ export default function ConversationFlows() {
   const { mutate: saveFlow, isPending: isSaving } = useMutation({
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       const isEditing = Boolean(flow.id);
-      const response = await apiRequest(
+      return apiRequest(
         isEditing ? "PUT" : "POST",
         isEditing
           ? `/api/conversation-flows/${flow.id}`
           : "/api/conversation-flows",
         flow,
       );
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -150,66 +106,6 @@ export default function ConversationFlows() {
       });
     },
   });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedConfigId || !editingFlow) {
-      toast({
-        title: "Error",
-        description: "Please select a configuration and fill out the form",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const requiredFields = {
-      order: editingFlow.order,
-      videoFilename: editingFlow.videoFilename,
-      systemPrompt: editingFlow.systemPrompt,
-      agentQuestion: editingFlow.agentQuestion,
-    };
-
-    const missingFields = Object.entries(requiredFields)
-      .filter(([_, value]) => !value)
-      .map(([key]) => key);
-
-    if (missingFields.length > 0) {
-      toast({
-        title: "Error",
-        description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    saveFlow({
-      ...editingFlow,
-      configId: selectedConfigId,
-    });
-  };
-
-  const handleEdit = (flow: ConversationFlow) => {
-    setEditingFlow({
-      id: flow.id,
-      configId: flow.configId,
-      order: flow.order,
-      videoFilename: flow.videoFilename,
-      systemPrompt: flow.systemPrompt,
-      agentQuestion: flow.agentQuestion,
-      passNext: flow.passNext,
-      failNext: flow.failNext,
-      videoOnly: flow.videoOnly,
-      showForm: flow.showForm,
-      formName: flow.formName,
-      inputDelay: flow.inputDelay,
-    });
-  };
-
-  const handleDelete = (flowId: number) => {
-    if (window.confirm("Are you sure you want to delete this flow?")) {
-      deleteFlow(flowId);
-    }
-  };
 
   // Update the select handling
   const handleConfigSelect = (value: string) => {
@@ -559,3 +455,63 @@ export default function ConversationFlows() {
     </div>
   );
 }
+
+const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedConfigId || !editingFlow) {
+      toast({
+        title: "Error",
+        description: "Please select a configuration and fill out the form",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const requiredFields = {
+      order: editingFlow.order,
+      videoFilename: editingFlow.videoFilename,
+      systemPrompt: editingFlow.systemPrompt,
+      agentQuestion: editingFlow.agentQuestion,
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      toast({
+        title: "Error",
+        description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    saveFlow({
+      ...editingFlow,
+      configId: selectedConfigId,
+    });
+  };
+
+  const handleEdit = (flow: ConversationFlow) => {
+    setEditingFlow({
+      id: flow.id,
+      configId: flow.configId,
+      order: flow.order,
+      videoFilename: flow.videoFilename,
+      systemPrompt: flow.systemPrompt,
+      agentQuestion: flow.agentQuestion,
+      passNext: flow.passNext,
+      failNext: flow.failNext,
+      videoOnly: flow.videoOnly,
+      showForm: flow.showForm,
+      formName: flow.formName,
+      inputDelay: flow.inputDelay,
+    });
+  };
+
+  const handleDelete = (flowId: number) => {
+    if (window.confirm("Are you sure you want to delete this flow?")) {
+      deleteFlow(flowId);
+    }
+  };

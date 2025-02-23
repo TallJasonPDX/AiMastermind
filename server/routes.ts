@@ -17,32 +17,28 @@ export function registerRoutes(app: Express): Server {
     changeOrigin: true,
     secure: false,
     logLevel: 'debug',
-    // Using proper types for the handlers
-    onProxyReq: (proxyReq: any, req: express.Request, res: express.Response) => {
-      console.log("[FastAPI Proxy] Forwarding request:", {
-        method: req.method,
-        path: req.path,
-        body: req.body
-      });
-
-      // Ensure proper body forwarding for POST/PUT/PATCH requests
-      if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+    // Keep the /api prefix when forwarding to FastAPI
+    pathRewrite: { '^/api': '/api' },
+    onProxyReq: function onProxyReq(proxyReq: any, req: IncomingMessage, res: ServerResponse) {
+      if (req instanceof express.Request && ['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
         const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader("Content-Type", "application/json");
-        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
       }
     },
-    onProxyRes: (proxyRes: any, req: express.Request, res: express.Response) => {
-      console.log("[FastAPI Proxy] Received response:", {
-        method: req.method,
-        path: req.path,
+    onProxyRes: function onProxyRes(proxyRes: any, req: IncomingMessage, res: ServerResponse) {
+      const request = req as express.Request;
+      console.log("[FastAPI Proxy] Response:", {
+        method: request.method,
+        path: request.path,
         status: proxyRes.statusCode
       });
     },
-    onError: (err: Error, req: express.Request, res: express.Response) => {
+    onError: function onError(err: Error, req: IncomingMessage, res: ServerResponse) {
       console.error("[FastAPI Proxy] Error:", err);
-      res.status(500).send("Proxy Error");
+      res.statusCode = 500;
+      res.end("Proxy Error");
     }
   } as Options);
 
