@@ -515,4 +515,3 @@ const handleSubmit = (e: React.FormEvent) => {
       deleteFlow(flowId);
     }
   };
-}
