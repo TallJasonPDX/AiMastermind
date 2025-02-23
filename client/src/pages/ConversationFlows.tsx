@@ -30,7 +30,6 @@ const apiRequest = async (method: string, url: string, body?: any) => {
   return response;
 };
 
-
 export default function ConversationFlows() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -72,7 +71,9 @@ export default function ConversationFlows() {
         "[ConversationFlows] Fetching flows for config:",
         selectedConfigId,
       );
-      const response = await fetch(`/api/conversation-flows?config_id=${selectedConfigId}`);
+      const response = await fetch(
+        `/api/conversation-flows?config_id=${selectedConfigId}`,
+      );
       if (!response.ok) {
         const error = await response.text();
         console.error("[ConversationFlows] Error fetching flows:", error);
@@ -90,7 +91,7 @@ export default function ConversationFlows() {
     queryKey: ["/api/videos"],
     queryFn: async () => {
       console.log("[ConversationFlows] Fetching videos...");
-      const response = await fetch(`/api/videos`);
+      const response = await fetch("/api/videos");
       if (!response.ok) {
         const error = await response.text();
         console.error("[ConversationFlows] Error fetching videos:", error);
@@ -102,7 +103,7 @@ export default function ConversationFlows() {
 
   const { mutate: deleteFlow } = useMutation({
     mutationFn: async (flowId: number) => {
-      return apiRequest('DELETE', `/api/conversation-flows/${flowId}`);
+      return apiRequest("DELETE", `/api/conversation-flows/${flowId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -123,9 +124,11 @@ export default function ConversationFlows() {
     mutationFn: async (flow: Partial<ConversationFlow>) => {
       const isEditing = Boolean(flow.id);
       const response = await apiRequest(
-        isEditing ? 'PUT' : 'POST',
-        isEditing ? `/api/conversation-flows/${flow.id}` : '/api/conversation-flows',
-        flow
+        isEditing ? "PUT" : "POST",
+        isEditing
+          ? `/api/conversation-flows/${flow.id}`
+          : "/api/conversation-flows",
+        flow,
       );
       return response.json();
     },
@@ -472,9 +475,7 @@ export default function ConversationFlows() {
             )}
 
             <div className="mt-8 border-t pt-8">
-              <h2 className="text-xl font-semibold mb-4">
-                Conversation Flows
-              </h2>
+              <h2 className="text-xl font-semibold mb-4">Conversation Flows</h2>
               {flows?.length ? (
                 <div className="space-y-4">
                   {flows

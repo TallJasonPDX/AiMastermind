@@ -15,8 +15,9 @@ export function registerRoutes(app: Express): Server {
     target: "http://localhost:8000",
     changeOrigin: true,
     secure: false,
-    onProxyReq: (proxyReq, req, _res) => {
-      console.log("\n[FastAPI Proxy] Forwarding request:", {
+    pathRewrite: undefined, // Changed to undefined to reflect default behavior
+    onProxyReq: (proxyReq, req, res) => { // Renamed _res to res for consistency
+      console.log("[FastAPI Proxy] Forwarding request:", {
         method: req.method,
         path: req.path,
         body: req.body

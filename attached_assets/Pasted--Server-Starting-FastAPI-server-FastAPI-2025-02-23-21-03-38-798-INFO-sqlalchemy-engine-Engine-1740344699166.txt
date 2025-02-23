@@ -1,0 +1,59 @@
+[Server] Starting FastAPI server...
+[FastAPI] 2025-02-23 21:03:38,798 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+
+[FastAPI] 2025-02-23 21:03:38,799 INFO sqlalchemy.engine.Engine [raw sql] {}
+
+[FastAPI] 2025-02-23 21:03:38,837 INFO sqlalchemy.engine.Engine select current_schema()
+
+[FastAPI] 2025-02-23 21:03:38,837 INFO sqlalchemy.engine.Engine [raw sql] {}
+
+[FastAPI] 2025-02-23 21:03:38,874 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+
+[FastAPI] 2025-02-23 21:03:38,874 INFO sqlalchemy.engine.Engine [raw sql] {}
+
+[FastAPI] 2025-02-23 21:03:38,911 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+
+[FastAPI] 2025-02-23 21:03:38,911 INFO sqlalchemy.engine.Engine SELECT 1
+2025-02-23 21:03:38,911 INFO sqlalchemy.engine.Engine [generated in 0.00030s] {}
+
+[FastAPI] [Database] Successfully connected to the database
+2025-02-23 21:03:38,948 INFO sqlalchemy.engine.Engine ROLLBACK
+
+[FastAPI] 2025-02-23 21:03:39,841 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+
+[FastAPI Error] INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+
+[FastAPI] 2025-02-23 21:03:39,845 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+
+[FastAPI] 2025-02-23 21:03:39,845 INFO sqlalchemy.engine.Engine [generated in 0.00022s] {'table_name': 'configurations', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+
+[FastAPI Error] INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+INFO:sqlalchemy.engine.Engine:[generated in 0.00022s] {'table_name': 'configurations', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+
+[FastAPI] 2025-02-23 21:03:39,883 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+
+[FastAPI] 2025-02-23 21:03:39,883 INFO sqlalchemy.engine.Engine [cached since 0.03824s ago] {'table_name': 'conversation_flows', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+
+[FastAPI Error] INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+INFO:sqlalchemy.engine.Engine:[cached since 0.03824s ago] {'table_name': 'conversation_flows', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+
+[FastAPI] 2025-02-23 21:03:39,902 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+
+[FastAPI] 2025-02-23 21:03:39,902 INFO sqlalchemy.engine.Engine [cached since 0.05743s ago] {'table_name': 'conversations', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+
+[FastAPI Error] INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+INFO:sqlalchemy.engine.Engine:[cached since 0.05743s ago] {'table_name': 'conversations', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+
+[FastAPI] 2025-02-23 21:03:39,921 INFO sqlalchemy.engine.Engine COMMIT
