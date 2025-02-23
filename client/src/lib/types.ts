@@ -1,30 +1,30 @@
 export interface Config {
   id: number;
-  pageTitle: string;
-  heygenSceneId: string;
-  openaiAgentConfig: {
-    assistantId: string;
+  page_title: string;
+  heygen_scene_id: string;
+  openai_agent_config: {
+    assistant_id: string;
   };
-  passResponse: string;
-  failResponse: string;
-  voiceId: string;
-  createdAt: string;
-  updatedAt: string;
+  pass_response: string;
+  fail_response: string;
+  voice_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ConversationFlow {
   id: number;
-  configId: number;
+  config_id: number;
   order: number;
-  videoFilename: string;
-  systemPrompt: string;
-  agentQuestion: string;
-  passNext: number | null;
-  failNext: number | null;
-  videoOnly: boolean;
-  showForm: boolean;
-  formName: string | null;
-  inputDelay: number;
-  createdAt: string;
-  updatedAt: string;
+  video_filename: string;
+  system_prompt: string;
+  agent_question: string;
+  pass_next: number | null;
+  fail_next: number | null;
+  video_only: boolean;
+  show_form: boolean;
+  form_name: string | null;
+  input_delay: number;
+  created_at: string;
+  updated_at: string;
 }

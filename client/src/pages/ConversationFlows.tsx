@@ -16,7 +16,7 @@ import type { Config, ConversationFlow } from "@/lib/types";
 
 // API request helper function
 const apiRequest = async (method: string, url: string, body?: any) => {
-  const response = await fetch(url.startsWith('/api/') ? url : `/api${url}`, {
+  const response = await fetch(url.startsWith("/api/") ? url : `/api${url}`, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -48,7 +48,10 @@ export default function ConversationFlows() {
     queryKey: ["/api/conversation-flows", selectedConfigId],
     queryFn: () =>
       selectedConfigId
-        ? apiRequest("GET", `/api/conversation-flows?config_id=${selectedConfigId}`)
+        ? apiRequest(
+            "GET",
+            `/api/conversation-flows?config_id=${selectedConfigId}`,
+          )
         : Promise.resolve([]),
     enabled: !!selectedConfigId,
   });
@@ -199,7 +202,7 @@ export default function ConversationFlows() {
                         Video File *
                       </label>
                       <Select
-                        value={editingFlow.videoFilename}
+                        value={editingFlow.video_filename}
                         onValueChange={(value) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -241,7 +244,7 @@ export default function ConversationFlows() {
                         System Prompt *
                       </label>
                       <textarea
-                        value={editingFlow.systemPrompt || ""}
+                        value={editingFlow.system_prompt || ""}
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -257,7 +260,7 @@ export default function ConversationFlows() {
                         Agent Question *
                       </label>
                       <Input
-                        value={editingFlow.agentQuestion || ""}
+                        value={editingFlow.agent_question || ""}
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -273,7 +276,7 @@ export default function ConversationFlows() {
                       </label>
                       <Input
                         type="number"
-                        value={editingFlow.passNext || ""}
+                        value={editingFlow.pass_next || ""}
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -288,7 +291,7 @@ export default function ConversationFlows() {
                       </label>
                       <Input
                         type="number"
-                        value={editingFlow.failNext || ""}
+                        value={editingFlow.fail_next || ""}
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -299,7 +302,7 @@ export default function ConversationFlows() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Switch
-                        checked={editingFlow.videoOnly || false}
+                        checked={editingFlow.video_only || false}
                         onCheckedChange={(checked) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -311,7 +314,7 @@ export default function ConversationFlows() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Switch
-                        checked={editingFlow.showForm || false}
+                        checked={editingFlow.show_form || false}
                         onCheckedChange={(checked) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -321,13 +324,13 @@ export default function ConversationFlows() {
                       />
                       <label>Show Form</label>
                     </div>
-                    {editingFlow.showForm && (
+                    {editingFlow.show_form && (
                       <div className="col-span-2">
                         <label className="block font-medium mb-1">
                           Form Name
                         </label>
                         <Input
-                          value={editingFlow.formName || ""}
+                          value={editingFlow.form_name || ""}
                           onChange={(e) =>
                             setEditingFlow((prev) => ({
                               ...prev,
@@ -343,7 +346,7 @@ export default function ConversationFlows() {
                       </label>
                       <Input
                         type="number"
-                        value={editingFlow.inputDelay || ""}
+                        value={editingFlow.input_delay || ""}
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
@@ -388,40 +391,40 @@ export default function ConversationFlows() {
                             </p>
                             <p className="text-sm">
                               <span className="font-medium">Video:</span>{" "}
-                              {flow.videoFilename}
+                              {flow.video_filename}
                             </p>
                             <p className="text-sm">
                               <span className="font-medium">
                                 System Prompt:
                               </span>{" "}
-                              {flow.systemPrompt}
+                              {flow.system_prompt}
                             </p>
                             <p className="text-sm">
                               <span className="font-medium">Question:</span>{" "}
-                              {flow.agentQuestion}
+                              {flow.agent_question}
                             </p>
                             <p className="text-sm">
                               <span className="font-medium">Next Steps:</span>{" "}
-                              Pass → {flow.passNext || "End"}, Fail →{" "}
-                              {flow.failNext || "End"}
+                              Pass → {flow.pass_next || "End"}, Fail →{" "}
+                              {flow.fail_next || "End"}
                             </p>
-                            {flow.showForm && (
+                            {flow.show_form && (
                               <p className="text-sm">
                                 <span className="font-medium">Form Name:</span>{" "}
-                                {flow.formName}
+                                {flow.form_name}
                               </p>
                             )}
-                            {flow.videoOnly && (
+                            {flow.video_only && (
                               <p className="text-sm text-blue-600">
                                 Video Only Mode
                               </p>
                             )}
-                            {flow.inputDelay > 0 && (
+                            {flow.input_delay > 0 && (
                               <p className="text-sm">
                                 <span className="font-medium">
                                   Input Delay:
                                 </span>{" "}
-                                {flow.inputDelay}s
+                                {flow.input_delay}s
                               </p>
                             )}
                           </div>
@@ -457,61 +460,61 @@ export default function ConversationFlows() {
 }
 
 const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedConfigId || !editingFlow) {
-      toast({
-        title: "Error",
-        description: "Please select a configuration and fill out the form",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const requiredFields = {
-      order: editingFlow.order,
-      videoFilename: editingFlow.videoFilename,
-      systemPrompt: editingFlow.systemPrompt,
-      agentQuestion: editingFlow.agentQuestion,
-    };
-
-    const missingFields = Object.entries(requiredFields)
-      .filter(([_, value]) => !value)
-      .map(([key]) => key);
-
-    if (missingFields.length > 0) {
-      toast({
-        title: "Error",
-        description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    saveFlow({
-      ...editingFlow,
-      configId: selectedConfigId,
+  e.preventDefault();
+  if (!selectedConfigId || !editingFlow) {
+    toast({
+      title: "Error",
+      description: "Please select a configuration and fill out the form",
+      variant: "destructive",
     });
+    return;
+  }
+
+  const requiredFields = {
+    order: editingFlow.order,
+    videoFilename: editingFlow.video_filename,
+    systemPrompt: editingFlow.system_prompt,
+    agentQuestion: editingFlow.agent_question,
   };
 
-  const handleEdit = (flow: ConversationFlow) => {
-    setEditingFlow({
-      id: flow.id,
-      configId: flow.configId,
-      order: flow.order,
-      videoFilename: flow.videoFilename,
-      systemPrompt: flow.systemPrompt,
-      agentQuestion: flow.agentQuestion,
-      passNext: flow.passNext,
-      failNext: flow.failNext,
-      videoOnly: flow.videoOnly,
-      showForm: flow.showForm,
-      formName: flow.formName,
-      inputDelay: flow.inputDelay,
+  const missingFields = Object.entries(requiredFields)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingFields.length > 0) {
+    toast({
+      title: "Error",
+      description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
+      variant: "destructive",
     });
-  };
+    return;
+  }
 
-  const handleDelete = (flowId: number) => {
-    if (window.confirm("Are you sure you want to delete this flow?")) {
-      deleteFlow(flowId);
-    }
-  };
+  saveFlow({
+    ...editingFlow,
+    configId: selectedConfigId,
+  });
+};
+
+const handleEdit = (flow: ConversationFlow) => {
+  setEditingFlow({
+    id: flow.id,
+    configId: flow.config_id,
+    order: flow.order,
+    videoFilename: flow.video_filename,
+    systemPrompt: flow.system_prompt,
+    agentQuestion: flow.agent_question,
+    passNext: flow.pass_next,
+    failNext: flow.fail_next,
+    videoOnly: flow.video_only,
+    showForm: flow.show_form,
+    formName: flow.form_name,
+    inputDelay: flow.input_delay,
+  });
+};
+
+const handleDelete = (flowId: number) => {
+  if (window.confirm("Are you sure you want to delete this flow?")) {
+    deleteFlow(flowId);
+  }
+};

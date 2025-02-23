@@ -73,8 +73,8 @@ export default function Home() {
       setCurrentFlow(firstFlow);
       // Reset input state for new flow
       setIsInputEnabled(false);
-      if (firstFlow.inputDelay > 0) {
-        setTimeout(() => setIsInputEnabled(true), firstFlow.inputDelay * 1000);
+      if (firstFlow.input_delay > 0) {
+        setTimeout(() => setIsInputEnabled(true), firstFlow.input_delay * 1000);
       } else {
         setIsInputEnabled(true);
       }
@@ -88,14 +88,16 @@ export default function Home() {
 
     try {
       const data = await apiRequest("POST", "/api/openai/chat", {
-        system_prompt: currentFlow.systemPrompt,
-        agent_question: currentFlow.agentQuestion,
+        system_prompt: currentFlow.system_prompt,
+        agent_question: currentFlow.agent_question,
         user_message: message,
       });
 
       if (data.status === "pass" || data.status === "fail") {
         const nextFlowOrder =
-          data.status === "pass" ? currentFlow.passNext : currentFlow.failNext;
+          data.status === "pass"
+            ? currentFlow.pass_next
+            : currentFlow.fail_next;
 
         if (nextFlowOrder == null) {
           console.log("[Home] End of conversation. No next flow.");
@@ -108,10 +110,10 @@ export default function Home() {
           console.log("[Home] Moving to next flow:", nextFlow);
           setCurrentFlow(nextFlow);
           setIsInputEnabled(false);
-          if (nextFlow.inputDelay > 0) {
+          if (nextFlow.input_delay > 0) {
             setTimeout(
               () => setIsInputEnabled(true),
-              nextFlow.inputDelay * 1000,
+              nextFlow.input_delay * 1000,
             );
           } else {
             setIsInputEnabled(true);
@@ -127,7 +129,7 @@ export default function Home() {
 
   console.log("[Home] Render state:", {
     currentFlow,
-    shouldShowChat: !currentFlow?.videoOnly && currentFlow?.systemPrompt,
+    shouldShowChat: !currentFlow?.video_only && currentFlow?.system_prompt,
     isInputEnabled,
   });
 
@@ -159,20 +161,20 @@ export default function Home() {
             videoFilename={currentFlow?.video_filename}
             isAudioEnabled={audioEnabled}
           />
-          {!currentFlow?.videoOnly && currentFlow?.systemPrompt && (
+          {!currentFlow?.video_only && currentFlow?.system_prompt && (
             <ChatInterface
               isEnabled={isInputEnabled}
               onSubmit={handleUserResponse}
               configId={config?.id}
-              agentQuestion={currentFlow?.agentQuestion}
+              agentQuestion={currentFlow?.agent_question}
             />
           )}
-          {currentFlow?.showForm && (
+          {currentFlow?.show_form && (
             <div className="mt-4">
               {/* Dynamic form component will be rendered here */}
-              {currentFlow.formName && (
+              {currentFlow.form_name && (
                 <div className="text-center text-muted-foreground">
-                  Form placeholder: {currentFlow.formName}
+                  Form placeholder: {currentFlow.form_name}
                 </div>
               )}
             </div>
