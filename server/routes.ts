@@ -64,10 +64,12 @@ export function registerRoutes(app: Express): Server {
     },
   } as Options);
 
-  // Configure FastAPI proxy middleware
   app.use("/api", (req, res, next) => {
+    // Always ensure /api prefix
+    if (!req.url.startsWith("/api")) {
+      req.url = `/api${req.url}`;
+    }
     console.log("[FastAPI Route]", req.method, req.url);
-    // Don't modify the URL - let the proxy handle it
     return fastApiProxy(req, res, next);
   });
 
