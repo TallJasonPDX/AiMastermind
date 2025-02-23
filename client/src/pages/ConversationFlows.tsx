@@ -155,7 +155,7 @@ export default function ConversationFlows() {
                 {configs && configs.length > 0 ? (
                   configs.map((config) => (
                     <SelectItem key={config.id} value={config.id.toString()}>
-                      {config.pageTitle}
+                      {config.page_title}
                     </SelectItem>
                   ))
                 ) : (
