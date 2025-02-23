@@ -16,12 +16,20 @@ export function registerRoutes(app: Express): Server {
     target: "http://localhost:8000",
     changeOrigin: true,
     secure: false,
-    logLevel: 'debug',
-    onProxyReq: function onProxyReq(proxyReq: any, req: IncomingMessage, res: ServerResponse) {
-      if (req instanceof express.Request && ['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+    logLevel: "debug",
+    onProxyReq: function onProxyReq(
+      proxyReq: any,
+      req: IncomingMessage,
+      res: ServerResponse,
+    ) {
+      if (
+        req instanceof express.Request &&
+        ["POST", "PUT", "PATCH"].includes(req.method) &&
+        req.body
+      ) {
         const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.setHeader("Content-Type", "application/json");
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
       }
 
@@ -29,26 +37,31 @@ export function registerRoutes(app: Express): Server {
       console.log("[FastAPI Proxy] Forwarding request:", {
         url: proxyReq.path,
         method: proxyReq.method,
-        headers: proxyReq.getHeaders()
+        headers: proxyReq.getHeaders(),
       });
     },
-    onProxyRes: function onProxyRes(proxyRes: any, req: IncomingMessage, res: ServerResponse) {
+    onProxyRes: function onProxyRes(
+      proxyRes: any,
+      req: IncomingMessage,
+      res: ServerResponse,
+    ) {
       const request = req as express.Request;
       console.log("[FastAPI Proxy] Response:", {
         method: request.method,
         path: request.path,
-        status: proxyRes.statusCode
+        status: proxyRes.statusCode,
       });
     },
-    onError: function onError(err: Error, req: IncomingMessage, res: ServerResponse) {
+    onError: function onError(
+      err: Error,
+      req: IncomingMessage,
+      res: ServerResponse,
+    ) {
       console.error("[FastAPI Proxy] Error:", err);
       res.statusCode = 500;
       res.end("Proxy Error");
-    }
+    },
   } as Options);
-
-  // Apply proxy middleware for all /api routes
-  app.use("/api/videos", express.static("client/videos"));
 
   app.use("/api", (req, res, next) => {
     console.log("[FastAPI Route]", req.method, req.url);
