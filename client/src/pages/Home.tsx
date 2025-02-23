@@ -69,7 +69,9 @@ export default function Home() {
         setIsInputEnabled(true);
       }
     }
-  }, [flows]);
+  }, [flows, currentFlow]);
+
+  console.log("[Home] Current flow:", currentFlow);
 
   const handleUserResponse = async (message: string) => {
     if (!currentFlow || !config) return;
