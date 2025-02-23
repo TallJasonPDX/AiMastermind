@@ -17,8 +17,7 @@ export function registerRoutes(app: Express): Server {
     changeOrigin: true,
     secure: false,
     logLevel: 'debug',
-    // Keep the /api prefix when forwarding to FastAPI
-    pathRewrite: { '^/api': '/api' },
+    pathRewrite: undefined, // Do not rewrite paths, keep /api prefix
     onProxyReq: function onProxyReq(proxyReq: any, req: IncomingMessage, res: ServerResponse) {
       if (req instanceof express.Request && ['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
         const bodyData = JSON.stringify(req.body);
@@ -26,6 +25,13 @@ export function registerRoutes(app: Express): Server {
         proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
       }
+
+      // Log the outgoing request
+      console.log("[FastAPI Proxy] Forwarding request:", {
+        url: proxyReq.path,
+        method: proxyReq.method,
+        headers: proxyReq.getHeaders()
+      });
     },
     onProxyRes: function onProxyRes(proxyRes: any, req: IncomingMessage, res: ServerResponse) {
       const request = req as express.Request;
