@@ -229,7 +229,7 @@ export default function ConversationFlows() {
                         onValueChange={(value) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            videoFilename: value,
+                            video_filename: value,
                           }))
                         }
                       >
@@ -271,7 +271,7 @@ export default function ConversationFlows() {
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            systemPrompt: e.target.value,
+                            system_prompt: e.target.value,
                           }))
                         }
                         required
@@ -287,7 +287,7 @@ export default function ConversationFlows() {
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            agentQuestion: e.target.value,
+                            agent_question: e.target.value,
                           }))
                         }
                         required
@@ -303,7 +303,7 @@ export default function ConversationFlows() {
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            passNext: Number(e.target.value),
+                            pass_next: Number(e.target.value),
                           }))
                         }
                       />
@@ -318,7 +318,7 @@ export default function ConversationFlows() {
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            failNext: Number(e.target.value),
+                            fail_next: Number(e.target.value),
                           }))
                         }
                       />
@@ -329,7 +329,7 @@ export default function ConversationFlows() {
                         onCheckedChange={(checked) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            videoOnly: checked,
+                            video_only: checked,
                           }))
                         }
                       />
@@ -341,7 +341,7 @@ export default function ConversationFlows() {
                         onCheckedChange={(checked) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            showForm: checked,
+                            show_form: checked,
                           }))
                         }
                       />
@@ -357,7 +357,7 @@ export default function ConversationFlows() {
                           onChange={(e) =>
                             setEditingFlow((prev) => ({
                               ...prev,
-                              formName: e.target.value,
+                              form_name: e.target.value,
                             }))
                           }
                         />
@@ -373,7 +373,7 @@ export default function ConversationFlows() {
                         onChange={(e) =>
                           setEditingFlow((prev) => ({
                             ...prev,
-                            inputDelay: Number(e.target.value),
+                            input_delay: Number(e.target.value),
                           }))
                         }
                       />
@@ -495,9 +495,9 @@ const handleSubmit = (e: React.FormEvent) => {
 
   const requiredFields = {
     order: editingFlow.order,
-    videoFilename: editingFlow.video_filename,
-    systemPrompt: editingFlow.system_prompt,
-    agentQuestion: editingFlow.agent_question,
+    video_filename: editingFlow.video_filename,
+    system_prompt: editingFlow.system_prompt,
+    agent_question: editingFlow.agent_question,
   };
 
   const missingFields = Object.entries(requiredFields)
@@ -518,5 +518,3 @@ const handleSubmit = (e: React.FormEvent) => {
     configId: selectedConfigId,
   });
 };
-
-
