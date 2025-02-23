@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,7 +51,7 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
         controls
         autoPlay
         playsInline
-        src={`/api/videos/${videoFilename}`}
+        src={`../videos/${videoFilename}`}
         onError={(e) => console.error('[AvatarDisplay] Video loading error:', e)}
         onLoadStart={() => console.log('[AvatarDisplay] Video loading started')}
         onLoadedData={() => console.log('[AvatarDisplay] Video loaded successfully')}
