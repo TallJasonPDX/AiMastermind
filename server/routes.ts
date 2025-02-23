@@ -47,9 +47,11 @@ export function registerRoutes(app: Express): Server {
     }
   } as Options);
 
-  // Apply proxy middleware for all /api routes 
+  // Apply proxy middleware for all /api routes
   app.use("/api", (req, res, next) => {
     console.log("[FastAPI Route]", req.method, req.url);
+    // Add back the /api prefix that was stripped by Express
+    req.url = `/api${req.url}`;
     return fastApiProxy(req, res, next);
   });
 
