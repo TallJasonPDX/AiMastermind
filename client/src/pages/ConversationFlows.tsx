@@ -482,6 +482,8 @@ export default function ConversationFlows() {
   );
 }
 
+
+
 const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault();
   if (!selectedConfigId || !editingFlow) {
@@ -506,7 +508,7 @@ const handleSubmit = (e: React.FormEvent) => {
 
   if (missingFields.length > 0) {
     toast({
-      title: "Error",
+      title: "Error", 
       description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
       variant: "destructive",
     });
@@ -515,6 +517,6 @@ const handleSubmit = (e: React.FormEvent) => {
 
   saveFlow({
     ...editingFlow,
-    configId: selectedConfigId,
+    config_id: selectedConfigId,
   });
 };
