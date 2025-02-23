@@ -8,7 +8,7 @@ import type { Config, ConversationFlow } from "@/lib/types";
 
 // API request helper function
 const apiRequest = async (method: string, url: string, body?: any) => {
-  const response = await fetch(url.startsWith('/api/') ? url : `/api${url}`, {
+  const response = await fetch(url.startsWith("/api/") ? url : `/api${url}`, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -41,8 +41,18 @@ export default function Home() {
 
   // Fetch configuration
   const { data: config } = useQuery<Config>({
-    queryKey: [configId ? `/api/configurations/${configId}` : "/api/configurations/active"],
-    queryFn: () => apiRequest("GET", configId ? `/api/configurations/${configId}` : "/api/configurations/active"),
+    queryKey: [
+      configId
+        ? `/api/configurations/${configId}`
+        : "/api/configurations/active",
+    ],
+    queryFn: () =>
+      apiRequest(
+        "GET",
+        configId
+          ? `/api/configurations/${configId}`
+          : "/api/configurations/active",
+      ),
   });
 
   // Fetch conversation flows for the config
@@ -146,7 +156,7 @@ export default function Home() {
       <main className="container mx-auto px-4 pt-16 pb-24">
         <Card className="mt-4 p-4">
           <AvatarDisplay
-            videoFilename={currentFlow?.videoFilename}
+            videoFilename={currentFlow?.video_filename}
             isAudioEnabled={audioEnabled}
           />
           {!currentFlow?.videoOnly && currentFlow?.systemPrompt && (
