@@ -19,26 +19,27 @@ export function registerRoutes(app: Express): Server {
     logLevel: "debug",
     onProxyReq: function onProxyReq(
       proxyReq: any,
-      req: IncomingMessage,
+      req: express.Request,
       res: ServerResponse,
     ) {
-      if (
-        req instanceof express.Request &&
-        ["POST", "PUT", "PATCH"].includes(req.method) &&
-        req.body
-      ) {
-        const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader("Content-Type", "application/json");
-        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-      }
+      try {
+        if (["POST", "PUT", "PATCH"].includes(req.method) && req.body) {
+          const bodyData = JSON.stringify(req.body);
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
 
-      // Log the outgoing request
-      console.log("[FastAPI Proxy] Forwarding request:", {
-        url: proxyReq.path,
-        method: proxyReq.method,
-        headers: proxyReq.getHeaders(),
-      });
+        // Log the outgoing request
+        console.log("[FastAPI Proxy] Forwarding request:", {
+          url: proxyReq.path,
+          method: proxyReq.method,
+          headers: proxyReq.getHeaders(),
+          body: req.body,
+        });
+      } catch (error) {
+        console.error("[FastAPI Proxy] Error in request handling:", error);
+      }
     },
     onProxyRes: function onProxyRes(
       proxyRes: any,
