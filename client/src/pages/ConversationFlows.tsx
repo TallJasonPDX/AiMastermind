@@ -129,17 +129,17 @@ export default function ConversationFlows() {
   const handleEdit = (flow: ConversationFlow) => {
     setEditingFlow({
       id: flow.id,
-      configId: flow.config_id,
+      config_id: flow.config_id,
       order: flow.order,
-      videoFilename: flow.video_filename,
-      systemPrompt: flow.system_prompt,
-      agentQuestion: flow.agent_question,
-      passNext: flow.pass_next,
-      failNext: flow.fail_next,
-      videoOnly: flow.video_only,
-      showForm: flow.show_form,
-      formName: flow.form_name,
-      inputDelay: flow.input_delay,
+      video_filename: flow.video_filename,
+      system_prompt: flow.system_prompt,
+      agent_question: flow.agent_question,
+      pass_next: flow.pass_next,
+      fail_next: flow.fail_next,
+      video_only: flow.video_only,
+      show_form: flow.show_form,
+      form_name: flow.form_name,
+      input_delay: flow.input_delay,
     });
   };
 
