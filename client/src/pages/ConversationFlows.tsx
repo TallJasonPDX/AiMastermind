@@ -480,41 +480,41 @@ export default function ConversationFlows() {
       </div>
     </div>
   );
-}
 
-const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!selectedConfigId || !editingFlow) {
-    toast({
-      title: "Error",
-      description: "Please select a configuration and fill out the form",
-      variant: "destructive",
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedConfigId || !editingFlow) {
+      toast({
+        title: "Error",
+        description: "Please select a configuration and fill out the form",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const requiredFields = {
+      order: editingFlow.order,
+      video_filename: editingFlow.video_filename,
+      system_prompt: editingFlow.system_prompt,
+      agent_question: editingFlow.agent_question,
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      toast({
+        title: "Error",
+        description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    saveFlow({
+      ...editingFlow,
+      config_id: selectedConfigId,
     });
-    return;
-  }
-
-  const requiredFields = {
-    order: editingFlow.order,
-    video_filename: editingFlow.video_filename,
-    system_prompt: editingFlow.system_prompt,
-    agent_question: editingFlow.agent_question,
   };
-
-  const missingFields = Object.entries(requiredFields)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key);
-
-  if (missingFields.length > 0) {
-    toast({
-      title: "Error",
-      description: `Please fill out the following required fields: ${missingFields.join(", ")}`,
-      variant: "destructive",
-    });
-    return;
-  }
-
-  saveFlow({
-    ...editingFlow,
-    configId: selectedConfigId,
-  });
-};
+}
