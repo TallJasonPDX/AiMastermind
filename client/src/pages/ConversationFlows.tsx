@@ -480,16 +480,13 @@ export default function ConversationFlows() {
       </div>
     </div>
   );
-}
 
-
-
-const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!selectedConfigId || !editingFlow) {
-    toast({
-      title: "Error",
-      description: "Please select a configuration and fill out the form",
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedConfigId || !editingFlow) {
+      toast({
+        title: "Error",
+        description: "Please select a configuration and fill out the form",
       variant: "destructive",
     });
     return;
@@ -519,4 +516,5 @@ const handleSubmit = (e: React.FormEvent) => {
     ...editingFlow,
     config_id: selectedConfigId,
   });
-};
+  };
+}
