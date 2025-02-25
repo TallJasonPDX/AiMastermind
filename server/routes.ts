@@ -24,10 +24,6 @@ export function registerRoutes(app: Express): Server {
     changeOrigin: true,
     secure: false,
     logLevel: "debug",
-    pathRewrite: {
-      // Make sure we're not stripping the /api prefix
-      '^/api': '/api' // Keep the /api prefix
-    },
     onProxyReq: function onProxyReq(
       proxyReq: any,
       req: express.Request,
@@ -87,7 +83,9 @@ export function registerRoutes(app: Express): Server {
     res.json({ success: true, message: 'Express direct test endpoint reached', body: req.body });
   });
   
-  app.use("/api", (req, res, next) => {
+  // Backend routes directly mapped to FastAPI
+  app.all('/api/*', (req, res, next) => {
+    console.log("[FastAPI Router] Original path:", req.path);
     console.log("[FastAPI Router] Original URL:", req.url);
     console.log("[FastAPI Router] HTTP Method:", req.method);
     
@@ -95,13 +93,8 @@ export function registerRoutes(app: Express): Server {
       console.log("[FastAPI Router] POST Request Body:", req.body);
     }
     
-    // Strip the initial /api prefix before forwarding to proxy (which adds its own)
-    // This avoids double /api/api prefixes
-    if (req.url.startsWith("/api/")) {
-      console.log("[FastAPI Router] Stripping initial /api from URL to avoid double prefix");
-      req.url = req.url.substring(4); // Remove "/api" from the beginning
-    }
-    
+    // We need to forward the exact URL including the /api prefix to the FastAPI server
+    // Since FastAPI routes have the /api prefix included
     console.log("[FastAPI Router] Final URL being sent to proxy:", req.url);
     return fastApiProxy(req, res, next);
   });
