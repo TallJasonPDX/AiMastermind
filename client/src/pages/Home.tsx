@@ -12,7 +12,7 @@ const apiRequest = async (method: string, url: string, body?: any) => {
   console.log(`[API Request] Body:`, body);
   
   try {
-    // Ensure all URLs have /api prefix - but don't add it twice
+    // Add /api prefix to all URLs - Express will handle the proxy logic
     const fullUrl = url.startsWith("/api") ? url : `/api${url}`;
     console.log(`[API Request] Processed URL:`, fullUrl);
     
@@ -62,24 +62,24 @@ export default function Home() {
   const { data: config } = useQuery<Config>({
     queryKey: [
       configId
-        ? `/api/configurations/${configId}`
-        : "/api/configurations/active",
+        ? `/configurations/${configId}`
+        : "/configurations/active",
     ],
     queryFn: () =>
       apiRequest(
         "GET",
         configId
-          ? `/api/configurations/${configId}`
-          : "/api/configurations/active",
+          ? `/configurations/${configId}`
+          : "/configurations/active",
       ),
   });
 
   // Fetch conversation flows for the config
   const { data: flows } = useQuery<ConversationFlow[]>({
-    queryKey: ["/api/conversation-flows", config?.id],
+    queryKey: ["/conversation-flows", config?.id],
     queryFn: () =>
       config?.id
-        ? apiRequest("GET", `/api/conversation-flows?config_id=${config.id}`)
+        ? apiRequest("GET", `/conversation-flows?config_id=${config.id}`)
         : Promise.resolve([]),
     enabled: !!config?.id,
   });
@@ -130,17 +130,17 @@ export default function Home() {
       setIsLoading(true);
       
       // First try our test endpoint to verify the proxy is working
-      console.log("[Home] Testing proxy with /api/test-echo");
+      console.log("[Home] Testing proxy with /test-echo");
       try {
-        const testResponse = await apiRequest("POST", "/api/test-echo", {test: "message", data: message});
+        const testResponse = await apiRequest("POST", "/test-echo", {test: "message", data: message});
         console.log("[Home] Test endpoint response:", testResponse);
       } catch (testError) {
         console.error("[Home] Test endpoint failed:", testError);
       }
       
       // Now make the API request to OpenAI
-      console.log("[Home] About to make POST request to /api/openai/chat");
-      const data = await apiRequest("POST", "/api/openai/chat", payload);
+      console.log("[Home] About to make POST request to /chat");
+      const data = await apiRequest("POST", "/chat", payload);
       
       console.log("[Home] Received response from API:", data);
       
