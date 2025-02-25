@@ -8,11 +8,14 @@ import type { Config, ConversationFlow } from "@/lib/types";
 
 // API request helper function
 const apiRequest = async (method: string, url: string, body?: any) => {
-  console.log(`[API Request] ${method} ${url}`, body ? { body } : '');
+  console.log(`[API Request] ${method} ${url} - Original URL`, url);
+  console.log(`[API Request] Body:`, body);
   
   try {
     // Ensure URL starts with /api (without the trailing slash)
     const fullUrl = url.startsWith("/api") ? url : `/api${url}`;
+    console.log(`[API Request] Processed URL:`, fullUrl);
+    
     const response = await fetch(fullUrl, {
       method,
       headers: {
@@ -106,17 +109,29 @@ export default function Home() {
 
     try {
       console.log("[Home] Sending user response to API:", message);
+      console.log("[Home] Current flow details:", {
+        id: currentFlow.id,
+        order: currentFlow.order,
+        system_prompt: currentFlow.system_prompt,
+        agent_question: currentFlow.agent_question
+      });
+      
+      // Prepare request payload
+      const payload = {
+        system_prompt: currentFlow.system_prompt,
+        agent_question: currentFlow.agent_question,
+        user_message: message,
+      };
+      
+      console.log("[Home] POST request payload:", payload);
       
       // Clear any previous response and set loading state
       setCurrentResponse(null);
       setIsLoading(true);
       
       // Make the API request to OpenAI
-      const data = await apiRequest("POST", "/api/openai/chat", {
-        system_prompt: currentFlow.system_prompt,
-        agent_question: currentFlow.agent_question,
-        user_message: message,
-      });
+      console.log("[Home] About to make POST request to /api/openai/chat");
+      const data = await apiRequest("POST", "/api/openai/chat", payload);
       
       console.log("[Home] Received response from API:", data);
       

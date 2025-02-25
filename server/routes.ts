@@ -65,11 +65,22 @@ export function registerRoutes(app: Express): Server {
   } as Options);
 
   app.use("/api", (req, res, next) => {
+    console.log("[FastAPI Router] Original URL:", req.url);
+    console.log("[FastAPI Router] HTTP Method:", req.method);
+    
+    if (req.method === 'POST') {
+      console.log("[FastAPI Router] POST Request Body:", req.body);
+    }
+    
     // Always ensure /api prefix
     if (!req.url.startsWith("/api")) {
+      console.log("[FastAPI Router] Adding /api prefix to URL");
       req.url = `/api${req.url}`;
+    } else {
+      console.log("[FastAPI Router] URL already has /api prefix");
     }
-    console.log("[FastAPI Route]", req.method, req.url);
+    
+    console.log("[FastAPI Router] Final URL being sent to proxy:", req.url);
     return fastApiProxy(req, res, next);
   });
 
