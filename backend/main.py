@@ -139,7 +139,7 @@ async def get_conversation_flows(config_id: Optional[int] = None,
     return flows or []
 
 
-@app.get("/api/configurations/{config_id}", response_model=schemas.Config)
+@app.get("/configurations/{config_id}", response_model=schemas.Config)
 async def get_configuration(config_id: int, db: Session = Depends(get_db)):
     """Get a specific configuration by ID"""
     config = db.query(models.Configurations).filter(
@@ -210,7 +210,7 @@ async def delete_configuration(config_id: int, db: Session = Depends(get_db)):
 
 
 # Conversation Flow Endpoints
-@app.get("/api/conversation-flows/{flow_id}",
+@app.get("/conversation-flows/{flow_id}",
          response_model=schemas.ConversationFlow)
 async def get_conversation_flow(flow_id: int, db: Session = Depends(get_db)):
     """Get a specific conversation flow by ID"""
@@ -222,7 +222,7 @@ async def get_conversation_flow(flow_id: int, db: Session = Depends(get_db)):
     return flow
 
 
-@app.post("/api/conversation-flows",
+@app.post("/conversation-flows",
           response_model=schemas.ConversationFlow,
           status_code=status.HTTP_201_CREATED)
 async def create_conversation_flow(flow: schemas.ConversationFlowCreate,
@@ -235,7 +235,7 @@ async def create_conversation_flow(flow: schemas.ConversationFlowCreate,
     return db_flow
 
 
-@app.put("/api/conversation-flows/{flow_id}",
+@app.put("/conversation-flows/{flow_id}",
          response_model=schemas.ConversationFlow)
 async def update_conversation_flow(flow_id: int,
                                    flow: schemas.ConversationFlowUpdate,
@@ -255,7 +255,7 @@ async def update_conversation_flow(flow_id: int,
     return db_flow
 
 
-@app.delete("/api/conversation-flows/{flow_id}",
+@app.delete("/conversation-flows/{flow_id}",
             status_code=status.HTTP_204_NO_CONTENT)
 async def delete_conversation_flow(flow_id: int,
                                    db: Session = Depends(get_db)):
@@ -272,7 +272,7 @@ async def delete_conversation_flow(flow_id: int,
 
 
 # Conversation Endpoints
-@app.get("/api/conversations", response_model=List[schemas.Conversation])
+@app.get("/conversations", response_model=List[schemas.Conversation])
 async def get_conversations(config_id: Optional[int] = None,
                             skip: int = 0,
                             limit: int = 100,
@@ -286,7 +286,7 @@ async def get_conversations(config_id: Optional[int] = None,
     return conversations
 
 
-@app.get("/api/conversations/{conversation_id}",
+@app.get("/conversations/{conversation_id}",
          response_model=schemas.Conversation)
 async def get_conversation(conversation_id: int,
                            db: Session = Depends(get_db)):
