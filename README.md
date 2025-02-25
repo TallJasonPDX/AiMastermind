@@ -64,6 +64,27 @@ An intelligent qualification system for AI Mastermind group candidates that uses
 - Database: PostgreSQL
 - Video Integration: HeyGen API
 
+### Developer Guidelines
+
+#### Feature Development
+1. Only implement features that have received explicit approval
+2. Preserve all existing code:
+   - Do not remove existing features
+   - Keep debugging lines intact
+   - Maintain code unrelated to your changes
+3. Maintain separation of concerns:
+   - Frontend developers should not modify backend code
+   - Backend developers should not modify frontend code
+4. Implement logging:
+   - Add console.log statements for new features
+   - Log function entry points and key operations
+   - Include relevant data in logs for debugging
+
+#### Code Quality
+- Comment new features thoroughly
+- Follow existing code patterns and naming conventions
+- Test features in isolation before integration
+
 ### Quick Start
 1. Install dependencies: `npm install`
 2. Start the development server: `npm run dev`
