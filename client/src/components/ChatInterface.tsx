@@ -39,10 +39,17 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion }: 
     if (!message.trim() || !isEnabled) return;
 
     try {
-      onSubmit(message);
+      console.log('[ChatInterface] Submitting message:', message);
+      // Store the message for reference
+      const userMessage = message;
+      
+      // Clear the input field immediately for better UX
       setMessage('');
+      
+      // Send the message to the parent component
+      onSubmit(userMessage);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[ChatInterface] Error sending message:', error);
     }
   };
 

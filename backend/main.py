@@ -349,37 +349,50 @@ async def delete_conversation(conversation_id: int,
 @app.post("/api/openai/chat")
 async def process_chat(request: schemas.ChatRequest):
     """Process chat message through OpenAI and determine PASS/FAIL response"""
+    print("\n[API] ==== Starting chat processing ====")
+    print(f"[API] Received request: {request.model_dump_json()}")
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
+        print("[API] Error: OpenAI API key not configured")
         raise HTTPException(status_code=500,
                             detail="OpenAI API key not configured")
 
     try:
+        print("[API] Creating OpenAI client")
         client = OpenAI(api_key=api_key)
-        response = client.chat.completions.create(model="gpt-4",
-                                                  messages=[{
-                                                      "role":
-                                                      "system",
-                                                      "content":
-                                                      request.system_prompt
-                                                  }, {
-                                                      "role":
-                                                      "assistant",
-                                                      "content":
-                                                      request.agent_question
-                                                  }, {
-                                                      "role":
-                                                      "user",
-                                                      "content":
-                                                      request.user_message
-                                                  }],
-                                                  timeout=25)
+
+        print("[API] Sending request to OpenAI")
+        print(f"[API] System prompt: {request.system_prompt}")
+        print(f"[API] Agent question: {request.agent_question}")
+        print(f"[API] User message: {request.user_message}")
+        
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{
+                "role": "system",
+                "content": request.system_prompt
+            }, {
+                "role": "assistant",
+                "content": request.agent_question
+            }, {
+                "role": "user",
+                "content": request.user_message
+            }],
+            timeout=25  # 25 second timeout
+        )
 
         ai_response = response.choices[0].message.content
+        print(f"[API] OpenAI response received: {ai_response}")
+
+        # Determine the status based on the response
         status = "pass" if ai_response.strip() == "PASS" else "fail"
-        return {"status": status, "response": ai_response}
+        result = {"status": status, "response": ai_response}
+        print(f"[API] Returning result: {result}")
+        return result
 
     except Exception as e:
+        print(f"[API] Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

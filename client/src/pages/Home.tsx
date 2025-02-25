@@ -83,17 +83,33 @@ export default function Home() {
 
   console.log("[Home] Current flow:", currentFlow);
 
+  // State to hold the current chat response
+  const [currentResponse, setCurrentResponse] = useState<{ response: string; status: string } | null>(null);
+
   const handleUserResponse = async (message: string) => {
     if (!currentFlow || !config) return;
 
     try {
+      console.log("[Home] Sending user response to API:", message);
+      
+      // Clear any previous response
+      setCurrentResponse(null);
+      
+      // Make the API request to OpenAI
       const data = await apiRequest("POST", "/api/openai/chat", {
         system_prompt: currentFlow.system_prompt,
         agent_question: currentFlow.agent_question,
         user_message: message,
       });
+      
+      console.log("[Home] Received response from API:", data);
+      
+      // Set the response for display
+      setCurrentResponse(data);
 
       if (data.status === "pass" || data.status === "fail") {
+        console.log(`[Home] Response status: ${data.status}`);
+        
         const nextFlowOrder =
           data.status === "pass"
             ? currentFlow.pass_next
@@ -108,22 +124,30 @@ export default function Home() {
         const nextFlow = flows?.find((f) => f.order === nextFlowOrder);
         if (nextFlow) {
           console.log("[Home] Moving to next flow:", nextFlow);
-          setCurrentFlow(nextFlow);
-          setIsInputEnabled(false);
-          if (nextFlow.input_delay > 0) {
-            setTimeout(
-              () => setIsInputEnabled(true),
-              nextFlow.input_delay * 1000,
-            );
-          } else {
-            setIsInputEnabled(true);
-          }
+          // Add a slight delay before moving to next flow so user can see the response
+          setTimeout(() => {
+            setCurrentFlow(nextFlow);
+            setIsInputEnabled(false);
+            setCurrentResponse(null); // Clear response when switching flows
+            if (nextFlow.input_delay > 0) {
+              setTimeout(
+                () => setIsInputEnabled(true),
+                nextFlow.input_delay * 1000,
+              );
+            } else {
+              setIsInputEnabled(true);
+            }
+          }, 2000); // 2 second delay
         } else {
           console.error("[Home] Next flow not found:", nextFlowOrder);
         }
       }
     } catch (error) {
       console.error("[Home] Error processing response:", error);
+      setCurrentResponse({
+        response: "Sorry, there was an error processing your message.",
+        status: "error"
+      });
     }
   };
 
