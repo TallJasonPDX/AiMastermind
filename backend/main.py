@@ -345,12 +345,28 @@ async def delete_conversation(conversation_id: int,
     return None
 
 
+# Debug endpoints
+@app.post("/api/test-echo")
+async def test_echo(request: Request):
+    """Debug endpoint to echo back the request body"""
+    print("\n[API] ==== DEBUG ENDPOINT HIT: test-echo ====")
+    try:
+        body = await request.json()
+        print(f"[API] Received request body: {body}")
+        return {"success": True, "message": "Debug endpoint reached", "received_body": body}
+    except Exception as e:
+        print(f"[API] Error in test-echo endpoint: {str(e)}")
+        return {"success": False, "error": str(e)}
+
 # OpenAI integration
 @app.post("/api/openai/chat")
 async def process_chat(request: schemas.ChatRequest):
     """Process chat message through OpenAI and determine PASS/FAIL response"""
     print("\n[API] ==== Starting chat processing ====")
     print(f"[API] Received request: {request.model_dump_json()}")
+    print(f"[API] System prompt: {request.system_prompt}")
+    print(f"[API] Agent question: {request.agent_question}")
+    print(f"[API] User message: {request.user_message}")
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:

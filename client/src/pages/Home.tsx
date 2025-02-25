@@ -129,7 +129,16 @@ export default function Home() {
       setCurrentResponse(null);
       setIsLoading(true);
       
-      // Make the API request to OpenAI
+      // First try our test endpoint to verify the proxy is working
+      console.log("[Home] Testing proxy with /api/test-echo");
+      try {
+        const testResponse = await apiRequest("POST", "/api/test-echo", {test: "message", data: message});
+        console.log("[Home] Test endpoint response:", testResponse);
+      } catch (testError) {
+        console.error("[Home] Test endpoint failed:", testError);
+      }
+      
+      // Now make the API request to OpenAI
       console.log("[Home] About to make POST request to /api/openai/chat");
       const data = await apiRequest("POST", "/api/openai/chat", payload);
       
