@@ -347,9 +347,9 @@ async def delete_conversation(conversation_id: int,
 
 # OpenAI integration
 @app.post("/api/openai/chat")
-async def process_chat(request: schemas.ChatRequest):
+async def openai_chat(request: schemas.ChatRequest):
     """Process chat message through OpenAI and determine PASS/FAIL response"""
-    print("\n[API] ==== Starting chat processing ====")
+    print("\n[API] ==== Starting chat processing from /api/openai/chat ====")
     print(f"[API] Received request: {request.model_dump_json()}")
 
     api_key = os.getenv("OPENAI_API_KEY")
@@ -551,12 +551,7 @@ async def get_all_configs(db: Session = Depends(get_db)):
     return result
 
 
-class ChatRequest(BaseModel):
-    system_prompt: str
-    agent_question: str
-    user_message: str
-
-
+# Using the ChatRequest class defined above
 @app.post("/api/chat")
 def process_chat(request: ChatRequest):
     """Process chat message and determine PASS/FAIL response"""
