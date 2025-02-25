@@ -174,7 +174,7 @@ export default function Home() {
       <header className="fixed top-0 w-full bg-card/80 backdrop-blur-sm z-10 border-b">
         <div className="container mx-auto px-4 py-3">
           <h1 className="text-xl font-bold">
-            {config?.pageTitle || "AI Conversation"}
+            {config?.page_title || "AI Conversation"}
           </h1>
         </div>
       </header>
@@ -191,6 +191,12 @@ export default function Home() {
               onSubmit={handleUserResponse}
               configId={config?.id}
               agentQuestion={currentFlow?.agent_question}
+              chatResponse={currentResponse ? 
+                {
+                  response: currentResponse.response,
+                  messages: [],
+                  status: currentResponse.status
+                } : null}
             />
           )}
           {currentFlow?.show_form && (

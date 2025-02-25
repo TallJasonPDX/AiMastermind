@@ -23,17 +23,29 @@ interface ChatInterfaceProps {
   isEnabled: boolean;
   onSubmit: (message: string) => void;
   agentQuestion?: string;
+  chatResponse?: ChatResponse | null;
 }
 
-export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion }: ChatInterfaceProps) {
+export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, chatResponse: externalChatResponse }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const queryClient = useQueryClient();
-  const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
+  const [internalChatResponse, setInternalChatResponse] = useState<ChatResponse | null>(null);
+  
+  // Use either the external chat response from props or the internal state
+  const chatResponse = externalChatResponse || internalChatResponse;
 
   useEffect(() => {
-    // Reset chat response when component mounts or configId changes
-    setChatResponse(null);
+    // Reset internal chat response when component mounts or configId changes
+    setInternalChatResponse(null);
   }, [configId]);
+  
+  // Update internal state when external prop changes
+  useEffect(() => {
+    if (externalChatResponse) {
+      console.log('[ChatInterface] Received chat response:', externalChatResponse);
+      setInternalChatResponse(null); // Clear any internal state
+    }
+  }, [externalChatResponse]);
 
   const handleSubmit = async () => {
     if (!message.trim() || !isEnabled) return;
