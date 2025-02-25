@@ -23,7 +23,7 @@ export function registerRoutes(app: Express): Server {
     target: 'http://localhost:8000',
     changeOrigin: true,
     pathRewrite: {
-      '^/api': '/api' // Keep the /api prefix
+      '^/api': '' // Remove /api prefix since FastAPI routes already include it
     },
     logLevel: 'debug',
     onProxyReq: (proxyReq, req, res) => {

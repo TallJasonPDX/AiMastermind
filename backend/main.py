@@ -97,7 +97,7 @@ async def get_configurations(skip: int = 0,
                             detail=f"Database error: {str(e)}")
 
 
-@app.get("/api/configurations/active", response_model=schemas.Config)
+@app.get("/configurations/active", response_model=schemas.Config)
 async def get_active_config(db: Session = Depends(get_db)):
     """Get the active configuration (first one by ID)"""
     print("\n[API] Fetching active configuration")
@@ -125,7 +125,7 @@ async def get_active_config(db: Session = Depends(get_db)):
     return config_dict
 
 
-@app.get("/api/conversation-flows",
+@app.get("/conversation-flows",
          response_model=List[schemas.ConversationFlow])
 async def get_conversation_flows(config_id: Optional[int] = None,
                                  skip: int = 0,
