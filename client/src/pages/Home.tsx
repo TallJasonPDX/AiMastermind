@@ -5,37 +5,7 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Card } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Config, ConversationFlow } from "@/lib/types";
-
-// API request helper function
-const apiRequest = async (method: string, url: string, body?: any) => {
-  console.log(`[API Request] ${method} ${url}`, body ? { body } : '');
-  
-  try {
-    const fullUrl = url.startsWith("/api/") ? url : `/api${url}`;
-    const response = await fetch(fullUrl, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    
-    console.log(`[API Response] Status: ${response.status}`);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[API Error] ${response.status}: ${errorText || "Unknown error"}`);
-      throw new Error(errorText || `API request failed with status ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log(`[API Response] Data:`, data);
-    return data;
-  } catch (error) {
-    console.error(`[API Error] Failed to ${method} ${url}:`, error);
-    throw error;
-  }
-};
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Home() {
   const queryClient = useQueryClient();
