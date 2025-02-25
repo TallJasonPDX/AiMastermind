@@ -41,13 +41,16 @@ export function registerRoutes(app: Express): Server {
       console.log("[Proxy] Request URL:", req.url);
       console.log("[Proxy] Method:", req.method);
       
-      // Handle POST requests
-      if (req.method === 'POST' && req.body) {
+      // Handle POST, PUT, PATCH requests
+      if ((req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') && req.body) {
+        // Body needs to be explicitly written to the proxy request
         const bodyData = JSON.stringify(req.body);
+        // We need to set the headers before writing data
         proxyReq.setHeader('Content-Type', 'application/json');
         proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        // Write the body data to the request
         proxyReq.write(bodyData);
-        console.log("[Proxy] Added request body:", req.body);
+        console.log("[Proxy] Added request body:", bodyData);
       }
     },
     onError: (err: Error, req: IncomingMessage, res: ServerResponse) => {

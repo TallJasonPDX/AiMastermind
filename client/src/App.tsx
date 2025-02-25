@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Config from "./pages/Config";
 import ConversationFlows from "./pages/ConversationFlows";
+import TestEcho from "./pages/TestEcho";
 
 function Router() {
   return (
@@ -13,6 +14,7 @@ function Router() {
       <Route path="/" element={<Home />} />
       <Route path="/config" element={<Config />} />
       <Route path="/conversations" element={<ConversationFlows />} />
+      <Route path="/test-echo" element={<TestEcho />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
