@@ -11,14 +11,14 @@ export function registerRoutes(app: Express): Server {
   // Configure FastAPI proxy with explicit middleware settings
   app.use(express.json()); // Ensure JSON body parsing is enabled
   
-  // Add a test POST endpoint directly in Express for debugging
-  app.post('/api/test-post', (req, res) => {
+  // Add Express-only endpoints for testing (won't be proxied to FastAPI)
+  app.post('/api-express/test', (req, res) => {
     console.log('[Express Test] Received test POST request');
     console.log('[Express Test] Request body:', req.body);
-    res.json({ success: true, message: 'Test POST endpoint reached', body: req.body });
+    res.json({ success: true, message: 'Test endpoint reached in Express', body: req.body });
   });
 
-  // Create proxy middleware for FastAPI with detailed logging
+  // Simple proxy setup - direct pass-through to FastAPI with minimal configuration
   const fastApiProxy = createProxyMiddleware({
     target: "http://localhost:8000",
     changeOrigin: true,
@@ -83,21 +83,8 @@ export function registerRoutes(app: Express): Server {
     res.json({ success: true, message: 'Express direct test endpoint reached', body: req.body });
   });
   
-  // Backend routes directly mapped to FastAPI
-  app.all('/api/*', (req, res, next) => {
-    console.log("[FastAPI Router] Original path:", req.path);
-    console.log("[FastAPI Router] Original URL:", req.url);
-    console.log("[FastAPI Router] HTTP Method:", req.method);
-    
-    if (req.method === 'POST') {
-      console.log("[FastAPI Router] POST Request Body:", req.body);
-    }
-    
-    // We need to forward the exact URL including the /api prefix to the FastAPI server
-    // Since FastAPI routes have the /api prefix included
-    console.log("[FastAPI Router] Final URL being sent to proxy:", req.url);
-    return fastApiProxy(req, res, next);
-  });
+  // Setup a single clean proxy for all FastAPI routes
+  app.use('/api', fastApiProxy);
 
   // Register the router
   app.use(router);

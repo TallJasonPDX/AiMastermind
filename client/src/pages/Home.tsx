@@ -12,7 +12,7 @@ const apiRequest = async (method: string, url: string, body?: any) => {
   console.log(`[API Request] Body:`, body);
   
   try {
-    // Ensure URL starts with /api (without the trailing slash)
+    // Ensure all URLs have /api prefix - but don't add it twice
     const fullUrl = url.startsWith("/api") ? url : `/api${url}`;
     console.log(`[API Request] Processed URL:`, fullUrl);
     
