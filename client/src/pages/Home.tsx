@@ -8,18 +8,33 @@ import type { Config, ConversationFlow } from "@/lib/types";
 
 // API request helper function
 const apiRequest = async (method: string, url: string, body?: any) => {
-  const response = await fetch(url.startsWith("/api/") ? url : `/api${url}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || "API request failed");
+  console.log(`[API Request] ${method} ${url}`, body ? { body } : '');
+  
+  try {
+    const fullUrl = url.startsWith("/api/") ? url : `/api${url}`;
+    const response = await fetch(fullUrl, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    
+    console.log(`[API Response] Status: ${response.status}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[API Error] ${response.status}: ${errorText || "Unknown error"}`);
+      throw new Error(errorText || `API request failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[API Response] Data:`, data);
+    return data;
+  } catch (error) {
+    console.error(`[API Error] Failed to ${method} ${url}:`, error);
+    throw error;
   }
-  return response.json();
 };
 
 export default function Home() {
@@ -83,8 +98,9 @@ export default function Home() {
 
   console.log("[Home] Current flow:", currentFlow);
 
-  // State to hold the current chat response
+  // State to hold the current chat response and loading state
   const [currentResponse, setCurrentResponse] = useState<{ response: string; status: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleUserResponse = async (message: string) => {
     if (!currentFlow || !config) return;
@@ -92,8 +108,9 @@ export default function Home() {
     try {
       console.log("[Home] Sending user response to API:", message);
       
-      // Clear any previous response
+      // Clear any previous response and set loading state
       setCurrentResponse(null);
+      setIsLoading(true);
       
       // Make the API request to OpenAI
       const data = await apiRequest("POST", "/api/openai/chat", {
@@ -104,7 +121,8 @@ export default function Home() {
       
       console.log("[Home] Received response from API:", data);
       
-      // Set the response for display
+      // Clear loading state and set the response for display
+      setIsLoading(false);
       setCurrentResponse(data);
 
       if (data.status === "pass" || data.status === "fail") {
@@ -144,8 +162,9 @@ export default function Home() {
       }
     } catch (error) {
       console.error("[Home] Error processing response:", error);
+      setIsLoading(false);
       setCurrentResponse({
-        response: "Sorry, there was an error processing your message.",
+        response: "Sorry, there was an error processing your message. Please try again.",
         status: "error"
       });
     }
@@ -187,10 +206,11 @@ export default function Home() {
           />
           {!currentFlow?.video_only && currentFlow?.system_prompt && (
             <ChatInterface
-              isEnabled={isInputEnabled}
+              isEnabled={isInputEnabled && !isLoading}
               onSubmit={handleUserResponse}
               configId={config?.id}
               agentQuestion={currentFlow?.agent_question}
+              isLoading={isLoading}
               chatResponse={currentResponse ? 
                 {
                   response: currentResponse.response,

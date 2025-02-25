@@ -24,6 +24,7 @@ interface ChatInterfaceProps {
   onSubmit: (message: string) => void;
   agentQuestion?: string;
   chatResponse?: ChatResponse | null;
+  isLoading?: boolean;
 }
 
 export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, chatResponse: externalChatResponse }: ChatInterfaceProps) {
@@ -43,7 +44,8 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, ch
   useEffect(() => {
     if (externalChatResponse) {
       console.log('[ChatInterface] Received chat response:', externalChatResponse);
-      setInternalChatResponse(null); // Clear any internal state
+      // Update the internal chat response with the external one
+      setInternalChatResponse(externalChatResponse);
     }
   }, [externalChatResponse]);
 
@@ -69,14 +71,20 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, ch
     <div className="flex flex-col space-y-2">
       {/* Response Display Area */}
       <ScrollArea className="min-h-[80px] max-h-[160px] rounded-md border p-3">
+        {/* Always show the agent question */}
+        {agentQuestion && (
+          <div className="text-muted-foreground text-sm py-2 mb-2">
+            <strong>Question:</strong> {agentQuestion}
+          </div>
+        )}
+        
+        {/* Show the AI response if available */}
         {chatResponse?.response ? (
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-sm text-muted-foreground mb-1">AI Response:</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              <strong>Response:</strong> {chatResponse.status === 'pass' ? '✅ Pass' : chatResponse.status === 'fail' ? '❌ Fail' : ''}
+            </p>
             <p className="whitespace-pre-wrap text-sm">{chatResponse.response}</p>
-          </div>
-        ) : isEnabled && agentQuestion ? (
-          <div className="text-center text-muted-foreground text-sm py-2">
-            {agentQuestion}
           </div>
         ) : null}
       </ScrollArea>
