@@ -133,8 +133,8 @@ export default function Home() {
       setIsLoading(true);
 
       // Now make the API request to OpenAI
-      console.log("[Home] About to make POST request to /chat");
-      const data = await apiRequest("POST", "/chat", payload);
+      console.log("[Home] About to make POST request to /openai/chat");
+      const data = await apiRequest("POST", "/openai/chat", payload);
 
       console.log("[Home] Received response from API:", data);
 
