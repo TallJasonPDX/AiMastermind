@@ -127,7 +127,7 @@ async def get_active_config(db: Session = Depends(get_db)):
 
 @app.get("/api/conversation-flows",
          response_model=List[schemas.ConversationFlow])
-async def get_conversation_flows_with_filter(config_id: Optional[int] = None,
+async def get_conversation_flows(config_id: Optional[int] = None,
                                  skip: int = 0,
                                  limit: int = 100,
                                  db: Session = Depends(get_db)):
@@ -225,7 +225,7 @@ async def get_conversation_flow(flow_id: int, db: Session = Depends(get_db)):
 @app.post("/api/conversation-flows",
           response_model=schemas.ConversationFlow,
           status_code=status.HTTP_201_CREATED)
-async def create_conversation_flow_standalone(flow: schemas.ConversationFlowCreate,
+async def create_conversation_flow(flow: schemas.ConversationFlowCreate,
                                    db: Session = Depends(get_db)):
     """Create a new conversation flow"""
     db_flow = models.ConversationFlow(**flow.model_dump())
@@ -237,7 +237,7 @@ async def create_conversation_flow_standalone(flow: schemas.ConversationFlowCrea
 
 @app.put("/api/conversation-flows/{flow_id}",
          response_model=schemas.ConversationFlow)
-async def update_conversation_flow_endpoint(flow_id: int,
+async def update_conversation_flow(flow_id: int,
                                    flow: schemas.ConversationFlowUpdate,
                                    db: Session = Depends(get_db)):
     """Update an existing conversation flow"""
@@ -347,9 +347,9 @@ async def delete_conversation(conversation_id: int,
 
 # OpenAI integration
 @app.post("/api/openai/chat")
-async def openai_chat(request: schemas.ChatRequest):
+async def process_chat(request: schemas.ChatRequest):
     """Process chat message through OpenAI and determine PASS/FAIL response"""
-    print("\n[API] ==== Starting chat processing from /api/openai/chat ====")
+    print("\n[API] ==== Starting chat processing ====")
     print(f"[API] Received request: {request.model_dump_json()}")
 
     api_key = os.getenv("OPENAI_API_KEY")
@@ -414,10 +414,10 @@ async def log_requests(request: Request, call_next):
 
 @app.post("/api/configs/{config_id}/flows",
           response_model=schemas.ConversationFlow)
-async def create_config_flow(config_id: int,
-                           flow: schemas.ConversationFlowCreate,
-                           db: Session = Depends(get_db)):
-    """Create a new conversation flow for a specific config"""
+async def create_conversation_flow(config_id: int,
+                                   flow: schemas.ConversationFlowCreate,
+                                   db: Session = Depends(get_db)):
+    """Create a new conversation flow"""
     print(f"\n[API] Creating new flow for config {config_id}")
     print(f"[API] Flow data received: {flow.model_dump_json()}")
 
@@ -441,9 +441,9 @@ async def create_config_flow(config_id: int,
 
 @app.get("/api/configs/{config_id}/flows",
          response_model=List[schemas.ConversationFlow])
-async def get_config_flows(config_id: int,
-                         db: Session = Depends(get_db)):
-    """Get all conversation flows for a specific configuration"""
+async def get_conversation_flows(config_id: int,
+                                 db: Session = Depends(get_db)):
+    """Get all conversation flows for a configuration"""
     print(f"\n[API] Fetching flows for config {config_id}")
     flows = db.query(models.ConversationFlow).filter(
         models.ConversationFlow.config_id == config_id).order_by(
@@ -458,11 +458,11 @@ async def get_config_flows(config_id: int,
 
 @app.put("/api/configs/{config_id}/flows/{flow_id}",
          response_model=schemas.ConversationFlow)
-async def update_config_flow(config_id: int,
-                           flow_id: int,
-                           flow_update: schemas.ConversationFlowCreate,
-                           db: Session = Depends(get_db)):
-    """Update an existing conversation flow for a specific config"""
+async def update_conversation_flow(config_id: int,
+                                   flow_id: int,
+                                   flow_update: schemas.ConversationFlowCreate,
+                                   db: Session = Depends(get_db)):
+    """Update an existing conversation flow"""
     print(f"\n[API] Updating flow {flow_id} for config {config_id}")
     print(f"[API] Update data received: {flow_update.model_dump_json()}")
 
@@ -529,7 +529,7 @@ async def get_all_configs(db: Session = Depends(get_db)):
     if not configs:
         raise HTTPException(status_code=404, detail="No configurations found")
 
-    # Map each configuration to a dictionary
+    # Map each configuration to a dictionary (or let FastAPI handle it via your schema)
     result = []
     for config in configs:
         config_dict = {
@@ -551,15 +551,19 @@ async def get_all_configs(db: Session = Depends(get_db)):
     return result
 
 
-# Second OpenAI chat endpoint (for compatibility)
+class ChatRequest(BaseModel):
+    system_prompt: str
+    agent_question: str
+    user_message: str
+
+
 @app.post("/api/chat")
-def process_chat(request: schemas.ChatRequest):
+def process_chat(request: ChatRequest):
     """Process chat message and determine PASS/FAIL response"""
-    print("\n[API] ==== Starting chat processing from /api/chat ====")
+    print("\n[API] ==== Starting chat processing ====")
     print(f"[API] Received request: {request.model_dump_json()}")
 
     try:
-        api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             print("[API] Error: OpenAI API key not configured")
             raise HTTPException(status_code=500,
