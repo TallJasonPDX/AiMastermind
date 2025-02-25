@@ -10,12 +10,12 @@ import type { Config, ConversationFlow } from "@/lib/types";
 const apiRequest = async (method: string, url: string, body?: any) => {
   console.log(`[API Request] ${method} ${url} - Original URL`, url);
   console.log(`[API Request] Body:`, body);
-  
+
   try {
     // Add /api prefix to all URLs - Express will handle the proxy logic
     const fullUrl = url.startsWith("/api") ? url : `/api${url}`;
     console.log(`[API Request] Processed URL:`, fullUrl);
-    
+
     const response = await fetch(fullUrl, {
       method,
       headers: {
@@ -23,15 +23,19 @@ const apiRequest = async (method: string, url: string, body?: any) => {
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-    
+
     console.log(`[API Response] Status: ${response.status}`);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[API Error] ${response.status}: ${errorText || "Unknown error"}`);
-      throw new Error(errorText || `API request failed with status ${response.status}`);
+      console.error(
+        `[API Error] ${response.status}: ${errorText || "Unknown error"}`,
+      );
+      throw new Error(
+        errorText || `API request failed with status ${response.status}`,
+      );
     }
-    
+
     const data = await response.json();
     console.log(`[API Response] Data:`, data);
     return data;
@@ -61,16 +65,12 @@ export default function Home() {
   // Fetch configuration
   const { data: config } = useQuery<Config>({
     queryKey: [
-      configId
-        ? `/configurations/${configId}`
-        : "/configurations/active",
+      configId ? `/configurations/${configId}` : "/configurations/active",
     ],
     queryFn: () =>
       apiRequest(
         "GET",
-        configId
-          ? `/configurations/${configId}`
-          : "/configurations/active",
+        configId ? `/configurations/${configId}` : "/configurations/active",
       ),
   });
 
@@ -101,7 +101,10 @@ export default function Home() {
   }, [flows, currentFlow]);
 
   // State to hold the current chat response and loading state
-  const [currentResponse, setCurrentResponse] = useState<{ response: string; status: string } | null>(null);
+  const [currentResponse, setCurrentResponse] = useState<{
+    response: string;
+    status: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleUserResponse = async (message: string) => {
@@ -113,44 +116,35 @@ export default function Home() {
         id: currentFlow.id,
         order: currentFlow.order,
         system_prompt: currentFlow.system_prompt,
-        agent_question: currentFlow.agent_question
+        agent_question: currentFlow.agent_question,
       });
-      
+
       // Prepare request payload
       const payload = {
         system_prompt: currentFlow.system_prompt,
         agent_question: currentFlow.agent_question,
         user_message: message,
       };
-      
+
       console.log("[Home] POST request payload:", payload);
-      
+
       // Clear any previous response and set loading state
       setCurrentResponse(null);
       setIsLoading(true);
-      
-      // First try our test endpoint to verify the proxy is working
-      console.log("[Home] Testing proxy with /test-echo");
-      try {
-        const testResponse = await apiRequest("POST", "/test-echo", {test: "message", data: message});
-        console.log("[Home] Test endpoint response:", testResponse);
-      } catch (testError) {
-        console.error("[Home] Test endpoint failed:", testError);
-      }
-      
+
       // Now make the API request to OpenAI
       console.log("[Home] About to make POST request to /chat");
       const data = await apiRequest("POST", "/chat", payload);
-      
+
       console.log("[Home] Received response from API:", data);
-      
+
       // Clear loading state and set the response for display
       setIsLoading(false);
       setCurrentResponse(data);
 
       if (data.status === "pass" || data.status === "fail") {
         console.log(`[Home] Response status: ${data.status}`);
-        
+
         const nextFlowOrder =
           data.status === "pass"
             ? currentFlow.pass_next
@@ -187,8 +181,9 @@ export default function Home() {
       console.error("[Home] Error processing response:", error);
       setIsLoading(false);
       setCurrentResponse({
-        response: "Sorry, there was an error processing your message. Please try again.",
-        status: "error"
+        response:
+          "Sorry, there was an error processing your message. Please try again.",
+        status: "error",
       });
     }
   };
