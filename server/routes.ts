@@ -18,12 +18,13 @@ export function registerRoutes(app: Express): Server {
     res.json({ success: true, message: 'Test endpoint reached in Express', body: req.body });
   });
 
-  // Simple proxy setup - direct pass-through to FastAPI with minimal configuration
+  // Proxy setup for FastAPI that preserves the full path including /api
   const fastApiProxy = createProxyMiddleware({
     target: "http://localhost:8000",
     changeOrigin: true,
     secure: false,
     logLevel: "debug",
+    pathRewrite: { '^/api': '/api' }, // Don't strip /api prefix when forwarding
     onProxyReq: function onProxyReq(
       proxyReq: any,
       req: express.Request,
