@@ -164,7 +164,7 @@ async def get_configuration(config_id: int, db: Session = Depends(get_db)):
     return config_dict
 
 
-@app.post("/api/configurations",
+@app.post("/configurations",
           response_model=schemas.Config,
           status_code=status.HTTP_201_CREATED)
 async def create_configuration(config: schemas.ConfigCreate,
@@ -177,7 +177,7 @@ async def create_configuration(config: schemas.ConfigCreate,
     return db_config
 
 
-@app.put("/api/configurations/{config_id}", response_model=schemas.Config)
+@app.put("/configurations/{config_id}", response_model=schemas.Config)
 async def update_configuration(config_id: int,
                                config: schemas.ConfigUpdate,
                                db: Session = Depends(get_db)):
@@ -195,7 +195,7 @@ async def update_configuration(config_id: int,
     return db_config
 
 
-@app.delete("/api/configurations/{config_id}",
+@app.delete("/configurations/{config_id}",
             status_code=status.HTTP_204_NO_CONTENT)
 async def delete_configuration(config_id: int, db: Session = Depends(get_db)):
     """Delete a configuration"""
