@@ -62,7 +62,7 @@ An intelligent qualification system for AI Mastermind group candidates that uses
 - Frontend: React, TypeScript
 - Server: Express.js
 - Database: PostgreSQL
-- Video Integration: HeyGen API
+- Video Integration: Static videos created on Heygen.  No API integration at this time.
 
 ### Developer Guidelines
 
@@ -83,7 +83,6 @@ An intelligent qualification system for AI Mastermind group candidates that uses
 #### Code Quality
 - Comment new features thoroughly
 - Follow existing code patterns and naming conventions
-- Test features in isolation before integration
 
 ### Quick Start
 1. Install dependencies: `npm install`
@@ -93,9 +92,8 @@ An intelligent qualification system for AI Mastermind group candidates that uses
 ### AI Agent Guidelines
 
 #### Critical Components
-- Video processing happens in `/videos` directory
+- Videos are stored and loaded from `/videos` directory
 - OpenAI integration uses GPT-4 model by default
-- HeyGen API integration for video generation
 - Database operations must maintain data integrity with existing flows
 
 #### State Management
@@ -110,7 +108,6 @@ An intelligent qualification system for AI Mastermind group candidates that uses
 - Server logs prefixed with `[Server]`
 
 #### Testing Requirements
-- Test new features in isolation
 - Verify OpenAI responses match expected format
 - Ensure video playback works with new flows
 - Validate database schema consistency
