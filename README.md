@@ -89,3 +89,28 @@ An intelligent qualification system for AI Mastermind group candidates that uses
 1. Install dependencies: `npm install`
 2. Start the development server: `npm run dev`
 3. Access the application at: `http://0.0.0.0:3000`
+
+### AI Agent Guidelines
+
+#### Critical Components
+- Video processing happens in `/videos` directory
+- OpenAI integration uses GPT-4 model by default
+- HeyGen API integration for video generation
+- Database operations must maintain data integrity with existing flows
+
+#### State Management
+- Configuration state managed through `/api/configurations`
+- Conversation flows controlled via `/api/conversation-flows`
+- User interactions tracked in `/api/conversations`
+
+#### Debugging
+- Console logs are preserved for debugging
+- Backend logs prefixed with `[API]`
+- Frontend logs prefixed with `[Client]`
+- Server logs prefixed with `[Server]`
+
+#### Testing Requirements
+- Test new features in isolation
+- Verify OpenAI responses match expected format
+- Ensure video playback works with new flows
+- Validate database schema consistency
