@@ -298,7 +298,7 @@ async def get_conversation(conversation_id: int,
     return conversation
 
 
-@app.post("/api/conversations",
+@app.post("/conversations",
           response_model=schemas.Conversation,
           status_code=status.HTTP_201_CREATED)
 async def create_conversation(conversation: schemas.ConversationCreate,
@@ -311,7 +311,7 @@ async def create_conversation(conversation: schemas.ConversationCreate,
     return db_conversation
 
 
-@app.put("/api/conversations/{conversation_id}",
+@app.put("/conversations/{conversation_id}",
          response_model=schemas.Conversation)
 async def update_conversation(conversation_id: int,
                               conversation: schemas.ConversationUpdate,
@@ -330,7 +330,7 @@ async def update_conversation(conversation_id: int,
     return db_conversation
 
 
-@app.delete("/api/conversations/{conversation_id}",
+@app.delete("/conversations/{conversation_id}",
             status_code=status.HTTP_204_NO_CONTENT)
 async def delete_conversation(conversation_id: int,
                               db: Session = Depends(get_db)):
@@ -428,7 +428,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-@app.post("/api/configs/{config_id}/flows",
+@app.post("/configs/{config_id}/flows",
           response_model=schemas.ConversationFlow)
 async def create_conversation_flow(config_id: int,
                                    flow: schemas.ConversationFlowCreate,
@@ -455,7 +455,7 @@ async def create_conversation_flow(config_id: int,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/configs/{config_id}/flows",
+@app.get("/configs/{config_id}/flows",
          response_model=List[schemas.ConversationFlow])
 async def get_conversation_flows(config_id: int,
                                  db: Session = Depends(get_db)):
@@ -472,7 +472,7 @@ async def get_conversation_flows(config_id: int,
     return flows
 
 
-@app.put("/api/configs/{config_id}/flows/{flow_id}",
+@app.put("/configs/{config_id}/flows/{flow_id}",
          response_model=schemas.ConversationFlow)
 async def update_conversation_flow(config_id: int,
                                    flow_id: int,
@@ -507,7 +507,7 @@ async def update_conversation_flow(config_id: int,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/videos")
+@app.get("/videos")
 async def get_available_videos():
     """Get list of available video files"""
     try:
@@ -533,7 +533,7 @@ async def get_available_videos():
             detail=f"Error scanning videos directory: {str(e)}")
 
 
-@app.get("/api/configs", response_model=List[schemas.Config])
+@app.get("/configs", response_model=List[schemas.Config])
 async def get_all_configs(db: Session = Depends(get_db)):
     """
     Fetch all configurations from the database.
@@ -573,7 +573,7 @@ class ChatRequest(BaseModel):
     user_message: str
 
 
-@app.post("/api/chat")
+@app.post("/chat")
 def process_chat(request: ChatRequest):
     """Process chat message and determine PASS/FAIL response"""
     print("\n[API] ==== Starting chat processing ====")
