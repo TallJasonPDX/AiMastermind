@@ -27,27 +27,14 @@ interface ChatInterfaceProps {
   isLoading?: boolean;
 }
 
-export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, chatResponse: externalChatResponse }: ChatInterfaceProps) {
+export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, isLoading }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
-  const queryClient = useQueryClient();
-  const [internalChatResponse, setInternalChatResponse] = useState<ChatResponse | null>(null);
   
-  // Use either the external chat response from props or the internal state
-  const chatResponse = externalChatResponse || internalChatResponse;
-
+  // Component state tracking
   useEffect(() => {
-    // Reset internal chat response when component mounts or configId changes
-    setInternalChatResponse(null);
+    // Reset message when config changes
+    setMessage('');
   }, [configId]);
-  
-  // Update internal state when external prop changes
-  useEffect(() => {
-    if (externalChatResponse) {
-      console.log('[ChatInterface] Received chat response:', externalChatResponse);
-      // Update the internal chat response with the external one
-      setInternalChatResponse(externalChatResponse);
-    }
-  }, [externalChatResponse]);
 
   const handleSubmit = async () => {
     if (!message.trim() || !isEnabled) return;
@@ -69,43 +56,44 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, ch
 
   return (
     <div className="flex flex-col space-y-2">
-      {/* Response Display Area */}
-      <ScrollArea className="min-h-[80px] max-h-[160px] rounded-md border p-3">
-        {/* Always show the agent question */}
+      {/* Question Display Area */}
+      <div className="min-h-[50px] p-3">
         {agentQuestion && (
-          <div className="text-muted-foreground text-sm py-2 mb-2">
-            <strong>Question:</strong> {agentQuestion}
+          <div className="text-foreground text-base pb-2">
+            {agentQuestion}
           </div>
         )}
-        
-        {/* Show the AI response if available */}
-        {chatResponse?.response ? (
-          <div className="bg-muted rounded-lg p-3">
-            <p className="text-sm text-muted-foreground mb-1">
-              <strong>Response:</strong> {chatResponse.status === 'pass' ? '✅ Pass' : chatResponse.status === 'fail' ? '❌ Fail' : ''}
-            </p>
-            <p className="whitespace-pre-wrap text-sm">{chatResponse.response}</p>
-          </div>
-        ) : null}
-      </ScrollArea>
+      </div>
 
       {/* Message Input Area */}
       <div className="flex gap-2">
         <Textarea
-          placeholder="Type your message..."
+          placeholder={isLoading ? "Processing your response..." : "Type your message..."}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              if (message.trim() && isEnabled && !isLoading) {
+                handleSubmit();
+              }
+            }
+          }}
           className="resize-none"
           rows={2}
-          disabled={!isEnabled}
+          disabled={!isEnabled || isLoading}
         />
         <Button
           onClick={handleSubmit}
-          disabled={!message.trim() || !isEnabled}
+          disabled={!message.trim() || !isEnabled || isLoading}
           size="icon"
           className="h-auto"
         >
-          <SendIcon className="h-4 w-4" />
+          {isLoading ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : (
+            <SendIcon className="h-4 w-4" />
+          )}
         </Button>
       </div>
     </div>

@@ -96,8 +96,6 @@ export default function Home() {
     }
   }, [flows, currentFlow]);
 
-  console.log("[Home] Current flow:", currentFlow);
-
   // State to hold the current chat response and loading state
   const [currentResponse, setCurrentResponse] = useState<{ response: string; status: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -170,11 +168,7 @@ export default function Home() {
     }
   };
 
-  console.log("[Home] Render state:", {
-    currentFlow,
-    shouldShowChat: !currentFlow?.video_only && currentFlow?.system_prompt,
-    isInputEnabled,
-  });
+  // Determine if we should show chat based on current flow properties
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -211,12 +205,6 @@ export default function Home() {
               configId={config?.id}
               agentQuestion={currentFlow?.agent_question}
               isLoading={isLoading}
-              chatResponse={currentResponse ? 
-                {
-                  response: currentResponse.response,
-                  messages: [],
-                  status: currentResponse.status
-                } : null}
             />
           )}
           {currentFlow?.show_form && (
