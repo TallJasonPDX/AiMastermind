@@ -54,7 +54,7 @@ models.Base.metadata.create_all(bind=engine)
 
 
 # Configuration Endpoints
-@app.get("/api/configurations", response_model=List[schemas.Config])
+@app.get("/configurations", response_model=List[schemas.Config])
 async def get_configurations(skip: int = 0,
                              limit: int = 100,
                              db: Session = Depends(get_db)):
@@ -346,7 +346,7 @@ async def delete_conversation(conversation_id: int,
 
 
 # Debug endpoints
-@app.post("/api/test-echo")
+@app.post("/test-echo")
 async def test_echo(request: Request):
     """Debug endpoint to echo back the request body"""
     print("\n[API] ==== DEBUG ENDPOINT HIT: test-echo ====")
@@ -359,7 +359,7 @@ async def test_echo(request: Request):
         return {"success": False, "error": str(e)}
 
 # OpenAI integration
-@app.post("/api/openai/chat")
+@app.post("/openai/chat")
 async def process_chat(request: schemas.ChatRequest):
     """Process chat message through OpenAI and determine PASS/FAIL response"""
     print("\n[API] ==== Starting chat processing ====")
