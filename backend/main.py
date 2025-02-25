@@ -428,6 +428,19 @@ async def log_requests(request: Request, call_next):
     return response
 
 
+@app.post("/test-echo")
+async def test_echo(request: Request):
+    """Debug endpoint to echo back the request body"""
+    print("\n[API] Received test-echo request")
+    try:
+        body = await request.json()
+        print(f"[API] Request body: {body}")
+        return {"success": True, "echo": body, "message": "Echo successful"}
+    except Exception as e:
+        print(f"[API] Error in test-echo: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+
 @app.post("/configs/{config_id}/flows",
           response_model=schemas.ConversationFlow)
 async def create_conversation_flow(config_id: int,
