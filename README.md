@@ -1,6 +1,15 @@
 
 # AI Landing Page Generator
 
+## Project Overview
+An intelligent qualification system for AI Mastermind group candidates that uses video content and AI-driven conversations to assess fit and interest. The application plays videos based on conversation flows, asks questions, evaluates responses through OpenAI, and determines the next steps in the conversation.
+
+## Architecture
+- **Backend (Port 8000)**: FastAPI server with SQLAlchemy ORM
+- **Frontend Server (Port 5000)**: Express.js serving React frontend
+- **Database**: PostgreSQL
+- **AI Integration**: OpenAI for response evaluation
+
 ## Development Guidelines
 
 ### API Path Requirements
@@ -12,10 +21,48 @@
 - All database operations must go through the backend API endpoints
 - All database fields and properties shall remain in `snake_case` format in both frontend and backend for consistency
 
+### Database Schema
+1. **configurations**
+   - Page settings (title, HeyGen scene/voice IDs)
+   - OpenAI agent configuration
+   - Pass/fail response templates
+
+2. **conversation_flows**
+   - Interaction order
+   - Video filenames
+   - System prompts and agent questions
+   - Next flow IDs for pass/fail paths
+   - Form display settings
+
+3. **conversations**
+   - Message history
+   - Conversation status
+   - Timestamps
+
 ### Project Structure
-- `/backend`: FastAPI server and database models
-- `/client`: React frontend application
-- `/videos`: Video assets directory
+```
+├── backend/          # FastAPI server and database models
+├── client/          # React frontend application
+├── server/          # Express server configuration
+├── db/             # Database schemas and migrations
+└── videos/         # Video assets directory
+```
+
+### Application Flow
+1. Load active configuration and conversation flows
+2. Play video from current flow
+3. Present agent's question
+4. Send user response to OpenAI
+5. Process PASS/FAIL response
+6. Navigate to next flow based on response
+7. Repeat process with new flow
+
+### Technology Stack
+- Backend: Python (FastAPI, SQLAlchemy, OpenAI)
+- Frontend: React, TypeScript
+- Server: Express.js
+- Database: PostgreSQL
+- Video Integration: HeyGen API
 
 ### Quick Start
 1. Install dependencies: `npm install`
