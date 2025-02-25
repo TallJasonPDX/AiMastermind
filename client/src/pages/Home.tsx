@@ -110,17 +110,12 @@ export default function Home() {
       setCurrentResponse(null);
       setIsLoading(true);
       
-      // Prepare the request payload with proper logging
-      const payload = {
+      // Make the API request to OpenAI
+      const data = await apiRequest("POST", "/api/openai/chat", {
         system_prompt: currentFlow.system_prompt,
         agent_question: currentFlow.agent_question,
         user_message: message,
-      };
-      
-      console.log("[Home] Request payload:", payload);
-      
-      // Make the API request to OpenAI - using the full URL for clarity
-      const data = await apiRequest("POST", "/api/openai/chat", payload);
+      });
       
       console.log("[Home] Received response from API:", data);
       
