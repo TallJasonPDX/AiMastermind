@@ -11,9 +11,13 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-): Promise<Response> {
+): Promise<any> {
   // Ensure URL starts with /api
   const apiUrl = url.startsWith('/api') ? url : `/api${url}`;
+  
+  console.log('[API Request]', method, url, '- Original URL', url);
+  console.log('[API Request] Body:', data);
+  console.log('[API Request] Processed URL:', apiUrl);
 
   const res = await fetch(apiUrl, {
     method,
@@ -22,8 +26,13 @@ export async function apiRequest(
     credentials: "include",
   });
 
+  console.log('[API Response] Status:', res.status);
   await throwIfResNotOk(res);
-  return res;
+  
+  // Parse JSON response
+  const responseData = await res.json();
+  console.log('[API Response] Data:', responseData);
+  return responseData;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
