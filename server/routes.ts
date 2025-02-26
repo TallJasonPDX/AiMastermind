@@ -11,8 +11,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import express from "express";
-import { createProxyMiddleware, type Options } from "http-proxy-middleware";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import { IncomingMessage, ServerResponse } from "http";
+import axios from "axios";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
@@ -28,44 +29,59 @@ export function registerRoutes(app: Express): Server {
     res.json({ success: true, message: 'Test successful', data: req.body });
   });
 
-  // Create FastAPI proxy
-  const fastApiProxy = createProxyMiddleware({
-    target: 'http://localhost:8000',
-    changeOrigin: true,
-    pathRewrite: {
-      '^/api': '' // Remove /api prefix when forwarding to FastAPI routes
-    },
-    // @ts-ignore - logLevel is valid but types don't include it
-    logLevel: 'debug',
-    onProxyReq: (proxyReq: any, req: IncomingMessage & { body?: any }, res: ServerResponse) => {
-      console.log("[Proxy] Request URL:", req.url);
-      console.log("[Proxy] Method:", req.method);
+  // Handle all /api/* requests
+  app.all('/api/*', async (req: Request, res: Response) => {
+    // Remove /api prefix from path
+    const path = req.url.replace(/^\/api/, '');
+    const apiUrl = `http://localhost:8000${path}`;
+    
+    console.log(`[Proxy] ${req.method} request to ${apiUrl}`);
+    
+    try {
+      // Prepare axios options
+      const options: any = {
+        method: req.method,
+        url: apiUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        validateStatus: () => true // Allow any status code
+      };
       
-      // Handle POST, PUT, PATCH requests
-      if ((req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') && req.body) {
-        // Body needs to be explicitly written to the proxy request
-        const bodyData = JSON.stringify(req.body);
-        // We need to set the headers before writing data
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-        // Write the body data to the request
-        proxyReq.write(bodyData);
-        console.log("[Proxy] Added request body:", bodyData);
+      // Add body for non-GET requests
+      if (req.method !== 'GET' && req.body) {
+        options.data = req.body;
+        console.log('[Proxy] Request body:', JSON.stringify(req.body));
       }
-    },
-    onError: (err: Error, req: IncomingMessage, res: ServerResponse) => {
-      console.error("[Proxy] Error:", err);
-      res.writeHead(500, {
-        'Content-Type': 'text/plain'
+      
+      // Make request to API
+      const apiResponse = await axios(options);
+      
+      // Forward appropriate status code
+      res.status(apiResponse.status);
+      
+      // Forward response headers
+      Object.entries(apiResponse.headers).forEach(([name, value]) => {
+        res.setHeader(name, value);
       });
-      res.end('Proxy error: ' + err.message);
+      
+      // Handle response
+      if (apiResponse.data) {
+        console.log('[Proxy] Response data:', apiResponse.data);
+        res.send(apiResponse.data);
+      } else {
+        console.log('[Proxy] Empty response');
+        res.end();
+      }
+    } catch (error) {
+      console.error('[Proxy] Error:', error);
+      res.status(500).json({
+        error: 'Proxy Error',
+        message: error.message
+      });
     }
   });
-
-  // Mount proxy for all API routes
-  // This means all requests to /api/* will be forwarded to the FastAPI backend
-  // with the /api prefix removed by the pathRewrite rule above
-  app.use('/api', fastApiProxy);
   
   // Register router
   app.use(router);
