@@ -58,7 +58,7 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, is
     <div className="flex flex-col space-y-2">
       {/* Question Display Area */}
       <div className="min-h-[50px] p-3">
-        {agentQuestion && (
+        {agentQuestion && isEnabled && (
           <div className="text-foreground text-base pb-2">
             {agentQuestion}
           </div>
