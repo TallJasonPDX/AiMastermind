@@ -48,7 +48,6 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
       <video
         ref={videoRef}
         className="w-full h-full absolute inset-0"
-        controls
         autoPlay
         playsInline
         src={`../../videos/${videoFilename}`}
