@@ -2,7 +2,7 @@
 # AI Landing Page Generator
 
 ## Project Overview
-An intelligent qualification system for AI Mastermind group candidates that uses video content and AI-driven conversations to assess fit and interest. The application plays videos based on conversation flows, asks questions, evaluates responses through OpenAI, and determines the next steps in the conversation flow.
+An intelligent qualification system for AI Mastermind group candidates that uses video content and AI-driven conversations to assess fit and interest. The application plays videos based on conversation flows, asks questions, evaluates responses through OpenAI, and determines the next step in the conversation flow.
 
 ## Architecture
 - **Backend (Port 8000)**: FastAPI server with SQLAlchemy ORM
