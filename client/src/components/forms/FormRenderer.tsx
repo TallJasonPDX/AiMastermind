@@ -1,10 +1,8 @@
 // client/src/components/forms/FormRenderer.tsx
 
-import React, { useEffect } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFormSubmit } from '@/hooks/use-form-submit';
-import SubmitInterestForm from './SubmitInterestForm';
-import SubmitReconsiderationForm from './SubmitReconsiderationForm';
 import FormNotFound from './FormNotFound';
 
 // Props interface for the form renderer
@@ -25,6 +23,12 @@ export default function FormRenderer({ formName, onSubmitSuccess }: FormRenderer
   if (!formName) {
     return null;
   }
+  
+  // Get form components
+  const formComponents: Record<string, React.ComponentType<any>> = {
+    SubmitInterestForm: lazy(() => import('./SubmitInterestForm')),
+    SubmitReconsiderationForm: lazy(() => import('./SubmitReconsiderationForm')),
+  };
   
   // Initialize form submission hook with appropriate form name
   const formSubmit = useFormSubmit(formName, {
@@ -52,19 +56,18 @@ export default function FormRenderer({ formName, onSubmitSuccess }: FormRenderer
     }
   });
   
-  // Render the appropriate form based on the form name
-  switch (formName) {
-    case 'interest':
-    case 'SubmitInterestForm':
-      return <SubmitInterestForm formSubmit={formSubmit} />;
-    
-    case 'reconsideration':
-    case 'SubmitReconsiderationForm':
-      return <SubmitReconsiderationForm formSubmit={formSubmit} />;
-    
-    default:
-      // If no matching form is found, render a fallback component
-      console.log(`Form not found: ${formName}`);
-      return <FormNotFound formName={formName} />;
+  // Check if we have a form component matching the form name
+  const FormComponent = formComponents[formName];
+  
+  if (!FormComponent) {
+    console.log(`Form not found: ${formName}`);
+    return <FormNotFound formName={formName} />;
   }
+  
+  // Render the form component with Suspense for lazy loading
+  return (
+    <Suspense fallback={<div className="p-4 text-center">Loading form...</div>}>
+      <FormComponent formSubmit={formSubmit} />
+    </Suspense>
+  );
 }
