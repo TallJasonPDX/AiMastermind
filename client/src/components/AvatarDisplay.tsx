@@ -47,7 +47,7 @@ export function AvatarDisplay({
     };
   }, [isAudioEnabled]);
 
-  // Handle video filename changes with crossfade transition
+  // Handle video filename changes with immediate swap
   useEffect(() => {
     // Skip on initial render or if no audio enabled
     if (!isAudioEnabled || !videoFilename || activeVideoSrc === videoFilename) {
@@ -64,45 +64,40 @@ export function AvatarDisplay({
       secondaryVideoRef.current.src = `../../videos/${videoFilename}`;
       secondaryVideoRef.current.load();
       
-      // Once the secondary video is loaded, start the crossfade
+      // Once the secondary video is loaded, do the immediate swap
       secondaryVideoRef.current.onloadeddata = () => {
-        console.log('[AvatarDisplay] Secondary video loaded, starting crossfade');
+        console.log('[AvatarDisplay] Secondary video loaded, performing immediate swap');
         
         // Play the secondary video
         secondaryVideoRef.current?.play().catch(e => 
           console.error('[AvatarDisplay] Secondary video autoplay failed:', e)
         );
         
-        // Start crossfade animation
-        // Fade out primary video
-        setVideoOpacity(0);
-        // Fade in secondary video
-        setSecondaryVideoOpacity(1);
+        // Immediately swap visibility
+        setVideoOpacity(0); // Hide primary video
+        setSecondaryVideoOpacity(1); // Show secondary video
         
-        // After transition completes, swap the videos
-        setTimeout(() => {
-          if (primaryVideoRef.current && secondaryVideoRef.current) {
-            // Keep the secondary video playing
-            // Set the new active source
-            setActiveVideoSrc(videoFilename);
-            
-            // Reset the primary video with the new source
-            primaryVideoRef.current.src = `../../videos/${videoFilename}`;
-            primaryVideoRef.current.load();
-            primaryVideoRef.current.play().catch(e => 
-              console.error('[AvatarDisplay] New primary video autoplay failed:', e)
-            );
-            
-            // Reset opacities
-            setVideoOpacity(1);
-            setSecondaryVideoOpacity(0);
-            
-            // End transition state
-            setIsTransitioning(false);
-            
-            console.log('[AvatarDisplay] Crossfade complete, videos swapped');
-          }
-        }, 500); // Duration of crossfade
+        // Immediately update the primary video
+        if (primaryVideoRef.current) {
+          // Set the new active source
+          setActiveVideoSrc(videoFilename);
+          
+          // Reset the primary video with the new source
+          primaryVideoRef.current.src = `../../videos/${videoFilename}`;
+          primaryVideoRef.current.load();
+          primaryVideoRef.current.play().catch(e => 
+            console.error('[AvatarDisplay] New primary video autoplay failed:', e)
+          );
+          
+          // Reset opacities
+          setVideoOpacity(1);
+          setSecondaryVideoOpacity(0);
+          
+          // End transition state
+          setIsTransitioning(false);
+          
+          console.log('[AvatarDisplay] Video swap complete');
+        }
       };
     }
   }, [videoFilename, isAudioEnabled, activeVideoSrc]);
