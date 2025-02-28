@@ -93,26 +93,34 @@ export function registerRoutes(app: Express): Server {
         console.log("[Proxy] Request body:", JSON.stringify(req.body));
       }
 
-      // Try to ping FastAPI server first with retries
-      let pingSuccess = false;
-      const maxRetries = 3;
+      // Skip health check in development to avoid initial loading issues
+      // The FastAPI server is started with Express and should be available
+      let pingSuccess = process.env.NODE_ENV === 'development';
       
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          console.log(`[Proxy] FastAPI health check attempt ${attempt}/${maxRetries}...`);
-          const pingResponse = await axios.get(`${fastApiHost}/docs`, { timeout: 2000 });
-          console.log(`[Proxy] FastAPI server health check: HTTP ${pingResponse.status}`);
-          pingSuccess = true;
-          break;
-        } catch (pingError: any) {
-          console.log(`[Proxy] Health check attempt ${attempt} failed: ${pingError.message}`);
-          if (attempt === maxRetries) {
-            console.error(`[Proxy] All health check attempts failed. FastAPI may not be ready at ${fastApiHost}`);
-          } else {
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
+      // Only perform health check in production where FastAPI runs separately
+      if (!pingSuccess) {
+        const maxRetries = 3;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            console.log(`[Proxy] FastAPI health check attempt ${attempt}/${maxRetries}...`);
+            const pingResponse = await axios.get(`${fastApiHost}/docs`, { timeout: 2000 });
+            console.log(`[Proxy] FastAPI server health check: HTTP ${pingResponse.status}`);
+            pingSuccess = true;
+            break;
+          } catch (pingError: any) {
+            console.log(`[Proxy] Health check attempt ${attempt} failed: ${pingError.message}`);
+            if (attempt === maxRetries) {
+              console.error(`[Proxy] All health check attempts failed. FastAPI may not be ready at ${fastApiHost}`);
+              console.log(`[Proxy] Continuing with request anyway - FastAPI might still be initializing...`);
+            } else {
+              // Wait before retrying
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
           }
         }
+      } else {
+        console.log(`[Proxy] Using development mode - skipping health check`);
       }
 
       // Make request to API

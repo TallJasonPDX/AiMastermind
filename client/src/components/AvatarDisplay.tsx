@@ -44,7 +44,9 @@ export function AvatarDisplay({
         "[AvatarDisplay] Setting initial video source:",
         videoFilename,
       );
-      setPrimarySrc(newVideoPath);
+      // Add cache-busting query parameter
+      const timestamp = new Date().getTime();
+      setPrimarySrc(`${newVideoPath}?t=${timestamp}`);
       return;
     }
 
@@ -67,7 +69,9 @@ export function AvatarDisplay({
     setIsTransitioning(true);
 
     // Load the new video in the secondary player
-    setSecondarySrc(newVideoPath);
+    // Add cache-busting query parameter
+    const timestamp = new Date().getTime();
+    setSecondarySrc(`${newVideoPath}?t=${timestamp}`);
 
     // Secondary video will handle the rest in its onLoadedData event
   }, [videoFilename, primarySrc, isTransitioning]);
@@ -270,6 +274,21 @@ export function AvatarDisplay({
     };
   }, []);
 
+  // Handle video loading errors
+  const handleVideoError = (e: any) => {
+    console.error(`[AvatarDisplay] Error loading video:`, e);
+    // Try to reload the video after a short delay
+    setTimeout(() => {
+      if (primarySrc) {
+        const timestamp = new Date().getTime();
+        console.log(`[AvatarDisplay] Attempting to reload video with new timestamp`);
+        // Add cache-busting query parameter
+        const newSrc = `${primarySrc.split("?")[0]}?t=${timestamp}`;
+        setPrimarySrc(newSrc);
+      }
+    }, 1000);
+  };
+
   console.log("[AvatarDisplay] Rendering with props:", {
     videoFilename,
     nextVideoFilename,
@@ -309,9 +328,7 @@ export function AvatarDisplay({
               ? primarySrc
               : `/videos/${primarySrc.split("/").pop()}`
           }
-          onError={(e) =>
-            console.error("[AvatarDisplay] Primary video error:", e)
-          }
+          onError={handleVideoError} // Add error handler
           onLoadedData={() => {
             // Ensure video is not muted when loaded
             if (primaryVideoRef.current) {
@@ -338,9 +355,7 @@ export function AvatarDisplay({
               ? secondarySrc
               : `/videos/${secondarySrc.split("/").pop()}`
           }
-          onError={(e) =>
-            console.error("[AvatarDisplay] Secondary video error:", e)
-          }
+          onError={handleVideoError} // Add error handler
         />
       )}
     </Card>
