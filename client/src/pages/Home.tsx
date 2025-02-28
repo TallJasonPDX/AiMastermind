@@ -54,6 +54,7 @@ export default function Home() {
   const [showAudioModal, setShowAudioModal] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [showChat, setShowChat] = useState(false); // Default to hiding chat
+  const [chatInitialized, setChatInitialized] = useState(false); // Track if chat has ever been initialized
   const [nextVideoToLoad, setNextVideoToLoad] = useState<string | undefined>(undefined);
 
   // Reset audio confirmation on mount
@@ -373,20 +374,28 @@ export default function Home() {
             }}
           />
           
-          {/* Only show chat interface if showChat is true and it's not a video-only flow */}
+          {/* 
+            Only show chat interface if:
+            1. showChat is true (managed by delay timers)
+            2. Not a video-only flow
+            3. Has a system prompt
+            4. Not in a loading/transition state 
+          */}
           {showChat && !currentFlow?.video_only && currentFlow?.system_prompt && (
-            <ChatInterface
-              isEnabled={isInputEnabled && !isLoading}
-              onSubmit={handleUserResponse}
-              configId={config?.id}
-              agentQuestion={isLoading ? "Processing your response..." : currentFlow?.agent_question}
-              isLoading={isLoading}
-            />
+            <div className="transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
+              <ChatInterface
+                isEnabled={isInputEnabled && !isLoading}
+                onSubmit={handleUserResponse}
+                configId={config?.id}
+                agentQuestion={isLoading ? "Processing your response..." : currentFlow?.agent_question}
+                isLoading={isLoading}
+              />
+            </div>
           )}
           
           {/* Only show form if the current flow specifies it and showChat is true (after delay) */}
           {showChat && currentFlow?.show_form && (
-            <div className="mt-4">
+            <div className="mt-4 transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
               <FormRenderer 
                 formName={currentFlow.form_name} 
                 inputDelay={currentFlow.input_delay} 

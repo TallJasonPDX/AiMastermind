@@ -17,124 +17,121 @@ export function AvatarDisplay({
 }: AvatarDisplayProps) {
   const primaryVideoRef = useRef<HTMLVideoElement>(null);
   const secondaryVideoRef = useRef<HTMLVideoElement>(null);
-  const hasInitialized = useRef<boolean>(false);
-  const initialVideoLoaded = useRef<boolean>(false);
+  const hasPlayedVideo = useRef<boolean>(false);
   const preloadCache = useRef<Set<string>>(new Set());
+  const [primarySrc, setPrimarySrc] = useState<string>("");
+  const [secondarySrc, setSecondarySrc] = useState<string>("");
   
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [activeVideoSrc, setActiveVideoSrc] = useState<string | undefined>(videoFilename);
   const [videoOpacity, setVideoOpacity] = useState(1);
   const [secondaryVideoOpacity, setSecondaryVideoOpacity] = useState(0);
   
-  // Set up initial video on first render
+  // Initialize video sources only when needed (not on every render)
   useEffect(() => {
-    // Only run this once on initial mount
-    if (!initialVideoLoaded.current && primaryVideoRef.current && videoFilename) {
-      initialVideoLoaded.current = true;
-      console.log('[AvatarDisplay] Setting up initial video source:', videoFilename);
-      
-      // Set the initial video source without loading/playing yet 
-      // (will play when audio is enabled)
-      setActiveVideoSrc(videoFilename);
-      
-      // Add to preload cache to prevent duplicated preloading
-      if (videoFilename) preloadCache.current.add(videoFilename);
-    }
+    if (!videoFilename) return;
     
-    // Cleanup when component unmounts
-    return () => {
-      if (primaryVideoRef.current) {
-        primaryVideoRef.current.pause();
-        primaryVideoRef.current.src = '';
-      }
-      if (secondaryVideoRef.current) {
-        secondaryVideoRef.current.pause();
-        secondaryVideoRef.current.src = '';
-      }
-    };
-  }, [videoFilename]);
-
-  // Handle playing the video when audio is enabled
-  useEffect(() => {
-    if (isAudioEnabled && primaryVideoRef.current && !hasInitialized.current && activeVideoSrc) {
-      hasInitialized.current = true;
-      console.log('[AvatarDisplay] Audio enabled, playing video for first time');
-      
-      // Play the primary video now that audio is enabled
-      primaryVideoRef.current.play().catch(e => 
-        console.error('[AvatarDisplay] Autoplay failed:', e)
-      );
+    // Add to preload cache to track what we've loaded
+    preloadCache.current.add(videoFilename);
+    
+    // Set primary source only if it's not already set
+    if (primarySrc !== `../../videos/${videoFilename}`) {
+      console.log('[AvatarDisplay] Setting initial video source:', videoFilename);
+      setPrimarySrc(`../../videos/${videoFilename}`);
     }
-  }, [isAudioEnabled, activeVideoSrc]);
-
-  // Handle video filename changes with crossfade transition
+  }, [videoFilename]);
+  
+  // First-time play when audio is enabled
   useEffect(() => {
-    // Skip on initial render, if no audio enabled, or if it's the same video
-    if (!videoFilename || !isAudioEnabled || videoFilename === activeVideoSrc || isTransitioning) {
+    if (!isAudioEnabled || !primaryVideoRef.current || !primarySrc || hasPlayedVideo.current) {
       return;
     }
     
-    console.log(`[AvatarDisplay] Video source changing to: ${videoFilename}`);
+    console.log('[AvatarDisplay] Audio enabled, playing video for first time');
+    hasPlayedVideo.current = true;
     
-    // Start transition process
+    // Play when audio is enabled
+    primaryVideoRef.current.play().catch(e => 
+      console.error('[AvatarDisplay] Initial autoplay failed:', e)
+    );
+  }, [isAudioEnabled, primarySrc]);
+
+  // Handle video transition when filename changes
+  useEffect(() => {
+    // Skip if there's no video, no audio, or already transitioning
+    if (!videoFilename || !isAudioEnabled || isTransitioning) return;
+    
+    const newVideoPath = `../../videos/${videoFilename}`;
+    
+    // If source is already correct, do nothing
+    if (primarySrc === newVideoPath) return;
+    
+    console.log(`[AvatarDisplay] Video changing from ${primarySrc} to ${newVideoPath}`);
+    
+    // Start transition
     setIsTransitioning(true);
     
-    // Set the new video as the secondary video
-    if (secondaryVideoRef.current) {
-      // Only set source if we don't already have this video loaded
-      secondaryVideoRef.current.src = `../../videos/${videoFilename}`;
-      secondaryVideoRef.current.load();
-      
-      // Once the secondary video is loaded, start the crossfade
-      secondaryVideoRef.current.onloadeddata = () => {
-        console.log('[AvatarDisplay] Secondary video loaded, starting crossfade');
-        
-        // Play the secondary video
-        secondaryVideoRef.current?.play().catch(e => 
-          console.error('[AvatarDisplay] Secondary video autoplay failed:', e)
-        );
-        
-        // Start crossfade animation
-        // Fade out primary video
-        setVideoOpacity(0);
-        // Fade in secondary video
-        setSecondaryVideoOpacity(1);
-        
-        // After transition completes, make secondary the new primary
-        setTimeout(() => {
-          // Set the new active source
-          setActiveVideoSrc(videoFilename);
-          
-          // End transition state
-          setIsTransitioning(false);
-          
-          // Reset opacities for next transition
-          setVideoOpacity(1);
-          setSecondaryVideoOpacity(0);
-          
-          console.log('[AvatarDisplay] Crossfade complete, videos swapped');
-        }, 500); // Duration of crossfade
-      };
-    }
-  }, [videoFilename, isAudioEnabled, activeVideoSrc, isTransitioning]);
-
-  // Preload next video when available
-  useEffect(() => {
-    if (!nextVideoFilename || isTransitioning || !isAudioEnabled) {
-      return;
-    }
+    // Load the new video in the secondary player
+    setSecondarySrc(newVideoPath);
     
-    // Check if we've already preloaded this video
+    // Secondary video will handle the rest in its onLoadedData event
+  }, [videoFilename, isAudioEnabled, primarySrc, isTransitioning]);
+
+  // Handle secondary video loaded event for crossfade
+  useEffect(() => {
+    if (!secondaryVideoRef.current || !secondarySrc || !isTransitioning) return;
+    
+    const handleSecondaryLoaded = () => {
+      console.log('[AvatarDisplay] Secondary video loaded, starting crossfade');
+      
+      // Start playing the secondary video
+      secondaryVideoRef.current?.play().catch(e => 
+        console.error('[AvatarDisplay] Secondary video autoplay failed:', e)
+      );
+      
+      // Start crossfade animation
+      setVideoOpacity(0);
+      setSecondaryVideoOpacity(1);
+      
+      // Swap videos after transition completes
+      setTimeout(() => {
+        // Update primary src to match current video
+        setPrimarySrc(secondarySrc);
+        
+        // Reset opacity for next transition
+        setVideoOpacity(1);
+        setSecondaryVideoOpacity(0);
+        
+        // End transition state
+        setIsTransitioning(false);
+        
+        console.log('[AvatarDisplay] Crossfade complete');
+      }, 500);
+    };
+    
+    // Add event listener
+    secondaryVideoRef.current.addEventListener('loadeddata', handleSecondaryLoaded, { once: true });
+    
+    // Cleanup
+    return () => {
+      secondaryVideoRef.current?.removeEventListener('loadeddata', handleSecondaryLoaded);
+    };
+  }, [secondarySrc, isTransitioning]);
+
+  // Preload next video using fetch API
+  useEffect(() => {
+    if (!nextVideoFilename || isTransitioning || !isAudioEnabled) return;
+    
+    // Skip if already preloaded
     if (preloadCache.current.has(nextVideoFilename)) {
-      console.log(`[AvatarDisplay] Video already preloaded: ${nextVideoFilename}`);
+      console.log(`[AvatarDisplay] Already preloaded: ${nextVideoFilename}`);
       return;
     }
     
     console.log(`[AvatarDisplay] Preloading next video: ${nextVideoFilename}`);
     preloadCache.current.add(nextVideoFilename);
     
-    // Use fetch to preload the video instead of creating a video element
+    // Use fetch for preloading
     fetch(`../../videos/${nextVideoFilename}`)
       .then(response => {
         if (response.ok) {
@@ -148,19 +145,50 @@ export function AvatarDisplay({
       });
   }, [nextVideoFilename, isTransitioning, isAudioEnabled]);
 
-  // Handle video loaded callback
+  // Report when primary video is loaded
   useEffect(() => {
-    if (isVideoLoaded && onVideoLoaded) {
-      onVideoLoaded();
-    }
-  }, [isVideoLoaded, onVideoLoaded]);
+    if (!primaryVideoRef.current || !primarySrc) return;
+    
+    const handleVideoLoaded = () => {
+      console.log('[AvatarDisplay] Primary video loaded successfully');
+      setIsVideoLoaded(true);
+      
+      if (onVideoLoaded) {
+        onVideoLoaded();
+      }
+    };
+    
+    // Add event listener
+    primaryVideoRef.current.addEventListener('loadeddata', handleVideoLoaded, { once: true });
+    
+    // Cleanup
+    return () => {
+      primaryVideoRef.current?.removeEventListener('loadeddata', handleVideoLoaded);
+    };
+  }, [primarySrc, onVideoLoaded]);
+
+  // Cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      if (primaryVideoRef.current) {
+        primaryVideoRef.current.pause();
+        primaryVideoRef.current.removeAttribute('src');
+      }
+      if (secondaryVideoRef.current) {
+        secondaryVideoRef.current.pause();
+        secondaryVideoRef.current.removeAttribute('src');
+      }
+    };
+  }, []);
 
   console.log('[AvatarDisplay] Rendering with props:', { 
     videoFilename, 
     nextVideoFilename, 
     isAudioEnabled,
     isVideoLoaded,
-    isTransitioning
+    isTransitioning,
+    primarySrc: primarySrc.split('/').pop(),
+    secondarySrc: secondarySrc.split('/').pop()
   });
 
   if (!videoFilename) {
@@ -178,27 +206,33 @@ export function AvatarDisplay({
   return (
     <Card className="w-full aspect-video bg-black rounded-lg overflow-hidden relative">
       {/* Primary video */}
-      <video
-        ref={primaryVideoRef}
-        className="w-full h-full absolute inset-0 transition-opacity duration-500"
-        style={{ opacity: videoOpacity }}
-        autoPlay={isAudioEnabled}
-        playsInline
-        src={`../../videos/${activeVideoSrc}`}
-        onError={(e) => console.error('[AvatarDisplay] Primary video loading error:', e)}
-        onLoadedData={() => {
-          console.log('[AvatarDisplay] Primary video loaded successfully');
-          setIsVideoLoaded(true);
-        }}
-      />
+      {primarySrc && (
+        <video
+          ref={primaryVideoRef}
+          className="w-full h-full absolute inset-0 transition-opacity duration-500"
+          style={{ opacity: videoOpacity }}
+          autoPlay={isAudioEnabled}
+          playsInline
+          muted={false}
+          preload="auto"
+          src={primarySrc}
+          onError={(e) => console.error('[AvatarDisplay] Primary video error:', e)}
+        />
+      )}
       
-      {/* Secondary video for crossfade transitions */}
-      <video
-        ref={secondaryVideoRef}
-        className="w-full h-full absolute inset-0 transition-opacity duration-500"
-        style={{ opacity: secondaryVideoOpacity }}
-        playsInline
-      />
+      {/* Secondary video for transitions */}
+      {secondarySrc && (
+        <video
+          ref={secondaryVideoRef}
+          className="w-full h-full absolute inset-0 transition-opacity duration-500"
+          style={{ opacity: secondaryVideoOpacity }}
+          playsInline
+          muted={false}
+          preload="auto"
+          src={secondarySrc}
+          onError={(e) => console.error('[AvatarDisplay] Secondary video error:', e)}
+        />
+      )}
     </Card>
   );
 }
