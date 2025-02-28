@@ -389,49 +389,51 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto px-4 pt-16 pb-24">
-        <Card className="mt-4 p-4">
-          <AvatarDisplay
-            videoFilename={currentFlow?.video_filename}
-            nextVideoFilename={nextVideoToLoad}
-            isAudioEnabled={audioEnabled}
-            onVideoLoaded={() => {
-              // If this is the first load and we haven't preloaded any next videos yet
-              if (currentFlow && flows && flows.length > 1 && !nextVideoToLoad) {
-                console.log("[Home] Initial video loaded, preloading next potential videos");
-                preloadNextVideo(currentFlow.id);
-              }
-            }}
-          />
+        <div className="max-w-[750px] mx-auto">
+          <Card className="mt-4 p-4">
+            <AvatarDisplay
+              videoFilename={currentFlow?.video_filename}
+              nextVideoFilename={nextVideoToLoad}
+              isAudioEnabled={audioEnabled}
+              onVideoLoaded={() => {
+                // If this is the first load and we haven't preloaded any next videos yet
+                if (currentFlow && flows && flows.length > 1 && !nextVideoToLoad) {
+                  console.log("[Home] Initial video loaded, preloading next potential videos");
+                  preloadNextVideo(currentFlow.id);
+                }
+              }}
+            />
 
-          {/* 
-            Only show chat interface if:
-            1. showChat is true (managed by delay timers)
-            2. Not a video-only flow
-            3. Has a system prompt
-            4. Not in a loading/transition state 
-          */}
-          {showChat && !currentFlow?.video_only && currentFlow?.system_prompt && (
-            <div className="transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
-              <ChatInterface
-                isEnabled={isInputEnabled && !isLoading}
-                onSubmit={handleUserResponse}
-                configId={config?.id}
-                agentQuestion={isLoading ? "Processing your response..." : currentFlow?.agent_question}
-                isLoading={isLoading}
-              />
-            </div>
-          )}
+            {/* 
+              Only show chat interface if:
+              1. showChat is true (managed by delay timers)
+              2. Not a video-only flow
+              3. Has a system prompt
+              4. Not in a loading/transition state 
+            */}
+            {showChat && !currentFlow?.video_only && currentFlow?.system_prompt && (
+              <div className="transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
+                <ChatInterface
+                  isEnabled={isInputEnabled && !isLoading}
+                  onSubmit={handleUserResponse}
+                  configId={config?.id}
+                  agentQuestion={isLoading ? "Processing your response..." : currentFlow?.agent_question}
+                  isLoading={isLoading}
+                />
+              </div>
+            )}
 
-          {/* Show form if the current flow specifies it (regardless of chat visibility) */}
-          {currentFlow?.show_form && isInputEnabled && (
-            <div className="mt-4 transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
-              <FormRenderer 
-                formName={currentFlow.form_name} 
-                inputDelay={currentFlow.input_delay} 
-              />
-            </div>
-          )}
-        </Card>
+            {/* Show form if the current flow specifies it (regardless of chat visibility) */}
+            {currentFlow?.show_form && isInputEnabled && (
+              <div className="mt-4 transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
+                <FormRenderer 
+                  formName={currentFlow.form_name} 
+                  inputDelay={currentFlow.input_delay} 
+                />
+              </div>
+            )}
+          </Card>
+        </div>
       </main>
     </div>
   );
