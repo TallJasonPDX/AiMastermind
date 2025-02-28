@@ -56,3 +56,17 @@ class Conversations(Base):
 
     # Relationships
     configuration = relationship("Configurations", back_populates="conversations")
+
+
+class FormSubmissions(Base):
+    __tablename__ = "form_submissions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    form_name = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    phone = Column(String, nullable=True)
+    message = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
+    additional_data = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -52,6 +52,45 @@ app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
+# Email sending configuration
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# Email configuration
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+EMAIL_RECIPIENT = "jason@audiencesynergy.com"
+
+def send_email(subject, recipient, html_content):
+    """Send an email with the form submission details"""
+    if not SMTP_USERNAME or not SMTP_PASSWORD:
+        logger.warning("SMTP credentials not configured. Email not sent.")
+        return False
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_USERNAME
+        msg['To'] = recipient
+        msg['Subject'] = subject
+        
+        # Attach HTML content
+        msg.attach(MIMEText(html_content, 'html'))
+        
+        # Connect to SMTP server and send email
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+        
+        logger.info(f"Email sent successfully to {recipient}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        return False
+
 
 # Configuration Endpoints
 @app.get("/configurations", response_model=List[schemas.Config])
@@ -616,6 +655,109 @@ def process_chat(request: ChatRequest):
     except Exception as e:
         print(f"[API] Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Form Submission Endpoints
+@app.post("/form-submissions", status_code=status.HTTP_201_CREATED)
+async def create_form_submission(submission: schemas.FormSubmissionCreate, 
+                                request: Request,
+                                db: Session = Depends(get_db)):
+    """Save a form submission and send email notification"""
+    logger.info(f"[API] Received form submission for form: {submission.form_name}")
+    
+    try:
+        # Get client IP address
+        client_ip = request.client.host if request.client else None
+        submission_dict = submission.model_dump()
+        
+        # Add IP address to the submission
+        if client_ip:
+            submission_dict["ip_address"] = client_ip
+        
+        # Create database model
+        db_submission = models.FormSubmissions(**submission_dict)
+        db.add(db_submission)
+        db.commit()
+        db.refresh(db_submission)
+        
+        # Determine email subject based on form name
+        if submission.form_name == "SubmitInterestForm":
+            email_subject = "AI Mastermind Interest"
+        elif submission.form_name == "SubmitReconsiderationForm":
+            email_subject = "AI Mastermind Reconsideration Request"
+        else:
+            email_subject = f"Form Submission: {submission.form_name}"
+        
+        # Create HTML content for the email
+        html_content = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                h2 {{ color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; }}
+                .field {{ margin-bottom: 15px; }}
+                .label {{ font-weight: bold; color: #555; }}
+                .value {{ margin-top: 5px; }}
+                .footer {{ margin-top: 30px; font-size: 0.9em; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>{email_subject}</h2>
+                <div class="field">
+                    <div class="label">Name:</div>
+                    <div class="value">{submission.name}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Email:</div>
+                    <div class="value">{submission.email}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Phone:</div>
+                    <div class="value">{submission.phone or "Not provided"}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Message:</div>
+                    <div class="value">{submission.message or "Not provided"}</div>
+                </div>
+                <div class="field">
+                    <div class="label">IP Address:</div>
+                    <div class="value">{client_ip or "Unknown"}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Submission Time:</div>
+                    <div class="value">{db_submission.created_at}</div>
+                </div>
+                <div class="footer">
+                    This is an automated email from your AI Mastermind application.
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Send email notification
+        email_sent = send_email(
+            subject=email_subject,
+            recipient=EMAIL_RECIPIENT,
+            html_content=html_content
+        )
+        
+        if not email_sent:
+            logger.warning("[API] Email notification could not be sent")
+        
+        # Return success response
+        return {
+            "success": True,
+            "id": db_submission.id,
+            "message": "Form submission saved successfully",
+            "email_sent": email_sent
+        }
+        
+    except Exception as e:
+        logger.error(f"[API] Error processing form submission: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error saving form submission: {str(e)}")
 
 
 if __name__ == "__main__":
