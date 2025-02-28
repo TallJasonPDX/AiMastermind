@@ -56,6 +56,7 @@ export default function Home() {
 
   // Reset audio confirmation on mount
   useEffect(() => {
+    console.log("[Home] Component mounted - Resetting audio confirmation");
     queryClient.setQueryData(["audioConfirmed"], false);
     sessionStorage.removeItem("audioConfirmed");
   }, []);
@@ -63,42 +64,81 @@ export default function Home() {
   // Get config ID from URL or use null to fetch default
   const searchParams = new URLSearchParams(window.location.search);
   const configId = searchParams.get("id");
+  console.log("[Home] Config ID from URL:", configId || "Not provided, will use default");
 
   // Fetch configuration
-  const { data: config } = useQuery<Config>({
+  const { data: config, isLoading: configLoading, error: configError } = useQuery<Config>({
     queryKey: [
       configId ? `/configurations/${configId}` : "/configurations/active",
     ],
-    queryFn: () =>
-      apiRequest(
+    queryFn: () => {
+      console.log("[Home] Fetching configuration:", configId ? `ID ${configId}` : "active (default)");
+      return apiRequest(
         "GET",
         configId ? `/configurations/${configId}` : "/configurations/active",
-      ),
+      );
+    },
+    onSuccess: (data) => {
+      console.log("[Home] Configuration loaded successfully:", data);
+    },
+    onError: (err) => {
+      console.error("[Home] Error loading configuration:", err);
+    }
   });
 
   // Fetch conversation flows for the config
-  const { data: flows } = useQuery<ConversationFlow[]>({
+  const { data: flows, isLoading: flowsLoading, error: flowsError } = useQuery<ConversationFlow[]>({
     queryKey: ["/conversation-flows", config?.id],
-    queryFn: () =>
-      config?.id
-        ? apiRequest("GET", `/conversation-flows?config_id=${config.id}`)
-        : Promise.resolve([]),
+    queryFn: () => {
+      if (config?.id) {
+        console.log(`[Home] Fetching conversation flows for config ID ${config.id}`);
+        return apiRequest("GET", `/conversation-flows?config_id=${config.id}`);
+      } else {
+        console.log("[Home] No config ID available, skipping flows fetch");
+        return Promise.resolve([]);
+      }
+    },
     enabled: !!config?.id,
+    onSuccess: (data) => {
+      console.log(`[Home] Loaded ${data?.length || 0} conversation flows:`, data);
+    },
+    onError: (err) => {
+      console.error("[Home] Error loading conversation flows:", err);
+    }
   });
 
   // Initialize with first flow when flows are loaded
   useEffect(() => {
+    console.log("[Home] Flow dependency changed:", { 
+      flowsAvailable: !!flows?.length, 
+      flowsCount: flows?.length || 0,
+      currentFlowExists: !!currentFlow,
+      currentFlowId: currentFlow?.id
+    });
+    
     if (flows?.length && !currentFlow) {
       const firstFlow = flows[0];
       console.log("[Home] Setting initial flow:", firstFlow);
       setCurrentFlow(firstFlow);
+      
       // Reset input state for new flow
       setIsInputEnabled(false);
+      console.log("[Home] Input initially disabled for new flow");
+      
       if (firstFlow.input_delay > 0) {
-        setTimeout(() => setIsInputEnabled(true), firstFlow.input_delay * 1000);
+        console.log(`[Home] Setting input delay timer for ${firstFlow.input_delay} seconds`);
+        setTimeout(() => {
+          console.log("[Home] Input delay timer completed, enabling input");
+          setIsInputEnabled(true);
+        }, firstFlow.input_delay * 1000);
       } else {
+        console.log("[Home] No input delay specified, enabling input immediately");
         setIsInputEnabled(true);
       }
+    } else if (!flows?.length) {
+      console.log("[Home] No flows available yet");
+    } else if (currentFlow) {
+      console.log("[Home] Current flow already set:", currentFlow);
     }
   }, [flows, currentFlow]);
 
