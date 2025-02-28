@@ -1,16 +1,15 @@
+
 // client/src/components/forms/SubmitReconsiderationForm.tsx
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,10 +23,19 @@ const formSchema = z.object({
   }),
 });
 
-// Define the type for form values based on the schema
+// Define types for our components
 type FormValues = z.infer<typeof formSchema>;
 
+interface SubmitReconsiderationFormProps {
+  [key: string]: any;
+}
+
+// The functional component that uses react-hook-form + zod
 export function SubmitReconsiderationForm() {
+  useEffect(() => {
+    console.log("[SubmitReconsiderationForm] Component mounted with form hook");
+  }, []);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,7 +45,7 @@ export function SubmitReconsiderationForm() {
 
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     // In a real app, you'd send this data to a backend endpoint.
-    console.log("Reconsideration Form Data:", data);
+    console.log("[SubmitReconsiderationForm] Form submitted with data:", data);
     alert(
       `Reconsideration request submitted for ${data.email}. (This is a demo, no email is sent.)`,
     );
@@ -68,12 +76,8 @@ export function SubmitReconsiderationForm() {
     </Form>
   );
 }
-import React, { useState, useEffect } from "react";
 
-interface SubmitReconsiderationFormProps {
-  [key: string]: any;
-}
-
+// For backwards compatibility with existing imports
 const SubmitReconsiderationForm: React.FC<SubmitReconsiderationFormProps> = (props) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -143,7 +147,7 @@ const SubmitReconsiderationForm: React.FC<SubmitReconsiderationFormProps> = (pro
         </div>
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
         >
           Submit Request
         </button>
