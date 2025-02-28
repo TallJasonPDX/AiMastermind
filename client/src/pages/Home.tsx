@@ -216,9 +216,14 @@ export default function Home() {
       const timerId = setTimeout(() => {
         console.log("[Home] Input delay timer completed, enabling input");
         setIsInputEnabled(true);
-        // Show chat if it's not a video-only flow OR if it has a form to display
-        if (!firstFlow.video_only || firstFlow.show_form) {
-          console.log(`[Home] Showing UI elements after delay - chat: ${!firstFlow.video_only}, form: ${firstFlow.show_form}`);
+        // For video-only flows that have forms, we need special handling
+        if (firstFlow.video_only && firstFlow.show_form) {
+          console.log(`[Home] Video-only flow with form detected, keeping input enabled but chat hidden`);
+          setIsInputEnabled(true);
+        }
+        // Only show chat if it's not a video-only flow
+        else if (!firstFlow.video_only) {
+          console.log(`[Home] Showing chat interface after delay`);
           setShowChat(true);
         }
       }, firstFlow.input_delay * 1000);
@@ -228,9 +233,14 @@ export default function Home() {
     } else {
       console.log("[Home] No input delay specified, enabling input immediately");
       setIsInputEnabled(true);
-      // Show chat if it's not a video-only flow OR if it has a form to display
-      if (!firstFlow.video_only || firstFlow.show_form) {
-        console.log(`[Home] Showing UI elements immediately - chat: ${!firstFlow.video_only}, form: ${firstFlow.show_form}`);
+      // For video-only flows that have forms, we need special handling
+      if (firstFlow.video_only && firstFlow.show_form) {
+        console.log(`[Home] Video-only flow with form detected, keeping input enabled but chat hidden`);
+        setIsInputEnabled(true);
+      }
+      // Only show chat if it's not a video-only flow
+      else if (!firstFlow.video_only) {
+        console.log(`[Home] Showing chat interface immediately`);
         setShowChat(true);
       }
     }
