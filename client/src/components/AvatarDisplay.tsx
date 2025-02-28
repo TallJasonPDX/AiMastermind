@@ -32,8 +32,8 @@ export function AvatarDisplay({
     // Skip if no filename provided
     if (!videoFilename) return;
 
-    // Generate the full path
-    const newVideoPath = `../../videos/${videoFilename}`;
+    // Generate the full path with proper handling for development vs production
+    const newVideoPath = `/videos/${videoFilename}`;
 
     // Add to preload cache to track what we've loaded
     preloadCache.current.add(videoFilename);
@@ -172,8 +172,8 @@ export function AvatarDisplay({
     console.log(`[AvatarDisplay] Preloading next video: ${nextVideoFilename}`);
     preloadCache.current.add(nextVideoFilename);
 
-    // Use fetch for preloading
-    fetch(`../../videos/${nextVideoFilename}`)
+    // Use fetch for preloading with proper path
+    fetch(`/videos/${nextVideoFilename}`)
       .then(response => {
         if (response.ok) {
           console.log(`[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`);
@@ -276,7 +276,20 @@ export function AvatarDisplay({
           muted={false}
           preload="auto"
           src={primarySrc}
-          onError={(e) => console.error('[AvatarDisplay] Primary video error:', e)}
+          controlsList="nodownload"
+          disablePictureInPicture
+          crossOrigin="anonymous"
+          onError={(e) => {
+            console.error('[AvatarDisplay] Primary video error:', e);
+            // Attempt to play without audio on error
+            if (primaryVideoRef.current) {
+              console.log('[AvatarDisplay] Attempting to recover by muting video');
+              primaryVideoRef.current.muted = true;
+              primaryVideoRef.current.play().catch(err => 
+                console.error('[AvatarDisplay] Recovery failed:', err)
+              );
+            }
+          }}
           onLoadedData={() => {
             // Ensure video is not muted when loaded
             if (primaryVideoRef.current) {
@@ -297,7 +310,20 @@ export function AvatarDisplay({
           muted={false}
           preload="auto"
           src={secondarySrc}
-          onError={(e) => console.error('[AvatarDisplay] Secondary video error:', e)}
+          controlsList="nodownload"
+          disablePictureInPicture
+          crossOrigin="anonymous"
+          onError={(e) => {
+            console.error('[AvatarDisplay] Secondary video error:', e);
+            // Attempt to play without audio on error
+            if (secondaryVideoRef.current) {
+              console.log('[AvatarDisplay] Attempting to recover secondary video by muting');
+              secondaryVideoRef.current.muted = true;
+              secondaryVideoRef.current.play().catch(err => 
+                console.error('[AvatarDisplay] Secondary recovery failed:', err)
+              );
+            }
+          }}
         />
       )}
     </Card>

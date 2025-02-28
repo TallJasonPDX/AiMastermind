@@ -45,9 +45,22 @@ app.add_middleware(
 # Mount videos directory
 videos_path = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
-if not os.path.exists(videos_path):
-    os.makedirs(videos_path)
-app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
+client_videos_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "client", "videos")
+
+# Check both potential video directories
+if os.path.exists(videos_path) and os.listdir(videos_path):
+    print(f"[API] Mounting videos from: {videos_path}")
+    app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
+elif os.path.exists(client_videos_path) and os.listdir(client_videos_path):
+    print(f"[API] Mounting videos from: {client_videos_path}")
+    app.mount("/videos", StaticFiles(directory=client_videos_path), name="videos")
+else:
+    print("[API] WARNING: No videos found in either videos path!")
+    # Create the directory if it doesn't exist
+    if not os.path.exists(videos_path):
+        os.makedirs(videos_path)
+    app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
