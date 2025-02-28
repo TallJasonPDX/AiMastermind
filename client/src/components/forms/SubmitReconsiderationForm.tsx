@@ -1,7 +1,6 @@
-
 // client/src/components/forms/SubmitReconsiderationForm.tsx
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useFormSubmit } from "@/hooks/use-form-submit";
 
 // Define the schema for form validation using Zod
 const formSchema = z.object({
@@ -33,16 +33,13 @@ const formSchema = z.object({
 // Define types for our components
 type FormValues = z.infer<typeof formSchema>;
 
+// Props interface for the form component
 interface SubmitReconsiderationFormProps {
-  [key: string]: any;
+  formSubmit?: ReturnType<typeof useFormSubmit> | null;
 }
 
-// The functional component that uses react-hook-form + zod
-export function SubmitReconsiderationForm() {
-  useEffect(() => {
-    console.log("[SubmitReconsiderationForm] Component mounted with form hook");
-  }, []);
-
+// The internal form component implementation
+function ReconsiderationFormComponent({ formSubmit }: SubmitReconsiderationFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,13 +49,25 @@ export function SubmitReconsiderationForm() {
     },
   });
 
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
-    // In a real app, you'd send this data to a backend endpoint.
-    console.log("[SubmitReconsiderationForm] Form submitted with data:", data);
-    alert(
-      `Reconsideration request submitted for ${data.email}. (This is a demo, no email is sent.)`,
-    );
-    form.reset(); // Clear form after submit
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    try {
+      if (formSubmit) {
+        // Use the provided form submission hook
+        await formSubmit.submitForm(data);
+        // Reset form on successful submission
+        form.reset();
+      } else {
+        // Fallback in case hook wasn't provided (for testing or direct usage)
+        console.log("[SubmitReconsiderationForm] Form submitted with data:", data);
+        alert(
+          `Reconsideration request submitted for ${data.email}. (This is a demo, no email is sent.)`,
+        );
+        form.reset();
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      // Error handling is taken care of by the hook
+    }
   };
 
   return (
@@ -111,15 +120,18 @@ export function SubmitReconsiderationForm() {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit Request</Button>
+        <Button 
+          type="submit"
+          disabled={formSubmit?.isSubmitting}
+        >
+          {formSubmit?.isSubmitting ? "Submitting..." : "Submit Request"}
+        </Button>
       </form>
     </Form>
   );
 }
 
-// Export the modern implementation as the default 
-export default function LegacyReconsiderationForm() {
-  console.log("[LegacyReconsiderationForm] Legacy form component rendered");
-  // Use the modern implementation
-  return <SubmitReconsiderationForm />;
-};
+// Export the implementation as the default
+export default function SubmitReconsiderationForm(props: SubmitReconsiderationFormProps) {
+  return <ReconsiderationFormComponent {...props} />;
+}
