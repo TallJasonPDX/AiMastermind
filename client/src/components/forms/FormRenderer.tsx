@@ -24,25 +24,14 @@ interface FormRendererProps {
 export default function FormRenderer({ formName, onSubmitSuccess, inputDelay = 0 }: FormRendererProps) {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
-  const [showForm, setShowForm] = useState(inputDelay === 0);
   
   // If no form name is provided, don't render anything
   if (!formName) {
     return null;
   }
   
-  // Effect to handle the delay timer
-  useEffect(() => {
-    if (inputDelay > 0 && !showForm) {
-      console.log(`[FormRenderer] Setting input delay timer for ${inputDelay} seconds`);
-      const timer = setTimeout(() => {
-        console.log("[FormRenderer] Input delay timer completed, showing form");
-        setShowForm(true);
-      }, inputDelay * 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [inputDelay, showForm]);
+  // Remove duplicate delay timer - Home.tsx already handles this
+  console.log(`[FormRenderer] Rendering form: ${formName}`);
   
   // Get form components
   const formComponents: Record<string, React.ComponentType<any>> = {
@@ -93,15 +82,6 @@ export default function FormRenderer({ formName, onSubmitSuccess, inputDelay = 0
           </p>
         </CardContent>
       </Card>
-    );
-  }
-  
-  // If we're still in the delay period, show a waiting message
-  if (!showForm) {
-    return (
-      <div className="p-4 text-center">
-        <p className="text-muted-foreground">Please wait...</p>
-      </div>
     );
   }
   
