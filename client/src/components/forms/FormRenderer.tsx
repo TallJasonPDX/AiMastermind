@@ -1,9 +1,11 @@
 // client/src/components/forms/FormRenderer.tsx
 
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFormSubmit } from '@/hooks/use-form-submit';
 import FormNotFound from './FormNotFound';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle2 } from 'lucide-react';
 
 // Props interface for the form renderer
 interface FormRendererProps {
@@ -18,6 +20,7 @@ interface FormRendererProps {
  */
 export default function FormRenderer({ formName, onSubmitSuccess }: FormRendererProps) {
   const { toast } = useToast();
+  const [submitted, setSubmitted] = useState(false);
   
   // If no form name is provided, don't render anything
   if (!formName) {
@@ -33,6 +36,9 @@ export default function FormRenderer({ formName, onSubmitSuccess }: FormRenderer
   // Initialize form submission hook with appropriate form name
   const formSubmit = useFormSubmit(formName, {
     onSuccess: (data) => {
+      // Set form as submitted
+      setSubmitted(true);
+      
       // Show a success toast
       toast({
         title: "Form submitted successfully",
@@ -55,6 +61,23 @@ export default function FormRenderer({ formName, onSubmitSuccess }: FormRenderer
       });
     }
   });
+  
+  // If the form has been submitted, show a success message
+  if (submitted) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="flex flex-row items-center space-x-2 text-green-600">
+          <CheckCircle2 size={24} />
+          <CardTitle>Thank You!</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Your form has been submitted successfully. We appreciate your input and will be in touch shortly.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
   
   // Check if we have a form component matching the form name
   const FormComponent = formComponents[formName];
