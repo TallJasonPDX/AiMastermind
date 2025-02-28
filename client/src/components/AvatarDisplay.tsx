@@ -69,18 +69,27 @@ export function AvatarDisplay({
 
   // Play video when audio is enabled
   useEffect(() => {
-    // Only handle first-time playback here
-    if (!isAudioEnabled || !primaryVideoRef.current || !primarySrc || hasPlayedVideo.current) {
+    // Skip if we don't have a video or audio is disabled
+    if (!isAudioEnabled || !primaryVideoRef.current || !primarySrc) {
       return;
     }
 
-    console.log('[AvatarDisplay] Audio enabled, playing video for first time');
-    hasPlayedVideo.current = true;
-
-    // Play when audio is enabled
-    primaryVideoRef.current.play().catch(e => 
-      console.error('[AvatarDisplay] Initial autoplay failed:', e)
-    );
+    console.log('[AvatarDisplay] Audio enabled, ensuring video plays with audio');
+    
+    // Always ensure the primary video is not muted
+    if (primaryVideoRef.current.muted) {
+      console.log('[AvatarDisplay] Unmuting primary video');
+      primaryVideoRef.current.muted = false;
+    }
+    
+    // If it's first time playback, play the video
+    if (!hasPlayedVideo.current) {
+      console.log('[AvatarDisplay] Playing video for first time');
+      hasPlayedVideo.current = true;
+      primaryVideoRef.current.play().catch(e => 
+        console.error('[AvatarDisplay] Initial autoplay failed:', e)
+      );
+    }
   }, [isAudioEnabled, primarySrc]);
 
   // Handle secondary video loaded event for crossfade
@@ -268,6 +277,13 @@ export function AvatarDisplay({
           preload="auto"
           src={primarySrc}
           onError={(e) => console.error('[AvatarDisplay] Primary video error:', e)}
+          onLoadedData={() => {
+            // Ensure video is not muted when loaded
+            if (primaryVideoRef.current) {
+              primaryVideoRef.current.muted = false;
+              console.log('[AvatarDisplay] Ensuring primary video is not muted on load');
+            }
+          }}
         />
       )}
 
