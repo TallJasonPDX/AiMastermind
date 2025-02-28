@@ -280,7 +280,10 @@ export default function Home() {
           )}
           {currentFlow?.show_form && (
             <div className="mt-4">
-              <FormRenderer formName={currentFlow.form_name} />
+              <FormRenderer 
+                formName={currentFlow.form_name} 
+                inputDelay={currentFlow.input_delay} 
+              />
             </div>
           )}
         </Card>

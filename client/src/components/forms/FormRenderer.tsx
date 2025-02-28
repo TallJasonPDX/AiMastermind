@@ -1,6 +1,7 @@
+
 // client/src/components/forms/FormRenderer.tsx
 
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFormSubmit } from '@/hooks/use-form-submit';
 import FormNotFound from './FormNotFound';
@@ -11,21 +12,37 @@ import { CheckCircle2 } from 'lucide-react';
 interface FormRendererProps {
   formName: string | null | undefined;
   onSubmitSuccess?: () => void;
+  inputDelay?: number;
 }
 
 /**
  * A component that renders different forms based on the provided formName
  * @param formName The name/identifier of the form to render
  * @param onSubmitSuccess Optional callback for when a form is successfully submitted
+ * @param inputDelay Time in seconds to wait before showing the form
  */
-export default function FormRenderer({ formName, onSubmitSuccess }: FormRendererProps) {
+export default function FormRenderer({ formName, onSubmitSuccess, inputDelay = 0 }: FormRendererProps) {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
+  const [showForm, setShowForm] = useState(inputDelay === 0);
   
   // If no form name is provided, don't render anything
   if (!formName) {
     return null;
   }
+  
+  // Effect to handle the delay timer
+  useEffect(() => {
+    if (inputDelay > 0 && !showForm) {
+      console.log(`[FormRenderer] Setting input delay timer for ${inputDelay} seconds`);
+      const timer = setTimeout(() => {
+        console.log("[FormRenderer] Input delay timer completed, showing form");
+        setShowForm(true);
+      }, inputDelay * 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [inputDelay, showForm]);
   
   // Get form components
   const formComponents: Record<string, React.ComponentType<any>> = {
@@ -76,6 +93,15 @@ export default function FormRenderer({ formName, onSubmitSuccess }: FormRenderer
           </p>
         </CardContent>
       </Card>
+    );
+  }
+  
+  // If we're still in the delay period, show a waiting message
+  if (!showForm) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-muted-foreground">Please wait...</p>
+      </div>
     );
   }
   
