@@ -29,21 +29,12 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, isLoading }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
-  const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
   
   // Component state tracking
   useEffect(() => {
     // Reset message when config changes
     setMessage('');
-    setSubmittedMessage(null);
   }, [configId]);
-
-  // Reset submitted message when loading state changes to false (response received)
-  useEffect(() => {
-    if (!isLoading && submittedMessage) {
-      setSubmittedMessage(null);
-    }
-  }, [isLoading]);
 
   const handleSubmit = async () => {
     if (!message.trim() || !isEnabled) return;
@@ -53,15 +44,13 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, is
       // Store the message for reference
       const userMessage = message;
       
-      // Store the submitted message instead of clearing it
-      setSubmittedMessage(userMessage);
+      // Clear the input field immediately for better UX
+      setMessage('');
       
       // Send the message to the parent component
       onSubmit(userMessage);
     } catch (error) {
       console.error('[ChatInterface] Error sending message:', error);
-      // Reset submitted message on error
-      setSubmittedMessage(null);
     }
   };
 
@@ -80,8 +69,8 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, is
       <div className="flex gap-2">
         <Textarea
           placeholder={isLoading ? "Processing your response..." : "Type your message..."}
-          value={isLoading && submittedMessage ? submittedMessage : message}
-          onChange={(e) => !isLoading && setMessage(e.target.value)}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
