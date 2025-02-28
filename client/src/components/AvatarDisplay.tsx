@@ -196,19 +196,19 @@ export function AvatarDisplay({
     // Use fetch for preloading
     fetch(`/videos/${nextVideoFilename}`)
       .then((response) => {
-        if (response.ok) {
-          console.log(
-            `[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`,
+        if (!response.ok) {
+          console.error(
+            `[AvatarDisplay] Failed to preload: ${nextVideoFilename}, status: ${response.status}`
           );
         } else {
-          console.error(
-            `[AvatarDisplay] Failed to preload: ${nextVideoFilename}`,
+          console.log(
+            `[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`,
           );
         }
       })
       .catch((error) => {
         console.error(
-          `[AvatarDisplay] Error preloading: ${nextVideoFilename}`,
+          `[AvatarDisplay] Network error preloading: ${nextVideoFilename}`,
           error,
         );
       });
