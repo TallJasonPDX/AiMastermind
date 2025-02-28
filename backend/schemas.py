@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 # Base OpenAI config schema
@@ -84,5 +84,25 @@ class Conversation(ConversationBase):
     created_at: datetime = Field(..., description="Timestamp when the conversation was created")
     updated_at: Optional[datetime] = Field(None, description="Timestamp when the conversation was last updated")
 
+    class Config:
+        from_attributes = True
+        
+# Form Submission schemas
+class FormSubmissionBase(BaseModel):
+    form_name: str = Field(..., description="Name of the form that was submitted")
+    name: str = Field(..., min_length=2, description="Name of the person submitting the form")
+    email: EmailStr = Field(..., description="Email address of the person submitting the form")
+    phone: Optional[str] = Field(None, description="Phone number (optional)")
+    message: Optional[str] = Field(None, description="Message content or comments")
+    additional_data: Optional[Dict[str, Any]] = Field(None, description="Any additional form data")
+    
+class FormSubmissionCreate(FormSubmissionBase):
+    ip_address: Optional[str] = Field(None, description="IP address of the submitter")
+
+class FormSubmission(FormSubmissionBase):
+    id: int = Field(..., description="Unique identifier for the form submission")
+    ip_address: Optional[str] = Field(None, description="IP address of the submitter")
+    created_at: datetime = Field(..., description="Timestamp when the submission was created")
+    
     class Config:
         from_attributes = True
