@@ -133,6 +133,13 @@ export default function Home() {
     const currentFlowIndex = flowsArray.findIndex(flow => flow.id === currentFlowId);
     if (currentFlowIndex === -1) return;
     
+    // Early return if we're already preloading this video
+    const currentFlow = flowsArray[currentFlowIndex];
+    if (nextVideoToLoad === currentFlow.video_filename) {
+      console.log(`[Home] Already preloading video: ${nextVideoToLoad}`);
+      return;
+    }
+    
     let nextFlowId: number | null = null;
     
     // If status is provided, use pass_next or fail_next
@@ -170,52 +177,62 @@ export default function Home() {
       currentFlowId: currentFlow?.id
     });
     
+    // Skip if we don't have flows yet or already have a current flow
+    if (!flows || currentFlow) {
+      if (!flows) {
+        console.log("[Home] No flows available yet");
+      } else if (currentFlow) {
+        console.log("[Home] Current flow already set:", currentFlow);
+      }
+      return;
+    }
+    
     // Type check to ensure flows is treated as an array
     const flowsArray = Array.isArray(flows) ? flows : [];
+    if (flowsArray.length === 0) return;
     
-    if (flowsArray.length > 0 && !currentFlow) {
-      const firstFlow = flowsArray[0];
-      console.log("[Home] Setting initial flow:", firstFlow);
-      setCurrentFlow(firstFlow);
-      
-      // Reset input state for new flow
-      setIsInputEnabled(false);
-      setShowChat(false); // Initially hide chat until delay passes
-      console.log("[Home] Input initially disabled for new flow");
-      
-      // Preload next video if available
-      if (flowsArray.length > 1) {
-        const nextFlow = flowsArray[1];
-        if (nextFlow && nextFlow.video_filename) {
-          setNextVideoToLoad(nextFlow.video_filename);
-          console.log(`[Home] Preloading second video: ${nextFlow.video_filename}`);
-        }
+    // Set initial flow only once
+    const firstFlow = flowsArray[0];
+    console.log("[Home] Setting initial flow:", firstFlow);
+    setCurrentFlow(firstFlow);
+    
+    // Reset input state for new flow
+    setIsInputEnabled(false);
+    setShowChat(false); // Initially hide chat until delay passes
+    console.log("[Home] Input initially disabled for new flow");
+    
+    // Preload next video if available
+    if (flowsArray.length > 1) {
+      const nextFlow = flowsArray[1];
+      if (nextFlow && nextFlow.video_filename) {
+        setNextVideoToLoad(nextFlow.video_filename);
+        console.log(`[Home] Preloading second video: ${nextFlow.video_filename}`);
       }
-      
-      if (firstFlow.input_delay > 0) {
-        console.log(`[Home] Setting input delay timer for ${firstFlow.input_delay} seconds`);
-        setTimeout(() => {
-          console.log("[Home] Input delay timer completed, enabling input");
-          setIsInputEnabled(true);
-          // Only show chat if it's not a video-only flow
-          if (!firstFlow.video_only) {
-            setShowChat(true);
-          }
-        }, firstFlow.input_delay * 1000);
-      } else {
-        console.log("[Home] No input delay specified, enabling input immediately");
+    }
+    
+    // Set up input delay timer
+    if (firstFlow.input_delay > 0) {
+      console.log(`[Home] Setting input delay timer for ${firstFlow.input_delay} seconds`);
+      const timerId = setTimeout(() => {
+        console.log("[Home] Input delay timer completed, enabling input");
         setIsInputEnabled(true);
         // Only show chat if it's not a video-only flow
         if (!firstFlow.video_only) {
           setShowChat(true);
         }
+      }, firstFlow.input_delay * 1000);
+      
+      // Clean up timer if component unmounts
+      return () => clearTimeout(timerId);
+    } else {
+      console.log("[Home] No input delay specified, enabling input immediately");
+      setIsInputEnabled(true);
+      // Only show chat if it's not a video-only flow
+      if (!firstFlow.video_only) {
+        setShowChat(true);
       }
-    } else if (!flowsArray.length) {
-      console.log("[Home] No flows available yet");
-    } else if (currentFlow) {
-      console.log("[Home] Current flow already set:", currentFlow);
     }
-  }, [flows, currentFlow]);
+  }, [flows]);
 
   // State to hold the current chat response and loading state
   const [currentResponse, setCurrentResponse] = useState<{

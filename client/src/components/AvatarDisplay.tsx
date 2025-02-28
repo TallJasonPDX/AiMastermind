@@ -27,22 +27,49 @@ export function AvatarDisplay({
   const [videoOpacity, setVideoOpacity] = useState(1);
   const [secondaryVideoOpacity, setSecondaryVideoOpacity] = useState(0);
   
-  // Initialize video sources only when needed (not on every render)
+  // Handle video initialization and transitions with a single effect
   useEffect(() => {
+    // Skip if no filename provided
     if (!videoFilename) return;
+    
+    // Generate the full path
+    const newVideoPath = `../../videos/${videoFilename}`;
     
     // Add to preload cache to track what we've loaded
     preloadCache.current.add(videoFilename);
     
-    // Set primary source only if it's not already set
-    if (primarySrc !== `../../videos/${videoFilename}`) {
+    // Case 1: Initial load - set primary source directly
+    if (!primarySrc) {
       console.log('[AvatarDisplay] Setting initial video source:', videoFilename);
-      setPrimarySrc(`../../videos/${videoFilename}`);
+      setPrimarySrc(newVideoPath);
+      return;
     }
-  }, [videoFilename]);
+    
+    // Case 2: Same video - do nothing
+    if (primarySrc === newVideoPath) {
+      console.log('[AvatarDisplay] Video unchanged:', videoFilename);
+      return;
+    }
+    
+    // Case 3: Already transitioning - don't start another transition
+    if (isTransitioning) {
+      console.log('[AvatarDisplay] Ignoring video change during transition');
+      return;
+    }
+    
+    // Case 4: New video needs to be loaded - start transition
+    console.log(`[AvatarDisplay] Video changing from ${primarySrc} to ${newVideoPath}`);
+    setIsTransitioning(true);
+    
+    // Load the new video in the secondary player
+    setSecondarySrc(newVideoPath);
+    
+    // Secondary video will handle the rest in its onLoadedData event
+  }, [videoFilename, primarySrc, isTransitioning]);
   
-  // First-time play when audio is enabled
+  // Play video when audio is enabled
   useEffect(() => {
+    // Only handle first-time playback here
     if (!isAudioEnabled || !primaryVideoRef.current || !primarySrc || hasPlayedVideo.current) {
       return;
     }
@@ -55,27 +82,6 @@ export function AvatarDisplay({
       console.error('[AvatarDisplay] Initial autoplay failed:', e)
     );
   }, [isAudioEnabled, primarySrc]);
-
-  // Handle video transition when filename changes
-  useEffect(() => {
-    // Skip if there's no video, no audio, or already transitioning
-    if (!videoFilename || !isAudioEnabled || isTransitioning) return;
-    
-    const newVideoPath = `../../videos/${videoFilename}`;
-    
-    // If source is already correct, do nothing
-    if (primarySrc === newVideoPath) return;
-    
-    console.log(`[AvatarDisplay] Video changing from ${primarySrc} to ${newVideoPath}`);
-    
-    // Start transition
-    setIsTransitioning(true);
-    
-    // Load the new video in the secondary player
-    setSecondarySrc(newVideoPath);
-    
-    // Secondary video will handle the rest in its onLoadedData event
-  }, [videoFilename, isAudioEnabled, primarySrc, isTransitioning]);
 
   // Handle secondary video loaded event for crossfade
   useEffect(() => {
