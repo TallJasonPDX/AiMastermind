@@ -55,6 +55,11 @@ export function SubmitInterestForm() {
 
   return (
     <Form {...form}>
+      <div className="mb-4">
+        <p className="text-center text-muted-foreground">
+          You seem to be a great fit! If you would like the organizer to contact you with next steps, please share your interest using this form.
+        </p>
+      </div>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 p-4 border rounded-lg shadow-sm"
