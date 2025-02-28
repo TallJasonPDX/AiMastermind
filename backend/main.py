@@ -65,6 +65,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 EMAIL_RECIPIENT = os.getenv("EMAIL_RECIPIENT", "jason@audiencesynergy.com")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "submissions@agentsynergy.ai")
 
 def send_email(subject, recipient, html_content):
     """Send an email with the form submission details"""
@@ -74,7 +75,7 @@ def send_email(subject, recipient, html_content):
     
     try:
         msg = MIMEMultipart()
-        msg['From'] = SMTP_USERNAME
+        msg['From'] = FROM_EMAIL
         msg['To'] = recipient
         msg['Subject'] = subject
         
