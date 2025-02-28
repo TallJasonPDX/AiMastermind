@@ -31,23 +31,40 @@ export function AvatarDisplay({
   const [currentSrc, setCurrentSrc] = useState<string | undefined>(videoFilename);
   const [isTransitioning, setIsTransitioning] = useState(false);
   
-  // Initial video setup
+  // Initial video setup - track first load separately
   useEffect(() => {
-    if (topVideoRef.current && !hasInitialized.current && isAudioEnabled) {
-      hasInitialized.current = true;
-      console.log('[AvatarDisplay] Initializing video for first time');
+    // Only run this on first audio enable
+    if (!isAudioEnabled) return;
+    
+    console.log('[AvatarDisplay] Audio enabled, setting up initial video');
+    
+    if (videoFilename && topVideoRef.current) {
+      // Set source explicitly
+      console.log(`[AvatarDisplay] Loading initial video: ${videoFilename}`);
       
-      if (videoFilename) {
-        topVideoRef.current.src = `../../videos/${videoFilename}`;
-        topVideoRef.current.load();
-        topVideoRef.current.play().catch(e => 
-          console.error('[AvatarDisplay] Autoplay failed:', e)
+      topVideoRef.current.src = `../../videos/${videoFilename}`;
+      topVideoRef.current.load();
+      
+      // When loaded, play it
+      topVideoRef.current.onloadeddata = () => {
+        console.log('[AvatarDisplay] Initial video loaded, playing');
+        topVideoRef.current?.play().catch(e => 
+          console.error('[AvatarDisplay] Initial autoplay failed:', e)
         );
-        setCurrentSrc(videoFilename);
-      }
+        
+        // Mark as loaded
+        setIsVideoLoaded(true);
+      };
+      
+      // Update current source
+      setCurrentSrc(videoFilename);
+      
+      // Mark as initialized
+      hasInitialized.current = true;
     }
     
     return () => {
+      // Cleanup function
       if (topVideoRef.current) {
         topVideoRef.current.pause();
       }
@@ -168,9 +185,9 @@ export function AvatarDisplay({
         ref={topVideoRef}
         className="w-full h-full absolute inset-0 transition-opacity duration-300"
         style={{ opacity: topVideoActive ? 1 : 0, zIndex: 10 }}
-        autoPlay={isAudioEnabled}
         playsInline
         muted={false}
+        preload="auto"
         onLoadedData={() => {
           console.log('[AvatarDisplay] Top video loaded successfully');
           if (topVideoActive) {
@@ -186,6 +203,7 @@ export function AvatarDisplay({
         style={{ opacity: topVideoActive ? 0 : 1, zIndex: 5 }}
         playsInline
         muted={false}
+        preload="auto"
         onLoadedData={() => {
           console.log('[AvatarDisplay] Bottom video loaded successfully');
           if (!topVideoActive) {
