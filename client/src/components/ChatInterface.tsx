@@ -29,15 +29,25 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, isLoading }: ChatInterfaceProps) {
   const [message, setMessage] = useState('');
+  const [localProcessing, setLocalProcessing] = useState(false);
   
   // Component state tracking
   useEffect(() => {
-    // Reset message when config changes
+    // Reset message and processing state when config changes
     setMessage('');
+    setLocalProcessing(false);
   }, [configId]);
 
+  // Clear local processing state when parent indicates loading is done
+  useEffect(() => {
+    if (!isLoading && localProcessing) {
+      console.log('[ChatInterface] Parent loading complete, resetting local processing state');
+      setLocalProcessing(false);
+    }
+  }, [isLoading, localProcessing]);
+
   const handleSubmit = async () => {
-    if (!message.trim() || !isEnabled) return;
+    if (!message.trim() || !isEnabled || localProcessing) return;
 
     try {
       console.log('[ChatInterface] Submitting message:', message);
@@ -47,10 +57,14 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, is
       // Clear the input field immediately for better UX
       setMessage('');
       
+      // Set local processing state to true
+      setLocalProcessing(true);
+      
       // Send the message to the parent component
       onSubmit(userMessage);
     } catch (error) {
       console.error('[ChatInterface] Error sending message:', error);
+      setLocalProcessing(false);
     }
   };
 
@@ -68,28 +82,28 @@ export function ChatInterface({ configId, isEnabled, onSubmit, agentQuestion, is
       {/* Message Input Area */}
       <div className="flex gap-2">
         <Textarea
-          placeholder={isLoading ? "Processing your response..." : "Type your message..."}
+          placeholder={(isLoading || localProcessing) ? "Processing your response..." : "Type your message..."}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              if (message.trim() && isEnabled && !isLoading) {
+              if (message.trim() && isEnabled && !isLoading && !localProcessing) {
                 handleSubmit();
               }
             }
           }}
           className="resize-none"
           rows={2}
-          disabled={!isEnabled || isLoading}
+          disabled={!isEnabled || isLoading || localProcessing}
         />
         <Button
           onClick={handleSubmit}
-          disabled={!message.trim() || !isEnabled || isLoading}
+          disabled={!message.trim() || !isEnabled || isLoading || localProcessing}
           size="icon"
           className="h-auto"
         >
-          {isLoading ? (
+          {(isLoading || localProcessing) ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           ) : (
             <SendIcon className="h-4 w-4" />
