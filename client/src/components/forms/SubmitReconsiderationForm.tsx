@@ -1,3 +1,4 @@
+
 // client/src/components/forms/SubmitReconsiderationForm.tsx
 
 import React, { useState, useEffect } from "react";
@@ -6,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -17,8 +19,14 @@ import {
 
 // Define the schema for form validation using Zod
 const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
   email: z.string().email({
     message: "Please enter a valid email address.",
+  }),
+  message: z.string().min(5, {
+    message: "Message must be at least 5 characters.",
   }),
 });
 
@@ -38,7 +46,9 @@ export function SubmitReconsiderationForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
+      message: "",
     },
   });
 
@@ -53,10 +63,28 @@ export function SubmitReconsiderationForm() {
 
   return (
     <Form {...form}>
+      <div className="mb-4">
+        <p className="text-center text-muted-foreground">
+          If you feel we have made a mistake and would like us to reconsider, please submit the form below.
+        </p>
+      </div>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 p-4 border rounded-lg shadow-sm"
       >
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Your Name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="email"
@@ -65,6 +93,19 @@ export function SubmitReconsiderationForm() {
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input placeholder="your.email@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="message"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Message</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Please explain why we should reconsider your application..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
