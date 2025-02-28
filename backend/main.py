@@ -62,7 +62,7 @@ SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-EMAIL_RECIPIENT = "jason@audiencesynergy.com"
+EMAIL_RECIPIENT = os.getenv("EMAIL_RECIPIENT", "jason@audiencesynergy.com")
 
 def send_email(subject, recipient, html_content):
     """Send an email with the form submission details"""
