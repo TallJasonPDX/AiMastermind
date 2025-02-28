@@ -34,9 +34,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formName }) => {
       }),
   );
 
+  console.log(`[FormRenderer] Rendering form component with name: ${formName}`);
+  
   return (
     <Suspense fallback={<div>Loading form...</div>}>
-      <FormComponent />
+      {/* Using an empty props object to ensure we don't pass undefined */}
+      <FormComponent key={formName} {...{}} />
     </Suspense>
   );
 };

@@ -68,3 +68,88 @@ export function SubmitReconsiderationForm() {
     </Form>
   );
 }
+import React, { useState, useEffect } from "react";
+
+interface SubmitReconsiderationFormProps {
+  [key: string]: any;
+}
+
+const SubmitReconsiderationForm: React.FC<SubmitReconsiderationFormProps> = (props) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    reason: ""
+  });
+
+  useEffect(() => {
+    console.log("[SubmitReconsiderationForm] Component mounted with props:", props || {});
+  }, [props]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    console.log(`[SubmitReconsiderationForm] Field changed: ${name} = ${value}`);
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("[SubmitReconsiderationForm] Form submitted with data:", formData);
+    // Here you would normally submit the form data to your backend
+    alert("Thank you for your submission. We'll review your request and get back to you.");
+  };
+
+  return (
+    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-xl font-semibold mb-4">Request Reconsideration</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label htmlFor="name" className="block text-sm font-medium mb-1">Name</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="reason" className="block text-sm font-medium mb-1">Why do you believe we should reconsider?</label>
+          <textarea
+            id="reason"
+            name="reason"
+            value={formData.reason}
+            onChange={handleChange}
+            rows={4}
+            className="w-full px-3 py-2 border rounded-md"
+            required
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+        >
+          Submit Request
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default SubmitReconsiderationForm;
