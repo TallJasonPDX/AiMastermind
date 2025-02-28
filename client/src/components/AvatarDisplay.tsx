@@ -44,9 +44,7 @@ export function AvatarDisplay({
         "[AvatarDisplay] Setting initial video source:",
         videoFilename,
       );
-      // Add cache-busting query parameter
-      const timestamp = new Date().getTime();
-      setPrimarySrc(`${newVideoPath}?t=${timestamp}`);
+      setPrimarySrc(newVideoPath);
       return;
     }
 
@@ -69,9 +67,7 @@ export function AvatarDisplay({
     setIsTransitioning(true);
 
     // Load the new video in the secondary player
-    // Add cache-busting query parameter
-    const timestamp = new Date().getTime();
-    setSecondarySrc(`${newVideoPath}?t=${timestamp}`);
+    setSecondarySrc(newVideoPath);
 
     // Secondary video will handle the rest in its onLoadedData event
   }, [videoFilename, primarySrc, isTransitioning]);
@@ -196,19 +192,19 @@ export function AvatarDisplay({
     // Use fetch for preloading
     fetch(`/videos/${nextVideoFilename}`)
       .then((response) => {
-        if (!response.ok) {
-          console.error(
-            `[AvatarDisplay] Failed to preload: ${nextVideoFilename}, status: ${response.status}`
-          );
-        } else {
+        if (response.ok) {
           console.log(
             `[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`,
+          );
+        } else {
+          console.error(
+            `[AvatarDisplay] Failed to preload: ${nextVideoFilename}`,
           );
         }
       })
       .catch((error) => {
         console.error(
-          `[AvatarDisplay] Network error preloading: ${nextVideoFilename}`,
+          `[AvatarDisplay] Error preloading: ${nextVideoFilename}`,
           error,
         );
       });
@@ -274,21 +270,6 @@ export function AvatarDisplay({
     };
   }, []);
 
-  // Handle video loading errors
-  const handleVideoError = (e: any) => {
-    console.error(`[AvatarDisplay] Error loading video:`, e);
-    // Try to reload the video after a short delay
-    setTimeout(() => {
-      if (primarySrc) {
-        const timestamp = new Date().getTime();
-        console.log(`[AvatarDisplay] Attempting to reload video with new timestamp`);
-        // Add cache-busting query parameter
-        const newSrc = `${primarySrc.split("?")[0]}?t=${timestamp}`;
-        setPrimarySrc(newSrc);
-      }
-    }, 1000);
-  };
-
   console.log("[AvatarDisplay] Rendering with props:", {
     videoFilename,
     nextVideoFilename,
@@ -328,7 +309,9 @@ export function AvatarDisplay({
               ? primarySrc
               : `/videos/${primarySrc.split("/").pop()}`
           }
-          onError={handleVideoError} // Add error handler
+          onError={(e) =>
+            console.error("[AvatarDisplay] Primary video error:", e)
+          }
           onLoadedData={() => {
             // Ensure video is not muted when loaded
             if (primaryVideoRef.current) {
@@ -355,7 +338,9 @@ export function AvatarDisplay({
               ? secondarySrc
               : `/videos/${secondarySrc.split("/").pop()}`
           }
-          onError={handleVideoError} // Add error handler
+          onError={(e) =>
+            console.error("[AvatarDisplay] Secondary video error:", e)
+          }
         />
       )}
     </Card>

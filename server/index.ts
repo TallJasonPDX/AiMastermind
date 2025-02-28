@@ -91,10 +91,8 @@ app.use((req, res, next) => {
 
   // In production, FastAPI should be running separately
   if (process.env.NODE_ENV !== "production") {
-    // Wait longer for FastAPI to initialize in development
-    console.log("[Server] Waiting for FastAPI server to initialize (5 seconds)...");
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    console.log("[Server] Initialization wait complete, proceeding with Express setup");
+    // Wait a bit for FastAPI to initialize in development
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
   const server = registerRoutes(app);
