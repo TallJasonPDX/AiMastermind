@@ -32,10 +32,8 @@ export function AvatarDisplay({
     // Skip if no filename provided
     if (!videoFilename) return;
 
-    // Generate the full path with proper handling for development vs production
-    // Add timestamp to prevent caching issues and use the API endpoint
-    const timestamp = new Date().getTime();
-    const newVideoPath = `/api/videos/${videoFilename}?t=${timestamp}`;
+    // Generate the full path
+    const newVideoPath = `../../videos/${videoFilename}`;
 
     // Add to preload cache to track what we've loaded
     preloadCache.current.add(videoFilename);
@@ -161,13 +159,6 @@ export function AvatarDisplay({
     };
   }, [secondarySrc, isTransitioning]);
 
-  // Get correct video URL with fallbacks
-  const getVideoUrl = (filename: string) => {
-    const timestamp = new Date().getTime();
-    // Try different paths in sequence if needed
-    return `/api/videos/${filename}?t=${timestamp}`;
-  };
-
   // Preload next video using fetch API
   useEffect(() => {
     if (!nextVideoFilename || isTransitioning || !isAudioEnabled) return;
@@ -181,25 +172,13 @@ export function AvatarDisplay({
     console.log(`[AvatarDisplay] Preloading next video: ${nextVideoFilename}`);
     preloadCache.current.add(nextVideoFilename);
 
-    // Get video URL 
-    const videoUrl = getVideoUrl(nextVideoFilename);
-    
-    // Use fetch for preloading with proper path
-    fetch(videoUrl)
+    // Use fetch for preloading
+    fetch(`../../videos/${nextVideoFilename}`)
       .then(response => {
         if (response.ok) {
           console.log(`[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`);
         } else {
-          console.error(`[AvatarDisplay] Failed to preload: ${nextVideoFilename} (Status: ${response.status})`);
-          // Try an alternative URL if the first one fails
-          const altUrl = `/videos/${nextVideoFilename}?t=${new Date().getTime()}`;
-          console.log(`[AvatarDisplay] Attempting alternative URL: ${altUrl}`);
-          return fetch(altUrl);
-        }
-      })
-      .then(response => {
-        if (response && !response.ok) {
-          console.error(`[AvatarDisplay] All preload attempts failed for: ${nextVideoFilename}`);
+          console.error(`[AvatarDisplay] Failed to preload: ${nextVideoFilename}`);
         }
       })
       .catch(error => {
@@ -297,20 +276,7 @@ export function AvatarDisplay({
           muted={false}
           preload="auto"
           src={primarySrc}
-          controlsList="nodownload"
-          disablePictureInPicture
-          crossOrigin="anonymous"
-          onError={(e) => {
-            console.error('[AvatarDisplay] Primary video error:', e);
-            // Attempt to play without audio on error
-            if (primaryVideoRef.current) {
-              console.log('[AvatarDisplay] Attempting to recover by muting video');
-              primaryVideoRef.current.muted = true;
-              primaryVideoRef.current.play().catch(err => 
-                console.error('[AvatarDisplay] Recovery failed:', err)
-              );
-            }
-          }}
+          onError={(e) => console.error('[AvatarDisplay] Primary video error:', e)}
           onLoadedData={() => {
             // Ensure video is not muted when loaded
             if (primaryVideoRef.current) {
@@ -331,20 +297,7 @@ export function AvatarDisplay({
           muted={false}
           preload="auto"
           src={secondarySrc}
-          controlsList="nodownload"
-          disablePictureInPicture
-          crossOrigin="anonymous"
-          onError={(e) => {
-            console.error('[AvatarDisplay] Secondary video error:', e);
-            // Attempt to play without audio on error
-            if (secondaryVideoRef.current) {
-              console.log('[AvatarDisplay] Attempting to recover secondary video by muting');
-              secondaryVideoRef.current.muted = true;
-              secondaryVideoRef.current.play().catch(err => 
-                console.error('[AvatarDisplay] Secondary recovery failed:', err)
-              );
-            }
-          }}
+          onError={(e) => console.error('[AvatarDisplay] Secondary video error:', e)}
         />
       )}
     </Card>
