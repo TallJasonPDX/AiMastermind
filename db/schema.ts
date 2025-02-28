@@ -1,6 +1,18 @@
-import { pgTable, text, serial, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, jsonb, integer, boolean, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
+
+export const formSubmissions = pgTable("form_submissions", {
+  id: serial("id").primaryKey(),
+  formName: text("form_name").notNull(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  message: text("message"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  additionalData: jsonb("additional_data"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const configurations = pgTable("configurations", {
   id: serial("id").primaryKey(),
@@ -68,3 +80,5 @@ export const insertConversationSchema = createInsertSchema(conversations);
 export const selectConversationSchema = createSelectSchema(conversations);
 export const insertConversationFlowSchema = createInsertSchema(conversationFlows);
 export const selectConversationFlowSchema = createSelectSchema(conversationFlows);
+export const insertFormSubmissionSchema = createInsertSchema(formSubmissions);
+export const selectFormSubmissionSchema = createSelectSchema(formSubmissions);
