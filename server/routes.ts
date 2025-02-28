@@ -56,7 +56,20 @@ export function registerRoutes(app: Express): Server {
   app.use("/videos", express.static(videosPath));
   console.log(`[Server] Serving videos from ${videosPath}`);
 
+  // Log all incoming requests to help debug routing issues
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`[Express] Incoming request: ${req.method} ${req.path}`);
+    next();
+  });
+
   // Test endpoint in Express
+  app.post("/express-test", (req: Request, res: Response) => {
+    console.log("[Express] Test endpoint reached");
+    console.log("[Express] Request body:", req.body);
+    res.json({ success: true, message: "Test successful", data: req.body });
+  });
+
+  // Make sure this comes before the catch-all /api/* route
   app.post("/express-test", (req: Request, res: Response) => {
     console.log("[Express] Test endpoint reached");
     console.log("[Express] Request body:", req.body);

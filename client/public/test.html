@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>API Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+    button { padding: 8px 16px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Express Test Endpoint</h1>
+  <div>
+    <h3>Test Data:</h3>
+    <textarea id="testData" rows="5" cols="50">{"test": "data"}</textarea>
+  </div>
+  <button id="sendBtn">Send POST Request</button>
+  <div>
+    <h3>Response:</h3>
+    <pre id="response">No response yet</pre>
+  </div>
+
+  <script>
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const testData = document.getElementById('testData').value;
+      const responseEl = document.getElementById('response');
+      
+      try {
+        responseEl.textContent = 'Sending request...';
+        const rawData = JSON.parse(testData);
+        
+        const response = await fetch('/express-test', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(rawData)
+        });
+        
+        const result = await response.json();
+        responseEl.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        responseEl.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
