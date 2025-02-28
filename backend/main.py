@@ -3,6 +3,7 @@ import time
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 import uvicorn
@@ -64,6 +65,19 @@ video_dirs = [
     "/home/runner/ai-landing-page/client/videos"
 ]
 
+# Create an endpoint to serve videos directly if mounting doesn't work
+@app.get("/api/videos/{filename}")
+async def get_video(filename: str):
+    for video_dir in video_dirs:
+        if os.path.exists(video_dir):
+            video_path = os.path.join(video_dir, filename)
+            if os.path.exists(video_path):
+                print(f"[API] Serving video from: {video_path}")
+                return FileResponse(video_path, media_type="video/mp4")
+    
+    raise HTTPException(status_code=404, detail=f"Video {filename} not found")
+
+# Still try to mount videos directory for static serving
 mounted = False
 for video_dir in video_dirs:
     if os.path.exists(video_dir):
@@ -73,8 +87,14 @@ for video_dir in video_dirs:
             if video_files:
                 print(f"[API] Mounting videos from: {video_dir}")
                 print(f"[API] Found videos: {video_files}")
-                app.mount("/videos", StaticFiles(directory=video_dir), name="videos")
-                mounted = True
+                # Try to mount at both /videos and /api/videos
+                try:
+                    app.mount("/videos", StaticFiles(directory=video_dir), name="videos")
+                    print("[API] Successfully mounted /videos")
+                    mounted = True
+                except Exception as e:
+                    print(f"[API] Error mounting /videos: {str(e)}")
+                
                 break
             else:
                 print(f"[API] Directory exists but no video files found in: {video_dir}")
@@ -86,7 +106,11 @@ if not mounted:
     # Create the directory if it doesn't exist
     if not os.path.exists(videos_path):
         os.makedirs(videos_path)
-    app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
+    try:
+        app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
+        print("[API] Mounted empty videos directory")
+    except Exception as e:
+        print(f"[API] Error mounting empty videos directory: {str(e)}")
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)

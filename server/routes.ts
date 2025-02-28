@@ -48,6 +48,8 @@ export function registerRoutes(app: Express): Server {
           Accept: "application/json",
         },
         validateStatus: () => true, // Allow any status code
+        // Set a longer timeout
+        timeout: 10000,
       };
 
       // Add body for non-GET requests
@@ -59,17 +61,36 @@ export function registerRoutes(app: Express): Server {
       // Make request to API
       const apiResponse = await axios(options);
 
+      console.log(`[Proxy] Response status: ${apiResponse.status}`);
+      
+      // Check if the response content-type is JSON
+      const contentType = apiResponse.headers['content-type'] || '';
+      if (!contentType.includes('application/json') && apiResponse.status !== 204) {
+        console.error(`[Proxy] Unexpected content type: ${contentType}`);
+        console.error(`[Proxy] Response data:`, typeof apiResponse.data === 'string' ? apiResponse.data.substring(0, 200) : apiResponse.data);
+        return res.status(500).json({
+          error: "API returned non-JSON response",
+          message: "The backend API returned an unexpected format. Please check server logs."
+        });
+      }
+
       // Forward appropriate status code
       res.status(apiResponse.status);
 
-      // Forward response headers
-      Object.entries(apiResponse.headers).forEach(([name, value]) => {
-        res.setHeader(name, value);
-      });
+      // Forward response headers (only the necessary ones)
+      const headersToForward = ['content-type', 'content-length', 'cache-control'];
+      for (const header of headersToForward) {
+        if (apiResponse.headers[header]) {
+          res.setHeader(header, apiResponse.headers[header]);
+        }
+      }
 
       // Handle response
       if (apiResponse.data) {
-        console.log("[Proxy] Response data:", apiResponse.data);
+        console.log("[Proxy] Response data:", 
+          typeof apiResponse.data === 'object' 
+            ? JSON.stringify(apiResponse.data).substring(0, 200) + (JSON.stringify(apiResponse.data).length > 200 ? '...' : '') 
+            : apiResponse.data);
         res.send(apiResponse.data);
       } else {
         console.log("[Proxy] Empty response");

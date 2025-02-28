@@ -33,9 +33,9 @@ export function AvatarDisplay({
     if (!videoFilename) return;
 
     // Generate the full path with proper handling for development vs production
-    // Add timestamp to prevent caching issues
+    // Add timestamp to prevent caching issues and use the API endpoint
     const timestamp = new Date().getTime();
-    const newVideoPath = `/videos/${videoFilename}?t=${timestamp}`;
+    const newVideoPath = `/api/videos/${videoFilename}?t=${timestamp}`;
 
     // Add to preload cache to track what we've loaded
     preloadCache.current.add(videoFilename);
@@ -161,6 +161,13 @@ export function AvatarDisplay({
     };
   }, [secondarySrc, isTransitioning]);
 
+  // Get correct video URL with fallbacks
+  const getVideoUrl = (filename: string) => {
+    const timestamp = new Date().getTime();
+    // Try different paths in sequence if needed
+    return `/api/videos/${filename}?t=${timestamp}`;
+  };
+
   // Preload next video using fetch API
   useEffect(() => {
     if (!nextVideoFilename || isTransitioning || !isAudioEnabled) return;
@@ -174,9 +181,8 @@ export function AvatarDisplay({
     console.log(`[AvatarDisplay] Preloading next video: ${nextVideoFilename}`);
     preloadCache.current.add(nextVideoFilename);
 
-    // Add timestamp to avoid caching issues
-    const timestamp = new Date().getTime();
-    const videoUrl = `/videos/${nextVideoFilename}?t=${timestamp}`;
+    // Get video URL 
+    const videoUrl = getVideoUrl(nextVideoFilename);
     
     // Use fetch for preloading with proper path
     fetch(videoUrl)
@@ -186,7 +192,7 @@ export function AvatarDisplay({
         } else {
           console.error(`[AvatarDisplay] Failed to preload: ${nextVideoFilename} (Status: ${response.status})`);
           // Try an alternative URL if the first one fails
-          const altUrl = `/api/videos/${nextVideoFilename}?t=${timestamp}`;
+          const altUrl = `/videos/${nextVideoFilename}?t=${new Date().getTime()}`;
           console.log(`[AvatarDisplay] Attempting alternative URL: ${altUrl}`);
           return fetch(altUrl);
         }
