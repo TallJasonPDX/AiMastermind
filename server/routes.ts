@@ -93,13 +93,26 @@ export function registerRoutes(app: Express): Server {
         console.log("[Proxy] Request body:", JSON.stringify(req.body));
       }
 
-      // Try to ping FastAPI server first
-      try {
-        const pingResponse = await axios.get(`${fastApiHost}/docs`, { timeout: 1000 });
-        console.log(`[Proxy] FastAPI server health check: HTTP ${pingResponse.status}`);
-      } catch (pingError: any) {
-        console.error(`[Proxy] FastAPI server health check failed: ${pingError.message}`);
-        console.error(`[Proxy] This suggests the FastAPI server is not running at ${fastApiHost}`);
+      // Try to ping FastAPI server first with retries
+      let pingSuccess = false;
+      const maxRetries = 3;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[Proxy] FastAPI health check attempt ${attempt}/${maxRetries}...`);
+          const pingResponse = await axios.get(`${fastApiHost}/docs`, { timeout: 2000 });
+          console.log(`[Proxy] FastAPI server health check: HTTP ${pingResponse.status}`);
+          pingSuccess = true;
+          break;
+        } catch (pingError: any) {
+          console.log(`[Proxy] Health check attempt ${attempt} failed: ${pingError.message}`);
+          if (attempt === maxRetries) {
+            console.error(`[Proxy] All health check attempts failed. FastAPI may not be ready at ${fastApiHost}`);
+          } else {
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
 
       // Make request to API
