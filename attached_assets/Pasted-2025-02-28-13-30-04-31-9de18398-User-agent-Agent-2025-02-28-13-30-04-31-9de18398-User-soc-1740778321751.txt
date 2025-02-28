@@ -1,0 +1,172 @@
+2025-02-28 13:30:04.31
+9de18398
+User
+agent: [Agent],
+2025-02-28 13:30:04.31
+9de18398
+User
+socketPath: undefined,
+2025-02-28 13:30:04.31
+9de18398
+User
+method: 'GET',
+2025-02-28 13:30:04.31
+9de18398
+User
+maxHeaderSize: undefined,
+2025-02-28 13:30:04.31
+9de18398
+User
+insecureHTTPParser: undefined,
+2025-02-28 13:30:04.31
+9de18398
+User
+joinDuplicateHeaders: undefined,
+2025-02-28 13:30:04.31
+9de18398
+User
+path: '/configurations/active',
+2025-02-28 13:30:04.31
+9de18398
+User
+_ended: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+res: null,
+2025-02-28 13:30:04.31
+9de18398
+User
+aborted: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+timeoutCb: [Function: emitRequestTimeout],
+2025-02-28 13:30:04.31
+9de18398
+User
+upgradeOrConnect: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+parser: null,
+2025-02-28 13:30:04.31
+9de18398
+User
+maxHeadersCount: null,
+2025-02-28 13:30:04.31
+9de18398
+User
+reusedSocket: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+host: 'localhost',
+2025-02-28 13:30:04.31
+9de18398
+User
+protocol: 'http:',
+2025-02-28 13:30:04.31
+9de18398
+User
+_redirectable: [Circular *1],
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(shapeMode)]: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kCapture)]: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kBytesWritten)]: 0,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kNeedDrain)]: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(corked)]: 0,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kOutHeaders)]: [Object: null prototype],
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(errored)]: null,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kHighWaterMark)]: 16384,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kRejectNonStandardBodyWrites)]: false,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kUniqueHeaders)]: null
+2025-02-28 13:30:04.31
+9de18398
+User
+},
+2025-02-28 13:30:04.31
+9de18398
+User
+_currentUrl: 'http://localhost:8000/configurations/active',
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(shapeMode)]: true,
+2025-02-28 13:30:04.31
+9de18398
+User
+[Symbol(kCapture)]: false
+2025-02-28 13:30:04.31
+9de18398
+User
+},
+2025-02-28 13:30:04.31
+9de18398
+User
+cause: Error: connect ECONNREFUSED 127.0.0.1:8000
+2025-02-28 13:30:04.31
+9de18398
+User
+at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+2025-02-28 13:30:04.31
+9de18398
+User
+errno: -111,
+2025-02-28 13:30:04.31
+9de18398
+User
+code: 'ECONNREFUSED',
+2025-02-28 13:30:04.31
+9de18398
+User
+syscall: 'connect',
+2025-02-28 13:30:04.31
+9de18398
+User
+address: '127.0.0.1',
+2025-02-28 13:30:04.31
+9de18398
+User
+port: 8000
+2025-02-28 13:30:04.31
+9de18398
+User
+}
+2025-02-28 13:30:04.31
+9de18398
+User
+}
+2025-02-28 13:30:04.31
+9de18398
+User
+9:30:04 PM [express] GET /api/configurations/active 500 in 26m

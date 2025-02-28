@@ -107,7 +107,7 @@ app.use((req, res, next) => {
   });
 
   // Setup Vite or serve static content based on environment
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV !== "production") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
