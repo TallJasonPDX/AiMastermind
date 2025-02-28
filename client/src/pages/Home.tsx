@@ -1,10 +1,12 @@
+// client/src/pages/Home.tsx
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioModal } from "@/components/AudioModal";
 import { AvatarDisplay } from "@/components/AvatarDisplay";
 import { ChatInterface } from "@/components/ChatInterface";
 import { Card } from "@/components/ui/card";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Config, ConversationFlow } from "@/lib/types";
+import FormRenderer from "@/components/forms/FormRenderer";
 
 // API request helper function
 const apiRequest = async (method: string, url: string, body?: any) => {
@@ -133,8 +135,8 @@ export default function Home() {
       setIsLoading(true);
 
       // Now make the API request to OpenAI
-      console.log("[Home] About to make POST request to /openai/chat");
-      const data = await apiRequest("POST", "/openai/chat", payload);
+      console.log("[Home] About to make POST request to /chat");
+      const data = await apiRequest("POST", "/chat", payload);
 
       console.log("[Home] Received response from API:", data);
 
@@ -229,12 +231,7 @@ export default function Home() {
           )}
           {currentFlow?.show_form && (
             <div className="mt-4">
-              {/* Dynamic form component will be rendered here */}
-              {currentFlow.form_name && (
-                <div className="text-center text-muted-foreground">
-                  Form placeholder: {currentFlow.form_name}
-                </div>
-              )}
+              <FormRenderer formName={currentFlow.form_name} />
             </div>
           )}
         </Card>
