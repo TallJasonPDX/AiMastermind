@@ -382,7 +382,7 @@ export default function Home() {
 
       <header className="fixed top-0 w-full bg-card/80 backdrop-blur-sm z-10 border-b">
         <div className="container mx-auto px-4 py-3">
-          <h1 className="text-xl font-bold">
+          <h1 className="text-xl font-bold text-center">
             {config?.page_title || "AI Conversation"}
           </h1>
         </div>
