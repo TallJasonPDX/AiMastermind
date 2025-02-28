@@ -48,15 +48,41 @@ videos_path = os.path.join(
 client_videos_path = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "client", "videos")
 
-# Check both potential video directories
-if os.path.exists(videos_path) and os.listdir(videos_path):
-    print(f"[API] Mounting videos from: {videos_path}")
-    app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
-elif os.path.exists(client_videos_path) and os.listdir(client_videos_path):
-    print(f"[API] Mounting videos from: {client_videos_path}")
-    app.mount("/videos", StaticFiles(directory=client_videos_path), name="videos")
-else:
-    print("[API] WARNING: No videos found in either videos path!")
+# Log all possible video paths for debugging
+print(f"[API] Checking videos path: {videos_path}")
+print(f"[API] Checking client videos path: {client_videos_path}")
+
+# Try all possible video directories in priority order
+video_dirs = [
+    videos_path,
+    client_videos_path,
+    # Add absolute fallback paths that might be used in deployment
+    "/app/videos",
+    "/app/client/videos",
+    # Common Replit paths
+    "/home/runner/ai-landing-page/videos",
+    "/home/runner/ai-landing-page/client/videos"
+]
+
+mounted = False
+for video_dir in video_dirs:
+    if os.path.exists(video_dir):
+        try:
+            files = os.listdir(video_dir)
+            video_files = [f for f in files if f.lower().endswith(('.mp4', '.webm'))]
+            if video_files:
+                print(f"[API] Mounting videos from: {video_dir}")
+                print(f"[API] Found videos: {video_files}")
+                app.mount("/videos", StaticFiles(directory=video_dir), name="videos")
+                mounted = True
+                break
+            else:
+                print(f"[API] Directory exists but no video files found in: {video_dir}")
+        except Exception as e:
+            print(f"[API] Error checking directory {video_dir}: {str(e)}")
+
+if not mounted:
+    print("[API] WARNING: No videos found in any path! Creating default videos directory")
     # Create the directory if it doesn't exist
     if not os.path.exists(videos_path):
         os.makedirs(videos_path)

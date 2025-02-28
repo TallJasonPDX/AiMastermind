@@ -33,7 +33,9 @@ export function AvatarDisplay({
     if (!videoFilename) return;
 
     // Generate the full path with proper handling for development vs production
-    const newVideoPath = `/videos/${videoFilename}`;
+    // Add timestamp to prevent caching issues
+    const timestamp = new Date().getTime();
+    const newVideoPath = `/videos/${videoFilename}?t=${timestamp}`;
 
     // Add to preload cache to track what we've loaded
     preloadCache.current.add(videoFilename);
@@ -172,13 +174,26 @@ export function AvatarDisplay({
     console.log(`[AvatarDisplay] Preloading next video: ${nextVideoFilename}`);
     preloadCache.current.add(nextVideoFilename);
 
+    // Add timestamp to avoid caching issues
+    const timestamp = new Date().getTime();
+    const videoUrl = `/videos/${nextVideoFilename}?t=${timestamp}`;
+    
     // Use fetch for preloading with proper path
-    fetch(`/videos/${nextVideoFilename}`)
+    fetch(videoUrl)
       .then(response => {
         if (response.ok) {
           console.log(`[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`);
         } else {
-          console.error(`[AvatarDisplay] Failed to preload: ${nextVideoFilename}`);
+          console.error(`[AvatarDisplay] Failed to preload: ${nextVideoFilename} (Status: ${response.status})`);
+          // Try an alternative URL if the first one fails
+          const altUrl = `/api/videos/${nextVideoFilename}?t=${timestamp}`;
+          console.log(`[AvatarDisplay] Attempting alternative URL: ${altUrl}`);
+          return fetch(altUrl);
+        }
+      })
+      .then(response => {
+        if (response && !response.ok) {
+          console.error(`[AvatarDisplay] All preload attempts failed for: ${nextVideoFilename}`);
         }
       })
       .catch(error => {
