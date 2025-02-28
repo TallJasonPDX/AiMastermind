@@ -82,7 +82,7 @@ export default function Home() {
       ) as Promise<Config>;
     }
   });
-  
+
   // Log config on successful load
   useEffect(() => {
     if (config) {
@@ -104,14 +104,14 @@ export default function Home() {
     },
     enabled: !!config?.id
   });
-  
+
   // Log flows on successful load
   useEffect(() => {
     if (flows) {
       console.log(`[Home] Loaded ${flows.length || 0} conversation flows:`, flows);
     }
   }, [flows]);
-  
+
   // Handle errors in useEffect
   useEffect(() => {
     if (configError) {
@@ -125,23 +125,23 @@ export default function Home() {
   // Function to preload next video based on current flow
   const preloadNextVideo = (currentFlowId: number, status: 'pass' | 'fail' | null = null) => {
     if (!flows || !flows.length) return;
-    
+
     // Type check to ensure flows is treated as an array
     const flowsArray = Array.isArray(flows) ? flows : [];
     if (flowsArray.length === 0) return;
-    
+
     const currentFlowIndex = flowsArray.findIndex(flow => flow.id === currentFlowId);
     if (currentFlowIndex === -1) return;
-    
+
     // Early return if we're already preloading this video
     const currentFlow = flowsArray[currentFlowIndex];
     if (nextVideoToLoad === currentFlow.video_filename) {
       console.log(`[Home] Already preloading video: ${nextVideoToLoad}`);
       return;
     }
-    
+
     let nextFlowId: number | null = null;
-    
+
     // If status is provided, use pass_next or fail_next
     if (status === 'pass' && flowsArray[currentFlowIndex].pass_next) {
       nextFlowId = flowsArray[currentFlowIndex].pass_next;
@@ -158,7 +158,7 @@ export default function Home() {
         }
       }
     }
-    
+
     if (nextFlowId) {
       const nextFlow = flowsArray.find(flow => flow.order === nextFlowId);
       if (nextFlow && nextFlow.video_filename) {
@@ -176,7 +176,7 @@ export default function Home() {
       currentFlowExists: !!currentFlow,
       currentFlowId: currentFlow?.id
     });
-    
+
     // Skip if we don't have flows yet or already have a current flow
     if (!flows || currentFlow) {
       if (!flows) {
@@ -186,21 +186,21 @@ export default function Home() {
       }
       return;
     }
-    
+
     // Type check to ensure flows is treated as an array
     const flowsArray = Array.isArray(flows) ? flows : [];
     if (flowsArray.length === 0) return;
-    
+
     // Set initial flow only once
     const firstFlow = flowsArray[0];
     console.log("[Home] Setting initial flow:", firstFlow);
     setCurrentFlow(firstFlow);
-    
+
     // Reset input state for new flow
     setIsInputEnabled(false);
     setShowChat(false); // Initially hide chat until delay passes
     console.log("[Home] Input initially disabled for new flow");
-    
+
     // Preload next video if available
     if (flowsArray.length > 1) {
       const nextFlow = flowsArray[1];
@@ -209,26 +209,28 @@ export default function Home() {
         console.log(`[Home] Preloading second video: ${nextFlow.video_filename}`);
       }
     }
-    
+
     // Set up input delay timer
     if (firstFlow.input_delay > 0) {
       console.log(`[Home] Setting input delay timer for ${firstFlow.input_delay} seconds`);
       const timerId = setTimeout(() => {
         console.log("[Home] Input delay timer completed, enabling input");
         setIsInputEnabled(true);
-        // Only show chat if it's not a video-only flow
-        if (!firstFlow.video_only) {
+        // Show chat if it's not a video-only flow OR if it has a form to display
+        if (!firstFlow.video_only || firstFlow.show_form) {
+          console.log(`[Home] Showing UI elements after delay - chat: ${!firstFlow.video_only}, form: ${firstFlow.show_form}`);
           setShowChat(true);
         }
       }, firstFlow.input_delay * 1000);
-      
+
       // Clean up timer if component unmounts
       return () => clearTimeout(timerId);
     } else {
       console.log("[Home] No input delay specified, enabling input immediately");
       setIsInputEnabled(true);
-      // Only show chat if it's not a video-only flow
-      if (!firstFlow.video_only) {
+      // Show chat if it's not a video-only flow OR if it has a form to display
+      if (!firstFlow.video_only || firstFlow.show_form) {
+        console.log(`[Home] Showing UI elements immediately - chat: ${!firstFlow.video_only}, form: ${firstFlow.show_form}`);
         setShowChat(true);
       }
     }
@@ -294,16 +296,16 @@ export default function Home() {
         // Type check to ensure flows is treated as an array
         const flowsArray = Array.isArray(flows) ? flows : [];
         const nextFlow = flowsArray.find((f) => f.order === nextFlowOrder);
-        
+
         if (nextFlow) {
           console.log("[Home] Moving to next flow:", nextFlow);
-          
+
           // Preload next potential videos based on this next flow
           preloadNextVideo(nextFlow.id, null);
-          
+
           // Hide chat immediately during transition
           setShowChat(false);
-          
+
           // Keep loading state active during transition
           // Add a slight delay before moving to next flow so user can see the response
           setTimeout(() => {
@@ -311,7 +313,7 @@ export default function Home() {
             setCurrentFlow(nextFlow);
             setCurrentResponse(null); // Clear response when switching flows
             setIsInputEnabled(false); // Disable input during transition
-            
+
             // Only enable input and show chat after the specified delay
             if (nextFlow.input_delay > 0) {
               console.log(`[Home] Setting delay timer for next flow: ${nextFlow.input_delay} seconds`);
@@ -390,7 +392,7 @@ export default function Home() {
               }
             }}
           />
-          
+
           {/* 
             Only show chat interface if:
             1. showChat is true (managed by delay timers)
@@ -409,7 +411,7 @@ export default function Home() {
               />
             </div>
           )}
-          
+
           {/* Only show form if the current flow specifies it and showChat is true (after delay) */}
           {showChat && currentFlow?.show_form && (
             <div className="mt-4 transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
