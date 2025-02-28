@@ -125,29 +125,35 @@ export default function Home() {
   const preloadNextVideo = (currentFlowId: number, status: 'pass' | 'fail' | null = null) => {
     if (!flows || !flows.length) return;
     
-    const currentFlowIndex = flows.findIndex(flow => flow.id === currentFlowId);
+    // Type check to ensure flows is treated as an array
+    const flowsArray = Array.isArray(flows) ? flows : [];
+    if (flowsArray.length === 0) return;
+    
+    const currentFlowIndex = flowsArray.findIndex(flow => flow.id === currentFlowId);
     if (currentFlowIndex === -1) return;
     
     let nextFlowId: number | null = null;
     
     // If status is provided, use pass_next or fail_next
-    if (status === 'pass' && flows[currentFlowIndex].pass_next) {
-      nextFlowId = flows[currentFlowIndex].pass_next;
-    } else if (status === 'fail' && flows[currentFlowIndex].fail_next) {
-      nextFlowId = flows[currentFlowIndex].fail_next;
+    if (status === 'pass' && flowsArray[currentFlowIndex].pass_next) {
+      nextFlowId = flowsArray[currentFlowIndex].pass_next;
+    } else if (status === 'fail' && flowsArray[currentFlowIndex].fail_next) {
+      nextFlowId = flowsArray[currentFlowIndex].fail_next;
     } else {
       // Default: preload the next sequential flow if no status provided
-      const nextFlow = flows[currentFlowIndex + 1];
-      if (nextFlow) {
-        setNextVideoToLoad(nextFlow.video_filename);
-        console.log(`[Home] Preloading next sequential video: ${nextFlow.video_filename}`);
-        return;
+      if (currentFlowIndex + 1 < flowsArray.length) {
+        const nextFlow = flowsArray[currentFlowIndex + 1];
+        if (nextFlow && nextFlow.video_filename) {
+          setNextVideoToLoad(nextFlow.video_filename);
+          console.log(`[Home] Preloading next sequential video: ${nextFlow.video_filename}`);
+          return;
+        }
       }
     }
     
     if (nextFlowId) {
-      const nextFlow = flows.find(flow => flow.order === nextFlowId);
-      if (nextFlow) {
+      const nextFlow = flowsArray.find(flow => flow.order === nextFlowId);
+      if (nextFlow && nextFlow.video_filename) {
         setNextVideoToLoad(nextFlow.video_filename);
         console.log(`[Home] Preloading next video based on ${status}: ${nextFlow.video_filename}`);
       }
@@ -163,8 +169,11 @@ export default function Home() {
       currentFlowId: currentFlow?.id
     });
     
-    if (flows?.length && !currentFlow) {
-      const firstFlow = flows[0];
+    // Type check to ensure flows is treated as an array
+    const flowsArray = Array.isArray(flows) ? flows : [];
+    
+    if (flowsArray.length > 0 && !currentFlow) {
+      const firstFlow = flowsArray[0];
       console.log("[Home] Setting initial flow:", firstFlow);
       setCurrentFlow(firstFlow);
       
@@ -174,8 +183,12 @@ export default function Home() {
       console.log("[Home] Input initially disabled for new flow");
       
       // Preload next video if available
-      if (flows.length > 1) {
-        setNextVideoToLoad(flows[1].video_filename);
+      if (flowsArray.length > 1) {
+        const nextFlow = flowsArray[1];
+        if (nextFlow && nextFlow.video_filename) {
+          setNextVideoToLoad(nextFlow.video_filename);
+          console.log(`[Home] Preloading second video: ${nextFlow.video_filename}`);
+        }
       }
       
       if (firstFlow.input_delay > 0) {
@@ -183,14 +196,20 @@ export default function Home() {
         setTimeout(() => {
           console.log("[Home] Input delay timer completed, enabling input");
           setIsInputEnabled(true);
-          setShowChat(true); // Show chat after delay
+          // Only show chat if it's not a video-only flow
+          if (!firstFlow.video_only) {
+            setShowChat(true);
+          }
         }, firstFlow.input_delay * 1000);
       } else {
         console.log("[Home] No input delay specified, enabling input immediately");
         setIsInputEnabled(true);
-        setShowChat(true); // Show chat immediately
+        // Only show chat if it's not a video-only flow
+        if (!firstFlow.video_only) {
+          setShowChat(true);
+        }
       }
-    } else if (!flows?.length) {
+    } else if (!flowsArray.length) {
       console.log("[Home] No flows available yet");
     } else if (currentFlow) {
       console.log("[Home] Current flow already set:", currentFlow);
@@ -254,7 +273,10 @@ export default function Home() {
           return;
         }
 
-        const nextFlow = flows?.find((f) => f.order === nextFlowOrder);
+        // Type check to ensure flows is treated as an array
+        const flowsArray = Array.isArray(flows) ? flows : [];
+        const nextFlow = flowsArray.find((f) => f.order === nextFlowOrder);
+        
         if (nextFlow) {
           console.log("[Home] Moving to next flow:", nextFlow);
           
@@ -340,7 +362,7 @@ export default function Home() {
         <Card className="mt-4 p-4">
           <AvatarDisplay
             videoFilename={currentFlow?.video_filename}
-            nextVideoToLoad={nextVideoToLoad}
+            nextVideoFilename={nextVideoToLoad}
             isAudioEnabled={audioEnabled}
             onVideoLoaded={() => {
               // If this is the first load and we haven't preloaded any next videos yet
