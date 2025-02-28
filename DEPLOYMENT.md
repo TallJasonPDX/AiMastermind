@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers how to deploy the application in various environments.
+This guide covers how to deploy the application in various replit environments.
 
 ## IMPORTANT: Starting Both Servers
 
