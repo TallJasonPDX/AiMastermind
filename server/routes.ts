@@ -69,13 +69,8 @@ export function registerRoutes(app: Express): Server {
     res.json({ success: true, message: "Test successful", data: req.body });
   });
 
-  // Make sure this comes before the catch-all /api/* route
-  app.post("/express-test", (req: Request, res: Response) => {
-    console.log("[Express] Test endpoint reached");
-    console.log("[Express] Request body:", req.body);
-    res.json({ success: true, message: "Test successful", data: req.body });
-  });
-
+  console.log("[Express] All routes registered, including test endpoint");
+  
   // Handle all /api/* requests
   app.all("/api/*", async (req: Request, res: Response) => {
     // Remove /api prefix from path
