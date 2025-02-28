@@ -90,18 +90,23 @@ export function AvatarDisplay({
     const handleSecondaryLoaded = () => {
       console.log('[AvatarDisplay] Secondary video loaded, starting crossfade');
 
-      // Mute the primary video before playing the secondary
-      if (primaryVideoRef.current) {
-        primaryVideoRef.current.muted = true;
-      }
-
-      // Start playing the secondary video with muted audio initially
-      if (secondaryVideoRef.current) {
-        secondaryVideoRef.current.muted = true;
-        secondaryVideoRef.current.play().catch(e => 
-          console.error('[AvatarDisplay] Secondary video autoplay failed:', e)
-        );
-      }
+      // Keep track of the current video elements to prevent race conditions
+      const primaryVideo = primaryVideoRef.current;
+      const secondaryVideo = secondaryVideoRef.current;
+      
+      if (!primaryVideo || !secondaryVideo) return;
+      
+      // Important: Completely mute the primary video immediately
+      primaryVideo.muted = true;
+      
+      // Ensure secondary video starts from the beginning
+      secondaryVideo.currentTime = 0;
+      
+      // Start playing with audio (not muted)
+      secondaryVideo.muted = false;
+      secondaryVideo.play().catch(e => 
+        console.error('[AvatarDisplay] Secondary video autoplay failed:', e)
+      );
 
       // Start crossfade animation
       setVideoOpacity(0);
@@ -109,35 +114,39 @@ export function AvatarDisplay({
 
       // Swap videos after transition completes
       setTimeout(() => {
-        // Stop the old primary video
-        if (primaryVideoRef.current) {
-          primaryVideoRef.current.pause();
+        console.log('[AvatarDisplay] Crossfade transition complete, cleaning up old video');
+        
+        // Explicitly pause and unload the old primary video
+        if (primaryVideo) {
+          primaryVideo.pause();
+          primaryVideo.src = '';
+          primaryVideo.load();
         }
-
-        // Unmute the secondary video only when it becomes the main video
-        if (secondaryVideoRef.current) {
-          secondaryVideoRef.current.muted = false;
-        }
-        // Update primary src to match current video
+        
+        // Now make the secondary video the primary one
         setPrimarySrc(secondarySrc);
-
+        setSecondarySrc(''); // Clear secondary source to prevent double loading
+        
         // Reset opacity for next transition
         setVideoOpacity(1);
         setSecondaryVideoOpacity(0);
-
+        
         // End transition state
         setIsTransitioning(false);
-
-        console.log('[AvatarDisplay] Crossfade complete');
+        
+        console.log('[AvatarDisplay] Crossfade complete, new video is now primary');
       }, 500);
     };
 
-    // Add event listener
-    secondaryVideoRef.current.addEventListener('loadeddata', handleSecondaryLoaded, { once: true });
+    // Add event listener for the loaded event - use once to prevent duplicates
+    const secondaryVideo = secondaryVideoRef.current;
+    secondaryVideo.addEventListener('loadeddata', handleSecondaryLoaded, { once: true });
 
     // Cleanup
     return () => {
-      secondaryVideoRef.current?.removeEventListener('loadeddata', handleSecondaryLoaded);
+      if (secondaryVideo) {
+        secondaryVideo.removeEventListener('loadeddata', handleSecondaryLoaded);
+      }
     };
   }, [secondarySrc, isTransitioning]);
 
@@ -167,6 +176,25 @@ export function AvatarDisplay({
         console.error(`[AvatarDisplay] Error preloading: ${nextVideoFilename}`, error);
       });
   }, [nextVideoFilename, isTransitioning, isAudioEnabled]);
+  
+  // Clear secondary video when it's no longer needed
+  useEffect(() => {
+    if (!isTransitioning && secondarySrc) {
+      console.log('[AvatarDisplay] Clearing unused secondary video source');
+      
+      // Set a small timeout to ensure we're not in the middle of a transition
+      const clearTimer = setTimeout(() => {
+        if (secondaryVideoRef.current) {
+          secondaryVideoRef.current.pause();
+          secondaryVideoRef.current.src = '';
+          secondaryVideoRef.current.load();
+        }
+        setSecondarySrc('');
+      }, 100);
+      
+      return () => clearTimeout(clearTimer);
+    }
+  }, [isTransitioning, secondarySrc]);
 
   // Report when primary video is loaded
   useEffect(() => {
