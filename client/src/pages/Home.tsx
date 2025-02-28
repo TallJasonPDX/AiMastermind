@@ -177,7 +177,7 @@ export default function Home() {
       console.log("[Home] Setting initial flow:", firstFlow);
       setCurrentFlow(firstFlow);
       
-      // Reset input state for new flow
+      // Reset input state for new flow - always hide chat initially
       setIsInputEnabled(false);
       setShowChat(false); // Initially hide chat until delay passes
       console.log("[Home] Input initially disabled for new flow");
@@ -191,6 +191,7 @@ export default function Home() {
         }
       }
       
+      // Set a timer to show chat after the specified delay
       if (firstFlow.input_delay > 0) {
         console.log(`[Home] Setting input delay timer for ${firstFlow.input_delay} seconds`);
         setTimeout(() => {
@@ -247,6 +248,8 @@ export default function Home() {
       // Clear any previous response and set loading state
       setCurrentResponse(null);
       setIsLoading(true);
+      // Always hide chat during API call and transitions
+      setShowChat(false);
 
       // Now make the API request to OpenAI
       console.log("[Home] About to make POST request to /chat");
@@ -283,9 +286,6 @@ export default function Home() {
           // Preload next potential videos based on this next flow
           preloadNextVideo(nextFlow.id, null);
           
-          // Hide chat immediately during transition
-          setShowChat(false);
-          
           // Keep loading state active during transition
           // Add a slight delay before moving to next flow so user can see the response
           setTimeout(() => {
@@ -293,6 +293,8 @@ export default function Home() {
             setCurrentFlow(nextFlow);
             setCurrentResponse(null); // Clear response when switching flows
             setIsInputEnabled(false); // Disable input during transition
+            // Ensure chat remains hidden during transition
+            setShowChat(false);
             
             // Only enable input and show chat after the specified delay
             if (nextFlow.input_delay > 0) {
@@ -301,26 +303,30 @@ export default function Home() {
                 console.log("[Home] Delay timer complete, enabling input and showing chat");
                 setIsLoading(false); // Finally clear loading state
                 setIsInputEnabled(true);
+                // Only show chat if it's not a video-only flow
                 if (!nextFlow.video_only) {
-                  setShowChat(true); // Only show chat if not video_only
+                  setShowChat(true);
                 }
               }, nextFlow.input_delay * 1000);
             } else {
               console.log("[Home] No delay for next flow, enabling input and showing chat immediately");
               setIsLoading(false);
               setIsInputEnabled(true);
+              // Only show chat if it's not a video-only flow
               if (!nextFlow.video_only) {
-                setShowChat(true); // Only show chat if not video_only
+                setShowChat(true);
               }
             }
-          }, 2000); // 2 second delay
+          }, 2000); // 2 second delay to let user see response
         } else {
           console.error("[Home] Next flow not found:", nextFlowOrder);
           setIsLoading(false); // Clear loading state on error
+          setShowChat(true); // Show chat again on error
         }
       } else {
         // If we don't have a valid status, clear loading state
         setIsLoading(false);
+        setShowChat(true); // Show chat again if no valid status
       }
     } catch (error) {
       console.error("[Home] Error processing response:", error);
