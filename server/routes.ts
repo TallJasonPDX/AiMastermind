@@ -31,7 +31,10 @@ export function registerRoutes(app: Express): Server {
   app.all("/api/*", async (req: Request, res: Response) => {
     // Remove /api prefix from path
     const path = req.url.replace(/^\/api/, "");
-    const apiUrl = `http://localhost:8000${path}`;
+    // Use environment variable for API host or default to localhost for development
+    const apiHost = process.env.API_HOST || '0.0.0.0';
+    const apiPort = process.env.API_PORT || '8000';
+    const apiUrl = `http://${apiHost}:${apiPort}${path}`;
 
     console.log(`[Proxy] ${req.method} request to ${apiUrl}`);
 

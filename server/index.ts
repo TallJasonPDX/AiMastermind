@@ -12,7 +12,17 @@ const debugLog = (...args: any[]) => {
 
 // Start FastAPI server
 const startFastAPI = () => {
-  const fastApiProcess = spawn('python3', ['-m', 'uvicorn', 'backend.main:app', '--host', '0.0.0.0', '--port', '8000']);
+  // Use environment variables or default to development configuration
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '0.0.0.0';
+  const port = process.env.PORT || '8000';
+  
+  // Set environment variable for API connection
+  process.env.API_HOST = host;
+  process.env.API_PORT = port;
+  
+  console.log(`[FastAPI] Starting with host ${host} and port ${port}`);
+  
+  const fastApiProcess = spawn('python3', ['-m', 'uvicorn', 'backend.main:app', '--host', host, '--port', port]);
 
   fastApiProcess.stdout.on('data', (data) => {
     console.log('[FastAPI]', data.toString());
