@@ -53,7 +53,7 @@ export default function Home() {
   const [isInputEnabled, setIsInputEnabled] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
-  const [showChat, setShowChat] = useState(true);
+  const [showChat, setShowChat] = useState(false); // Default to hiding chat
   const [nextVideoToLoad, setNextVideoToLoad] = useState<string | undefined>(undefined);
 
   // Reset audio confirmation on mount
