@@ -55,13 +55,16 @@ export default function FormRenderer({ formName, onSubmitSuccess }: FormRenderer
   // Render the appropriate form based on the form name
   switch (formName) {
     case 'interest':
+    case 'SubmitInterestForm':
       return <SubmitInterestForm formSubmit={formSubmit} />;
     
     case 'reconsideration':
+    case 'SubmitReconsiderationForm':
       return <SubmitReconsiderationForm formSubmit={formSubmit} />;
     
     default:
       // If no matching form is found, render a fallback component
+      console.log(`Form not found: ${formName}`);
       return <FormNotFound formName={formName} />;
   }
 }

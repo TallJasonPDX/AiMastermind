@@ -48,11 +48,11 @@ export const useFormSubmit = (formName: string, options?: FormSubmissionOptions)
       };
 
       // Submit the form data to the backend
-      const response = await apiRequest<FormSubmissionResponse>({
-        method: 'POST',
-        url: '/api/forms/submit',
-        data: submissionData,
-      });
+      const response = await apiRequest(
+        'POST',
+        '/form-submissions',
+        submissionData
+      ) as FormSubmissionResponse;
 
       // Handle successful submission
       setSubmitSuccess(true);
