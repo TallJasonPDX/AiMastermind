@@ -1,19 +1,5 @@
 #!/bin/bash
 
-# Check environment - this script is for production only
-if [ "$NODE_ENV" != "production" ]; then
-  echo "⚠️ Warning: This script is intended for production use."
-  echo "In development, use 'npm run dev' instead."
-  
-  # Check if we're in a Replit workflow or direct shell
-  if [ -z "$REPL_ID" ]; then
-    echo "Exiting. Use 'npm run dev' for development."
-    exit 1
-  else
-    echo "Running in a Replit environment, continuing anyway..."
-  fi
-fi
-
 # Check if the application is already running
 if netstat -tuln | grep -q ":5000"; then
   echo "Warning: Port 5000 is already in use. Express server may already be running."
