@@ -12,6 +12,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import express from "express";
 import axios from "axios";
+import path from "path";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
@@ -19,6 +20,19 @@ export function registerRoutes(app: Express): Server {
 
   // Configure middleware
   app.use(express.json());
+
+  // Determine FastAPI URL based on environment
+  const fastApiHost =
+    process.env.NODE_ENV === "production"
+      ? process.env.FASTAPI_URL || "http://0.0.0.0:8000"
+      : "http://localhost:8000";
+
+  console.log(`[Server] Using FastAPI backend at ${fastApiHost}`);
+
+  // Mount videos directory for static file serving
+  const videosPath = path.join(process.cwd(), "videos");
+  app.use("/videos", express.static(videosPath));
+  console.log(`[Server] Serving videos from ${videosPath}`);
 
   // Test endpoint in Express
   app.post("/express-test", (req: Request, res: Response) => {
@@ -31,7 +45,7 @@ export function registerRoutes(app: Express): Server {
   app.all("/api/*", async (req: Request, res: Response) => {
     // Remove /api prefix from path
     const path = req.url.replace(/^\/api/, "");
-    const apiUrl = `http://localhost:8000${path}`;
+    const apiUrl = `${fastApiHost}${path}`;
 
     console.log(`[Proxy] ${req.method} request to ${apiUrl}`);
 

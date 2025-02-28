@@ -47,7 +47,9 @@ videos_path = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "videos")
 if not os.path.exists(videos_path):
     os.makedirs(videos_path)
+    print(f"[FastAPI] Created videos directory at {videos_path}")
 app.mount("/videos", StaticFiles(directory=videos_path), name="videos")
+print(f"[FastAPI] Mounted videos directory at {videos_path}")
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)

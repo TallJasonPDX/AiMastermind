@@ -9,11 +9,11 @@ interface AvatarDisplayProps {
   onVideoLoaded?: () => void; // Callback when video is loaded
 }
 
-export function AvatarDisplay({ 
-  videoFilename, 
+export function AvatarDisplay({
+  videoFilename,
   nextVideoFilename,
-  isAudioEnabled, 
-  onVideoLoaded 
+  isAudioEnabled,
+  onVideoLoaded,
 }: AvatarDisplayProps) {
   const primaryVideoRef = useRef<HTMLVideoElement>(null);
   const secondaryVideoRef = useRef<HTMLVideoElement>(null);
@@ -33,32 +33,37 @@ export function AvatarDisplay({
     if (!videoFilename) return;
 
     // Generate the full path
-    const newVideoPath = `../../videos/${videoFilename}`;
+    const newVideoPath = `/videos/${videoFilename}`;
 
     // Add to preload cache to track what we've loaded
     preloadCache.current.add(videoFilename);
 
     // Case 1: Initial load - set primary source directly
     if (!primarySrc) {
-      console.log('[AvatarDisplay] Setting initial video source:', videoFilename);
+      console.log(
+        "[AvatarDisplay] Setting initial video source:",
+        videoFilename,
+      );
       setPrimarySrc(newVideoPath);
       return;
     }
 
     // Case 2: Same video - do nothing
     if (primarySrc === newVideoPath) {
-      console.log('[AvatarDisplay] Video unchanged:', videoFilename);
+      console.log("[AvatarDisplay] Video unchanged:", videoFilename);
       return;
     }
 
     // Case 3: Already transitioning - don't start another transition
     if (isTransitioning) {
-      console.log('[AvatarDisplay] Ignoring video change during transition');
+      console.log("[AvatarDisplay] Ignoring video change during transition");
       return;
     }
 
     // Case 4: New video needs to be loaded - start transition
-    console.log(`[AvatarDisplay] Video changing from ${primarySrc} to ${newVideoPath}`);
+    console.log(
+      `[AvatarDisplay] Video changing from ${primarySrc} to ${newVideoPath}`,
+    );
     setIsTransitioning(true);
 
     // Load the new video in the secondary player
@@ -74,21 +79,25 @@ export function AvatarDisplay({
       return;
     }
 
-    console.log('[AvatarDisplay] Audio enabled, ensuring video plays with audio');
-    
+    console.log(
+      "[AvatarDisplay] Audio enabled, ensuring video plays with audio",
+    );
+
     // Always ensure the primary video is not muted
     if (primaryVideoRef.current.muted) {
-      console.log('[AvatarDisplay] Unmuting primary video');
+      console.log("[AvatarDisplay] Unmuting primary video");
       primaryVideoRef.current.muted = false;
     }
-    
+
     // If it's first time playback, play the video
     if (!hasPlayedVideo.current) {
-      console.log('[AvatarDisplay] Playing video for first time');
+      console.log("[AvatarDisplay] Playing video for first time");
       hasPlayedVideo.current = true;
-      primaryVideoRef.current.play().catch(e => 
-        console.error('[AvatarDisplay] Initial autoplay failed:', e)
-      );
+      primaryVideoRef.current
+        .play()
+        .catch((e) =>
+          console.error("[AvatarDisplay] Initial autoplay failed:", e),
+        );
     }
   }, [isAudioEnabled, primarySrc]);
 
@@ -97,25 +106,27 @@ export function AvatarDisplay({
     if (!secondaryVideoRef.current || !secondarySrc || !isTransitioning) return;
 
     const handleSecondaryLoaded = () => {
-      console.log('[AvatarDisplay] Secondary video loaded, starting crossfade');
+      console.log("[AvatarDisplay] Secondary video loaded, starting crossfade");
 
       // Keep track of the current video elements to prevent race conditions
       const primaryVideo = primaryVideoRef.current;
       const secondaryVideo = secondaryVideoRef.current;
-      
+
       if (!primaryVideo || !secondaryVideo) return;
-      
+
       // Important: Completely mute the primary video immediately
       primaryVideo.muted = true;
-      
+
       // Ensure secondary video starts from the beginning
       secondaryVideo.currentTime = 0;
-      
+
       // Start playing with audio (not muted)
       secondaryVideo.muted = false;
-      secondaryVideo.play().catch(e => 
-        console.error('[AvatarDisplay] Secondary video autoplay failed:', e)
-      );
+      secondaryVideo
+        .play()
+        .catch((e) =>
+          console.error("[AvatarDisplay] Secondary video autoplay failed:", e),
+        );
 
       // Start crossfade animation
       setVideoOpacity(0);
@@ -123,38 +134,44 @@ export function AvatarDisplay({
 
       // Swap videos after transition completes
       setTimeout(() => {
-        console.log('[AvatarDisplay] Crossfade transition complete, cleaning up old video');
-        
+        console.log(
+          "[AvatarDisplay] Crossfade transition complete, cleaning up old video",
+        );
+
         // Explicitly pause and unload the old primary video
         if (primaryVideo) {
           primaryVideo.pause();
-          primaryVideo.src = '';
+          primaryVideo.src = "";
           primaryVideo.load();
         }
-        
+
         // Now make the secondary video the primary one
         setPrimarySrc(secondarySrc);
-        setSecondarySrc(''); // Clear secondary source to prevent double loading
-        
+        setSecondarySrc(""); // Clear secondary source to prevent double loading
+
         // Reset opacity for next transition
         setVideoOpacity(1);
         setSecondaryVideoOpacity(0);
-        
+
         // End transition state
         setIsTransitioning(false);
-        
-        console.log('[AvatarDisplay] Crossfade complete, new video is now primary');
+
+        console.log(
+          "[AvatarDisplay] Crossfade complete, new video is now primary",
+        );
       }, 500);
     };
 
     // Add event listener for the loaded event - use once to prevent duplicates
     const secondaryVideo = secondaryVideoRef.current;
-    secondaryVideo.addEventListener('loadeddata', handleSecondaryLoaded, { once: true });
+    secondaryVideo.addEventListener("loadeddata", handleSecondaryLoaded, {
+      once: true,
+    });
 
     // Cleanup
     return () => {
       if (secondaryVideo) {
-        secondaryVideo.removeEventListener('loadeddata', handleSecondaryLoaded);
+        secondaryVideo.removeEventListener("loadeddata", handleSecondaryLoaded);
       }
     };
   }, [secondarySrc, isTransitioning]);
@@ -173,34 +190,41 @@ export function AvatarDisplay({
     preloadCache.current.add(nextVideoFilename);
 
     // Use fetch for preloading
-    fetch(`../../videos/${nextVideoFilename}`)
-      .then(response => {
+    fetch(`/videos/${nextVideoFilename}`)
+      .then((response) => {
         if (response.ok) {
-          console.log(`[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`);
+          console.log(
+            `[AvatarDisplay] Successfully preloaded: ${nextVideoFilename}`,
+          );
         } else {
-          console.error(`[AvatarDisplay] Failed to preload: ${nextVideoFilename}`);
+          console.error(
+            `[AvatarDisplay] Failed to preload: ${nextVideoFilename}`,
+          );
         }
       })
-      .catch(error => {
-        console.error(`[AvatarDisplay] Error preloading: ${nextVideoFilename}`, error);
+      .catch((error) => {
+        console.error(
+          `[AvatarDisplay] Error preloading: ${nextVideoFilename}`,
+          error,
+        );
       });
   }, [nextVideoFilename, isTransitioning, isAudioEnabled]);
-  
+
   // Clear secondary video when it's no longer needed
   useEffect(() => {
     if (!isTransitioning && secondarySrc) {
-      console.log('[AvatarDisplay] Clearing unused secondary video source');
-      
+      console.log("[AvatarDisplay] Clearing unused secondary video source");
+
       // Set a small timeout to ensure we're not in the middle of a transition
       const clearTimer = setTimeout(() => {
         if (secondaryVideoRef.current) {
           secondaryVideoRef.current.pause();
-          secondaryVideoRef.current.src = '';
+          secondaryVideoRef.current.src = "";
           secondaryVideoRef.current.load();
         }
-        setSecondarySrc('');
+        setSecondarySrc("");
       }, 100);
-      
+
       return () => clearTimeout(clearTimer);
     }
   }, [isTransitioning, secondarySrc]);
@@ -210,7 +234,7 @@ export function AvatarDisplay({
     if (!primaryVideoRef.current || !primarySrc) return;
 
     const handleVideoLoaded = () => {
-      console.log('[AvatarDisplay] Primary video loaded successfully');
+      console.log("[AvatarDisplay] Primary video loaded successfully");
       setIsVideoLoaded(true);
 
       if (onVideoLoaded) {
@@ -219,11 +243,16 @@ export function AvatarDisplay({
     };
 
     // Add event listener
-    primaryVideoRef.current.addEventListener('loadeddata', handleVideoLoaded, { once: true });
+    primaryVideoRef.current.addEventListener("loadeddata", handleVideoLoaded, {
+      once: true,
+    });
 
     // Cleanup
     return () => {
-      primaryVideoRef.current?.removeEventListener('loadeddata', handleVideoLoaded);
+      primaryVideoRef.current?.removeEventListener(
+        "loadeddata",
+        handleVideoLoaded,
+      );
     };
   }, [primarySrc, onVideoLoaded]);
 
@@ -232,23 +261,23 @@ export function AvatarDisplay({
     return () => {
       if (primaryVideoRef.current) {
         primaryVideoRef.current.pause();
-        primaryVideoRef.current.removeAttribute('src');
+        primaryVideoRef.current.removeAttribute("src");
       }
       if (secondaryVideoRef.current) {
         secondaryVideoRef.current.pause();
-        secondaryVideoRef.current.removeAttribute('src');
+        secondaryVideoRef.current.removeAttribute("src");
       }
     };
   }, []);
 
-  console.log('[AvatarDisplay] Rendering with props:', { 
-    videoFilename, 
-    nextVideoFilename, 
+  console.log("[AvatarDisplay] Rendering with props:", {
+    videoFilename,
+    nextVideoFilename,
     isAudioEnabled,
     isVideoLoaded,
     isTransitioning,
-    primarySrc: primarySrc.split('/').pop(),
-    secondarySrc: secondarySrc.split('/').pop()
+    primarySrc: primarySrc.split("/").pop(),
+    secondarySrc: secondarySrc.split("/").pop(),
   });
 
   if (!videoFilename) {
@@ -275,13 +304,21 @@ export function AvatarDisplay({
           playsInline
           muted={false}
           preload="auto"
-          src={primarySrc}
-          onError={(e) => console.error('[AvatarDisplay] Primary video error:', e)}
+          src={
+            primarySrc.startsWith("/videos")
+              ? primarySrc
+              : `/videos/${primarySrc.split("/").pop()}`
+          }
+          onError={(e) =>
+            console.error("[AvatarDisplay] Primary video error:", e)
+          }
           onLoadedData={() => {
             // Ensure video is not muted when loaded
             if (primaryVideoRef.current) {
               primaryVideoRef.current.muted = false;
-              console.log('[AvatarDisplay] Ensuring primary video is not muted on load');
+              console.log(
+                "[AvatarDisplay] Ensuring primary video is not muted on load",
+              );
             }
           }}
         />
@@ -296,8 +333,14 @@ export function AvatarDisplay({
           playsInline
           muted={false}
           preload="auto"
-          src={secondarySrc}
-          onError={(e) => console.error('[AvatarDisplay] Secondary video error:', e)}
+          src={
+            secondarySrc.startsWith("/videos")
+              ? secondarySrc
+              : `/videos/${secondarySrc.split("/").pop()}`
+          }
+          onError={(e) =>
+            console.error("[AvatarDisplay] Secondary video error:", e)
+          }
         />
       )}
     </Card>
