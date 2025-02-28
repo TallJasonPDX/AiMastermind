@@ -422,8 +422,8 @@ export default function Home() {
             </div>
           )}
 
-          {/* Only show form if the current flow specifies it and showChat is true (after delay) */}
-          {showChat && currentFlow?.show_form && (
+          {/* Show form if the current flow specifies it (regardless of chat visibility) */}
+          {currentFlow?.show_form && isInputEnabled && (
             <div className="mt-4 transition-opacity duration-500" style={{ opacity: isInputEnabled ? 1 : 0 }}>
               <FormRenderer 
                 formName={currentFlow.form_name} 
