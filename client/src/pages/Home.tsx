@@ -1,6 +1,6 @@
 // client/src/pages/Home.tsx
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import { AudioModal } from "@/components/AudioModal";
 import { AvatarDisplay } from "@/components/AvatarDisplay";
 import { ChatInterface } from "@/components/ChatInterface";
@@ -53,6 +53,8 @@ export default function Home() {
   const [isInputEnabled, setIsInputEnabled] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [showChat, setShowChat] = useState(true);
+  const [nextVideoToLoad, setNextVideoToLoad] = useState<string | undefined>(undefined);
 
   // Reset audio confirmation on mount
   useEffect(() => {
@@ -76,15 +78,16 @@ export default function Home() {
       return apiRequest(
         "GET",
         configId ? `/configurations/${configId}` : "/configurations/active",
-      );
-    },
-    onSuccess: (data) => {
-      console.log("[Home] Configuration loaded successfully:", data);
-    },
-    onError: (err) => {
-      console.error("[Home] Error loading configuration:", err);
+      ) as Promise<Config>;
     }
   });
+  
+  // Log config on successful load
+  useEffect(() => {
+    if (config) {
+      console.log("[Home] Configuration loaded successfully:", config);
+    }
+  }, [config]);
 
   // Fetch conversation flows for the config
   const { data: flows, isLoading: flowsLoading, error: flowsError } = useQuery<ConversationFlow[]>({
@@ -92,20 +95,64 @@ export default function Home() {
     queryFn: () => {
       if (config?.id) {
         console.log(`[Home] Fetching conversation flows for config ID ${config.id}`);
-        return apiRequest("GET", `/conversation-flows?config_id=${config.id}`);
+        return apiRequest("GET", `/conversation-flows?config_id=${config.id}`) as Promise<ConversationFlow[]>;
       } else {
         console.log("[Home] No config ID available, skipping flows fetch");
-        return Promise.resolve([]);
+        return Promise.resolve([] as ConversationFlow[]);
       }
     },
-    enabled: !!config?.id,
-    onSuccess: (data) => {
-      console.log(`[Home] Loaded ${data?.length || 0} conversation flows:`, data);
-    },
-    onError: (err) => {
-      console.error("[Home] Error loading conversation flows:", err);
-    }
+    enabled: !!config?.id
   });
+  
+  // Log flows on successful load
+  useEffect(() => {
+    if (flows) {
+      console.log(`[Home] Loaded ${flows.length || 0} conversation flows:`, flows);
+    }
+  }, [flows]);
+  
+  // Handle errors in useEffect
+  useEffect(() => {
+    if (configError) {
+      console.error("[Home] Error loading configuration:", configError);
+    }
+    if (flowsError) {
+      console.error("[Home] Error loading conversation flows:", flowsError);
+    }
+  }, [configError, flowsError]);
+
+  // Function to preload next video based on current flow
+  const preloadNextVideo = (currentFlowId: number, status: 'pass' | 'fail' | null = null) => {
+    if (!flows || !flows.length) return;
+    
+    const currentFlowIndex = flows.findIndex(flow => flow.id === currentFlowId);
+    if (currentFlowIndex === -1) return;
+    
+    let nextFlowId: number | null = null;
+    
+    // If status is provided, use pass_next or fail_next
+    if (status === 'pass' && flows[currentFlowIndex].pass_next) {
+      nextFlowId = flows[currentFlowIndex].pass_next;
+    } else if (status === 'fail' && flows[currentFlowIndex].fail_next) {
+      nextFlowId = flows[currentFlowIndex].fail_next;
+    } else {
+      // Default: preload the next sequential flow if no status provided
+      const nextFlow = flows[currentFlowIndex + 1];
+      if (nextFlow) {
+        setNextVideoToLoad(nextFlow.video_filename);
+        console.log(`[Home] Preloading next sequential video: ${nextFlow.video_filename}`);
+        return;
+      }
+    }
+    
+    if (nextFlowId) {
+      const nextFlow = flows.find(flow => flow.order === nextFlowId);
+      if (nextFlow) {
+        setNextVideoToLoad(nextFlow.video_filename);
+        console.log(`[Home] Preloading next video based on ${status}: ${nextFlow.video_filename}`);
+      }
+    }
+  };
 
   // Initialize with first flow when flows are loaded
   useEffect(() => {
@@ -123,17 +170,25 @@ export default function Home() {
       
       // Reset input state for new flow
       setIsInputEnabled(false);
+      setShowChat(false); // Initially hide chat until delay passes
       console.log("[Home] Input initially disabled for new flow");
+      
+      // Preload next video if available
+      if (flows.length > 1) {
+        setNextVideoToLoad(flows[1].video_filename);
+      }
       
       if (firstFlow.input_delay > 0) {
         console.log(`[Home] Setting input delay timer for ${firstFlow.input_delay} seconds`);
         setTimeout(() => {
           console.log("[Home] Input delay timer completed, enabling input");
           setIsInputEnabled(true);
+          setShowChat(true); // Show chat after delay
         }, firstFlow.input_delay * 1000);
       } else {
         console.log("[Home] No input delay specified, enabling input immediately");
         setIsInputEnabled(true);
+        setShowChat(true); // Show chat immediately
       }
     } else if (!flows?.length) {
       console.log("[Home] No flows available yet");
@@ -202,22 +257,39 @@ export default function Home() {
         const nextFlow = flows?.find((f) => f.order === nextFlowOrder);
         if (nextFlow) {
           console.log("[Home] Moving to next flow:", nextFlow);
+          
+          // Preload next potential videos based on this next flow
+          preloadNextVideo(nextFlow.id, null);
+          
+          // Hide chat immediately during transition
+          setShowChat(false);
+          
           // Keep loading state active during transition
           // Add a slight delay before moving to next flow so user can see the response
           setTimeout(() => {
             // Set the new flow
             setCurrentFlow(nextFlow);
             setCurrentResponse(null); // Clear response when switching flows
+            setIsInputEnabled(false); // Disable input during transition
             
-            // Only enable input after the specified delay
+            // Only enable input and show chat after the specified delay
             if (nextFlow.input_delay > 0) {
+              console.log(`[Home] Setting delay timer for next flow: ${nextFlow.input_delay} seconds`);
               setTimeout(() => {
+                console.log("[Home] Delay timer complete, enabling input and showing chat");
                 setIsLoading(false); // Finally clear loading state
                 setIsInputEnabled(true);
+                if (!nextFlow.video_only) {
+                  setShowChat(true); // Only show chat if not video_only
+                }
               }, nextFlow.input_delay * 1000);
             } else {
+              console.log("[Home] No delay for next flow, enabling input and showing chat immediately");
               setIsLoading(false);
               setIsInputEnabled(true);
+              if (!nextFlow.video_only) {
+                setShowChat(true); // Only show chat if not video_only
+              }
             }
           }, 2000); // 2 second delay
         } else {
@@ -231,6 +303,7 @@ export default function Home() {
     } catch (error) {
       console.error("[Home] Error processing response:", error);
       setIsLoading(false);
+      setShowChat(true); // Show chat again on error
       setCurrentResponse({
         response:
           "Sorry, there was an error processing your message. Please try again.",
@@ -267,9 +340,19 @@ export default function Home() {
         <Card className="mt-4 p-4">
           <AvatarDisplay
             videoFilename={currentFlow?.video_filename}
+            nextVideoToLoad={nextVideoToLoad}
             isAudioEnabled={audioEnabled}
+            onVideoLoaded={() => {
+              // If this is the first load and we haven't preloaded any next videos yet
+              if (currentFlow && flows && flows.length > 1 && !nextVideoToLoad) {
+                console.log("[Home] Initial video loaded, preloading next potential videos");
+                preloadNextVideo(currentFlow.id);
+              }
+            }}
           />
-          {!currentFlow?.video_only && currentFlow?.system_prompt && (
+          
+          {/* Only show chat interface if showChat is true and it's not a video-only flow */}
+          {showChat && !currentFlow?.video_only && currentFlow?.system_prompt && (
             <ChatInterface
               isEnabled={isInputEnabled && !isLoading}
               onSubmit={handleUserResponse}
@@ -278,7 +361,9 @@ export default function Home() {
               isLoading={isLoading}
             />
           )}
-          {currentFlow?.show_form && (
+          
+          {/* Only show form if the current flow specifies it and showChat is true (after delay) */}
+          {showChat && currentFlow?.show_form && (
             <div className="mt-4">
               <FormRenderer 
                 formName={currentFlow.form_name} 

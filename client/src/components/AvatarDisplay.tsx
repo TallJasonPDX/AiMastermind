@@ -1,16 +1,26 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AvatarDisplayProps {
   videoFilename?: string;
+  nextVideoFilename?: string; // Add next video to preload
   isAudioEnabled: boolean;
+  onVideoLoaded?: () => void; // Callback when video is loaded
 }
 
-export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayProps) {
+export function AvatarDisplay({ 
+  videoFilename, 
+  nextVideoFilename,
+  isAudioEnabled, 
+  onVideoLoaded 
+}: AvatarDisplayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const preloadVideoRef = useRef<HTMLVideoElement>(null);
   const hasInitialized = useRef<boolean>(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
+  // Handle main video playback
   useEffect(() => {
     if (videoRef.current && !hasInitialized.current && isAudioEnabled) {
       hasInitialized.current = true;
@@ -29,7 +39,30 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
     };
   }, [videoFilename, isAudioEnabled]);
 
-  console.log('[AvatarDisplay] Rendering with props:', { videoFilename, isAudioEnabled });
+  // Preload next video when available
+  useEffect(() => {
+    if (nextVideoFilename && preloadVideoRef.current) {
+      console.log(`[AvatarDisplay] Preloading next video: ${nextVideoFilename}`);
+      // Setting src will trigger browser to preload the video
+      preloadVideoRef.current.src = `../../videos/${nextVideoFilename}`;
+      // We don't need to play it, just load it into cache
+      preloadVideoRef.current.load();
+    }
+  }, [nextVideoFilename]);
+
+  // Handle video loaded callback
+  useEffect(() => {
+    if (isVideoLoaded && onVideoLoaded) {
+      onVideoLoaded();
+    }
+  }, [isVideoLoaded, onVideoLoaded]);
+
+  console.log('[AvatarDisplay] Rendering with props:', { 
+    videoFilename, 
+    nextVideoFilename, 
+    isAudioEnabled,
+    isVideoLoaded
+  });
 
   if (!videoFilename) {
     return <Skeleton className="w-full aspect-video rounded-lg" />;
@@ -53,8 +86,20 @@ export function AvatarDisplay({ videoFilename, isAudioEnabled }: AvatarDisplayPr
         src={`../../videos/${videoFilename}`}
         onError={(e) => console.error('[AvatarDisplay] Video loading error:', e)}
         onLoadStart={() => console.log('[AvatarDisplay] Video loading started')}
-        onLoadedData={() => console.log('[AvatarDisplay] Video loaded successfully')}
+        onLoadedData={() => {
+          console.log('[AvatarDisplay] Video loaded successfully');
+          setIsVideoLoaded(true);
+        }}
       />
+      
+      {/* Hidden video element for preloading the next video */}
+      {nextVideoFilename && (
+        <video 
+          ref={preloadVideoRef}
+          style={{ display: 'none' }} 
+          preload="auto"
+        />
+      )}
     </Card>
   );
 }
