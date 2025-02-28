@@ -1,7 +1,7 @@
 // client/src/hooks/use-form-submit.ts
-import { useState } from "react";
-import { API_BASE_URL } from "@/config";
-import { useToast } from "@/hooks/use-toast";
+
+import { useState } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 
 export interface FormSubmissionData {
   name: string;
@@ -24,93 +24,66 @@ interface FormSubmissionOptions {
   onError?: (error: Error) => void;
 }
 
+/**
+ * Custom hook for handling form submissions
+ * @param formName The identifier of the form being submitted
+ * @param options Additional options for handling success and error cases
+ * @returns Object containing the submit function and submission state
+ */
 export const useFormSubmit = (formName: string, options?: FormSubmissionOptions) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const { toast } = useToast();
-  
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
   const submitForm = async (data: FormSubmissionData) => {
     setIsSubmitting(true);
-    setError(null);
-    setSuccess(false);
-    
+    setSubmitError(null);
+    setSubmitSuccess(false);
+
     try {
-      console.log(`[useFormSubmit] Submitting form: ${formName} with data:`, data);
-      
-      // Map the form data to match our API schema
-      const formData = {
+      // Add form name to submission data
+      const submissionData = {
+        ...data,
         form_name: formName,
-        name: data.name,
-        email: data.email,
-        phone: data.phone || data.phoneNumber || null,
-        message: data.message || data.comments || null,
-        additional_data: Object.keys(data)
-          .filter(key => !['name', 'email', 'phone', 'phoneNumber', 'message', 'comments'].includes(key))
-          .reduce((obj, key) => {
-            obj[key] = data[key];
-            return obj;
-          }, {} as Record<string, any>)
       };
-      
-      // Submit to API
-      const response = await fetch(`${API_BASE_URL}/form-submissions`, {
+
+      // Submit the form data to the backend
+      const response = await apiRequest<FormSubmissionResponse>({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        url: '/api/forms/submit',
+        data: submissionData,
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Error: ${response.status}`);
-      }
-      
-      const result = await response.json() as FormSubmissionResponse;
-      console.log(`[useFormSubmit] Form submitted successfully:`, result);
-      
-      setSuccess(true);
-      toast({
-        title: "Submission successful",
-        description: "Your form has been submitted successfully.",
-        variant: "default",
-      });
-      
-      // Call success callback if provided
+
+      // Handle successful submission
+      setSubmitSuccess(true);
       if (options?.onSuccess) {
-        options.onSuccess(result);
+        options.onSuccess(response);
       }
       
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      console.error(`[useFormSubmit] Error submitting form:`, err);
+      return response;
+    } catch (error) {
+      // Handle error
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      setSubmitError(errorMessage);
       
-      setError(errorMessage);
-      toast({
-        title: "Submission failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      
-      // Call error callback if provided
-      if (options?.onError && err instanceof Error) {
-        options.onError(err);
+      if (options?.onError && error instanceof Error) {
+        options.onError(error);
       }
       
-      throw err;
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return {
     submitForm,
     isSubmitting,
-    error,
-    success,
-    resetStatus: () => {
-      setError(null);
-      setSuccess(false);
+    submitError,
+    submitSuccess,
+    resetState: () => {
+      setSubmitError(null);
+      setSubmitSuccess(false);
     }
   };
 };

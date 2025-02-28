@@ -1,82 +1,67 @@
 // client/src/components/forms/FormRenderer.tsx
-import React, { Suspense, useEffect, useState } from "react";
-import { useFormSubmit } from "@/hooks/use-form-submit";
-import { useToast } from "@/hooks/use-toast";
 
+import React, { useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useFormSubmit } from '@/hooks/use-form-submit';
+import SubmitInterestForm from './SubmitInterestForm';
+import SubmitReconsiderationForm from './SubmitReconsiderationForm';
+import FormNotFound from './FormNotFound';
+
+// Props interface for the form renderer
 interface FormRendererProps {
   formName: string | null | undefined;
   onSubmitSuccess?: () => void;
 }
 
-const FormRenderer: React.FC<FormRendererProps> = ({ formName, onSubmitSuccess }) => {
-  const [isSubmitted, setIsSubmitted] = useState(false);
+/**
+ * A component that renders different forms based on the provided formName
+ * @param formName The name/identifier of the form to render
+ * @param onSubmitSuccess Optional callback for when a form is successfully submitted
+ */
+export default function FormRenderer({ formName, onSubmitSuccess }: FormRendererProps) {
   const { toast } = useToast();
   
-  // Set up the form submission hook if we have a valid form name
-  const formSubmit = formName 
-    ? useFormSubmit(formName, {
-        onSuccess: () => {
-          setIsSubmitted(true);
-          if (onSubmitSuccess) {
-            onSubmitSuccess();
-          }
-        },
-        onError: (error) => {
-          toast({
-            title: "Form Submission Failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      })
-    : null;
-  
-  useEffect(() => {
-    console.log("[FormRenderer] Initializing with formName:", formName);
-    // Reset submission state when form changes
-    setIsSubmitted(false);
-  }, [formName]);
-
+  // If no form name is provided, don't render anything
   if (!formName) {
-    console.log("[FormRenderer] No form name provided, rendering nothing");
-    return null; // Or some placeholder/message if no form name is provided
+    return null;
   }
-
-  if (isSubmitted) {
-    return (
-      <div className="p-6 bg-green-50 border border-green-200 rounded-lg text-center">
-        <h3 className="text-lg font-semibold text-green-700 mb-2">Thank you for your submission!</h3>
-        <p className="text-green-600">We have received your information and will contact you soon.</p>
-      </div>
-    );
+  
+  // Initialize form submission hook with appropriate form name
+  const formSubmit = useFormSubmit(formName, {
+    onSuccess: (data) => {
+      // Show a success toast
+      toast({
+        title: "Form submitted successfully",
+        description: "Thank you for your submission.",
+        duration: 5000,
+      });
+      
+      // Call the optional success callback
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      }
+    },
+    onError: (error) => {
+      // Show an error toast
+      toast({
+        title: "Error submitting form",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  });
+  
+  // Render the appropriate form based on the form name
+  switch (formName) {
+    case 'interest':
+      return <SubmitInterestForm formSubmit={formSubmit} />;
+    
+    case 'reconsideration':
+      return <SubmitReconsiderationForm formSubmit={formSubmit} />;
+    
+    default:
+      // If no matching form is found, render a fallback component
+      return <FormNotFound formName={formName} />;
   }
-
-  console.log(`[FormRenderer] Attempting to dynamically load form: ${formName}`);
-  
-  const FormComponent = React.lazy(() =>
-    import(`./${formName}`)
-      .then((module) => {
-        console.log(`[FormRenderer] Successfully loaded form: ${formName}`);
-        return module;
-      })
-      .catch((error) => {
-        console.error(`[FormRenderer] Failed to load form: ${formName}`, error);
-        console.log("[FormRenderer] Falling back to FormNotFound component");
-        return import("./FormNotFound"); // fallback component.
-      }),
-  );
-
-  console.log(`[FormRenderer] Rendering form component with name: ${formName}`);
-  
-  return (
-    <Suspense fallback={<div>Loading form...</div>}>
-      {/* Pass the form submission hook to the form component */}
-      <FormComponent 
-        key={formName} 
-        formSubmit={formSubmit}
-      />
-    </Suspense>
-  );
-};
-
-export default FormRenderer;
+}
