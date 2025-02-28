@@ -180,8 +180,8 @@ export default function Home() {
 
       console.log("[Home] Received response from API:", data);
 
-      // Clear loading state and set the response for display
-      setIsLoading(false);
+      // Set the response for display but maintain loading state
+      // to keep input disabled during transition
       setCurrentResponse(data);
 
       if (data.status === "pass" || data.status === "fail") {
@@ -195,29 +195,38 @@ export default function Home() {
         if (nextFlowOrder == null) {
           console.log("[Home] End of conversation. No next flow.");
           setCurrentFlow(null);
+          setIsLoading(false); // Only clear loading state here if conversation ends
           return;
         }
 
         const nextFlow = flows?.find((f) => f.order === nextFlowOrder);
         if (nextFlow) {
           console.log("[Home] Moving to next flow:", nextFlow);
+          // Keep loading state active during transition
           // Add a slight delay before moving to next flow so user can see the response
           setTimeout(() => {
+            // Set the new flow
             setCurrentFlow(nextFlow);
-            setIsInputEnabled(false);
             setCurrentResponse(null); // Clear response when switching flows
+            
+            // Only enable input after the specified delay
             if (nextFlow.input_delay > 0) {
-              setTimeout(
-                () => setIsInputEnabled(true),
-                nextFlow.input_delay * 1000,
-              );
+              setTimeout(() => {
+                setIsLoading(false); // Finally clear loading state
+                setIsInputEnabled(true);
+              }, nextFlow.input_delay * 1000);
             } else {
+              setIsLoading(false);
               setIsInputEnabled(true);
             }
           }, 2000); // 2 second delay
         } else {
           console.error("[Home] Next flow not found:", nextFlowOrder);
+          setIsLoading(false); // Clear loading state on error
         }
+      } else {
+        // If we don't have a valid status, clear loading state
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("[Home] Error processing response:", error);
@@ -265,7 +274,7 @@ export default function Home() {
               isEnabled={isInputEnabled && !isLoading}
               onSubmit={handleUserResponse}
               configId={config?.id}
-              agentQuestion={currentFlow?.agent_question}
+              agentQuestion={isLoading ? "Processing your response..." : currentFlow?.agent_question}
               isLoading={isLoading}
             />
           )}
