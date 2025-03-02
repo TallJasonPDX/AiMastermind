@@ -27,20 +27,24 @@ export function registerRoutes(app: Express): Server {
     if (process.env.NODE_ENV === "production") {
       // If FastAPI is running as part of the same application (common deployment pattern)
       const internalFastApiUrl = "http://localhost:8000";
-      
+
       // If a custom FASTAPI_URL is provided in environment variables, use that instead
       const configuredUrl = process.env.FASTAPI_URL || internalFastApiUrl;
-      
-      console.log(`[Server] Production environment detected, using FastAPI URL: ${configuredUrl}`);
-      
+
+      console.log(
+        `[Server] Production environment detected, using FastAPI URL: ${configuredUrl}`,
+      );
+
       // Warn if using localhost in a potentially externally accessible URL
       if (configuredUrl.includes("localhost")) {
-        console.warn("[Server] WARNING: Using localhost in FASTAPI_URL - this will only work if FastAPI is running in the same container");
+        console.warn(
+          "[Server] WARNING: Using localhost in FASTAPI_URL - this will only work if FastAPI is running in the same container",
+        );
       }
-      
+
       return configuredUrl;
     }
-    
+
     // In development environment - always use localhost:8000
     return "http://localhost:8000";
   })();
@@ -74,7 +78,7 @@ export function registerRoutes(app: Express): Server {
         url: apiUrl,
         headers: req.headers,
       });
-      
+
       // Prepare axios options
       const options: any = {
         method: req.method,
@@ -84,7 +88,7 @@ export function registerRoutes(app: Express): Server {
           Accept: "application/json",
         },
         validateStatus: () => true, // Allow any status code
-        timeout: 5000, // 5 second timeout to fail fast
+        timeout: process.env.NODE_ENV === "production" ? 5000 : 15000, // 5 second timeout to fail fast
       };
 
       // Add body for non-GET requests
@@ -95,11 +99,19 @@ export function registerRoutes(app: Express): Server {
 
       // Try to ping FastAPI server first
       try {
-        const pingResponse = await axios.get(`${fastApiHost}/docs`, { timeout: 1000 });
-        console.log(`[Proxy] FastAPI server health check: HTTP ${pingResponse.status}`);
+        const pingResponse = await axios.get(`${fastApiHost}/docs`, {
+          timeout: 1000,
+        });
+        console.log(
+          `[Proxy] FastAPI server health check: HTTP ${pingResponse.status}`,
+        );
       } catch (pingError: any) {
-        console.error(`[Proxy] FastAPI server health check failed: ${pingError.message}`);
-        console.error(`[Proxy] This suggests the FastAPI server is not running at ${fastApiHost}`);
+        console.error(
+          `[Proxy] FastAPI server health check failed: ${pingError.message}`,
+        );
+        console.error(
+          `[Proxy] This suggests the FastAPI server is not running at ${fastApiHost}`,
+        );
       }
 
       // Make request to API
@@ -123,24 +135,33 @@ export function registerRoutes(app: Express): Server {
       }
     } catch (error: any) {
       console.error("[Proxy] Error:", error.message);
-      if (error.code === 'ECONNREFUSED') {
-        console.error("[Proxy] Connection refused - FastAPI server is not running!");
-        console.error("[Proxy] Make sure FastAPI server is running on port 8000");
-        
+      if (error.code === "ECONNREFUSED") {
+        console.error(
+          "[Proxy] Connection refused - FastAPI server is not running!",
+        );
+        console.error(
+          "[Proxy] Make sure FastAPI server is running on port 8000",
+        );
+
         // Check if we're in production
-        if (process.env.NODE_ENV === 'production') {
-          console.error(`[Proxy] CRITICAL: In production, both Express AND FastAPI must be running!`);
-          console.error(`[Proxy] Your start script needs to launch both servers, not just Express`);
+        if (process.env.NODE_ENV === "production") {
+          console.error(
+            `[Proxy] CRITICAL: In production, both Express AND FastAPI must be running!`,
+          );
+          console.error(
+            `[Proxy] Your start script needs to launch both servers, not just Express`,
+          );
         }
       }
-      
+
       res.status(500).json({
         error: "Proxy Error",
         message: error.message || "Unknown error occurred",
         code: error.code,
-        suggestion: error.code === 'ECONNREFUSED' 
-          ? "The FastAPI server is not running. Please make sure it's started."
-          : "Check server logs for more details."
+        suggestion:
+          error.code === "ECONNREFUSED"
+            ? "The FastAPI server is not running. Please make sure it's started."
+            : "Check server logs for more details.",
       });
     }
   });

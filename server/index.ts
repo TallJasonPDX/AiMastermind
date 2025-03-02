@@ -10,7 +10,12 @@ const debugLog = (...args: any[]) => {
   if (DEBUG) console.log("[DEBUG]", ...args);
 };
 
-// Start FastAPI server (only in development mode)
+// Ensure NODE_ENV is set
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "development";
+  console.log("[Server] NODE_ENV not set, defaulting to 'development'");
+}
+
 const startFastAPI = () => {
   // Skip starting FastAPI if we're in production
   if (process.env.NODE_ENV === "production") {
@@ -21,6 +26,17 @@ const startFastAPI = () => {
   }
 
   console.log("[Server] Starting development FastAPI server...");
+
+  // Log which Python we're using
+  try {
+    const pythonVersionProcess = spawn("python3", ["--version"]);
+    pythonVersionProcess.stdout.on("data", (data) => {
+      console.log("[Server] Using Python version:", data.toString().trim());
+    });
+  } catch (err) {
+    console.error("[Server] Failed to get Python version:", err);
+  }
+
   const fastApiProcess = spawn("python3", [
     "-m",
     "uvicorn",
@@ -45,6 +61,7 @@ const startFastAPI = () => {
 
   // Handle process termination
   process.on("SIGTERM", () => {
+    console.log("[Server] SIGTERM received, killing FastAPI process");
     fastApiProcess.kill();
     process.exit(0);
   });
@@ -91,8 +108,12 @@ app.use((req, res, next) => {
 
   // In production, FastAPI should be running separately
   if (process.env.NODE_ENV !== "production") {
-    // Wait a bit for FastAPI to initialize in development
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Wait longer for FastAPI to initialize in development
+    console.log("[Server] Waiting for FastAPI to initialize (8 seconds)...");
+    await new Promise((resolve) => setTimeout(resolve, 8000));
+
+    // Simply log that we're proceeding
+    console.log("[Server] Proceeding with Express server initialization");
   }
 
   const server = registerRoutes(app);
